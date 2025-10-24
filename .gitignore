@@ -1,0 +1,7 @@
+/bin/
+coverage.out
+coverage.html
+.env
+api/swagger/*
+!api/swagger/README.md
+!api/swagger/swagger.go

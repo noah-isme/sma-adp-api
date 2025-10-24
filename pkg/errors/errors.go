@@ -51,6 +51,7 @@ var (
 	ErrForbidden          = New("FORBIDDEN", http.StatusForbidden, "forbidden")
 	ErrUnauthorized       = New("UNAUTHORIZED", http.StatusUnauthorized, "unauthorized")
 	ErrConflict           = New("CONFLICT", http.StatusConflict, "conflict")
+	ErrPreconditionFailed = New("PRECONDITION_FAILED", http.StatusPreconditionFailed, "precondition failed")
 	ErrValidation         = New("VALIDATION_ERROR", http.StatusBadRequest, "validation failed")
 	ErrInternal           = New("INTERNAL_ERROR", http.StatusInternalServerError, "internal server error")
 )

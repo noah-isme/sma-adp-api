@@ -1,0 +1,44 @@
+{
+  "info": {
+    "name": "SMA ADP API - Phase 2 Academic",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Collection covering Terms, Subjects, Classes, Class-Subjects, and Schedules endpoints."
+  },
+  "item": [
+    {
+      "name": "Terms",
+      "item": [
+        {"name": "List Terms", "request": {"method": "GET", "url": "{{base_url}}/api/v1/terms"}},
+        {"name": "Get Active Term", "request": {"method": "GET", "url": "{{base_url}}/api/v1/terms/active"}},
+        {"name": "Create Term", "request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "url": "{{base_url}}/api/v1/terms", "body": {"mode": "raw", "raw": "{}"}}},
+        {"name": "Set Active Term", "request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "url": "{{base_url}}/api/v1/terms/set-active", "body": {"mode": "raw", "raw": "{}"}}}
+      ]
+    },
+    {
+      "name": "Subjects",
+      "item": [
+        {"name": "List Subjects", "request": {"method": "GET", "url": "{{base_url}}/api/v1/subjects"}},
+        {"name": "Create Subject", "request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "url": "{{base_url}}/api/v1/subjects", "body": {"mode": "raw", "raw": "{}"}}}
+      ]
+    },
+    {
+      "name": "Classes",
+      "item": [
+        {"name": "List Classes", "request": {"method": "GET", "url": "{{base_url}}/api/v1/classes"}},
+        {"name": "Create Class", "request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "url": "{{base_url}}/api/v1/classes", "body": {"mode": "raw", "raw": "{}"}}},
+        {"name": "Assign Class Subjects", "request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "url": "{{base_url}}/api/v1/classes/{{class_id}}/subjects", "body": {"mode": "raw", "raw": "{}"}}}
+      ]
+    },
+    {
+      "name": "Schedules",
+      "item": [
+        {"name": "List Schedules", "request": {"method": "GET", "url": "{{base_url}}/api/v1/schedules"}},
+        {"name": "Create Schedule", "request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "url": "{{base_url}}/api/v1/schedules", "body": {"mode": "raw", "raw": "{}"}}},
+        {"name": "Bulk Create Schedules", "request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "url": "{{base_url}}/api/v1/schedules/bulk", "body": {"mode": "raw", "raw": "{}"}}}
+      ]
+    }
+  ],
+  "variable": [
+    {"key": "base_url", "value": "http://localhost:8080"}
+  ]
+}

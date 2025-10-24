@@ -56,6 +56,8 @@ var (
 	ErrInternal           = New("INTERNAL_ERROR", http.StatusInternalServerError, "internal server error")
 	ErrFinalized          = New("FINALIZED", http.StatusConflict, "resource finalized")
 	ErrInvalidWeights     = New("INVALID_WEIGHTS", http.StatusBadRequest, "invalid component weights")
+	ErrCacheMiss          = New("CACHE_MISS", http.StatusNotFound, "cache entry not found")
+	ErrStaleData          = New("STALE_DATA", http.StatusServiceUnavailable, "stale cached data detected")
 )
 
 // FromError normalises any error into an *Error.

@@ -11,16 +11,21 @@ import (
 
 // Envelope represents the common response contract.
 type Envelope struct {
-	Data       interface{}        `json:"data,omitempty"`
-	Error      *appErrors.Error   `json:"error,omitempty"`
-	Pagination *models.Pagination `json:"pagination,omitempty"`
+	Data       interface{}            `json:"data,omitempty"`
+	Error      *appErrors.Error       `json:"error,omitempty"`
+	Pagination *models.Pagination     `json:"pagination,omitempty"`
+	Meta       map[string]interface{} `json:"meta,omitempty"`
 }
 
 // JSON sends a success response with optional pagination metadata.
-func JSON(c *gin.Context, status int, data interface{}, pagination *models.Pagination) {
+func JSON(c *gin.Context, status int, data interface{}, pagination *models.Pagination, meta ...map[string]interface{}) {
 	c.Header("Cache-Control", "no-store")
 	c.Header("Pragma", "no-cache")
-	c.JSON(status, Envelope{Data: data, Pagination: pagination})
+	envelope := Envelope{Data: data, Pagination: pagination}
+	if len(meta) > 0 && meta[0] != nil {
+		envelope.Meta = meta[0]
+	}
+	c.JSON(status, envelope)
 }
 
 // Created responds with HTTP 201 Created.

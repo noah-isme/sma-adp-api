@@ -19,11 +19,12 @@ type Config struct {
 	Port      int
 	APIPrefix string
 
-	Database DatabaseConfig
-	Redis    RedisConfig
-	JWT      JWTConfig
-	CORS     CORSConfig
-	Log      LogConfig
+	Database  DatabaseConfig
+	Redis     RedisConfig
+	JWT       JWTConfig
+	CORS      CORSConfig
+	Log       LogConfig
+	Analytics AnalyticsConfig
 }
 
 type DatabaseConfig struct {
@@ -57,6 +58,12 @@ type CORSConfig struct {
 type LogConfig struct {
 	Level  string
 	Format string
+}
+
+// AnalyticsConfig governs feature flagging and cache behaviour for analytics endpoints.
+type AnalyticsConfig struct {
+	Enabled  bool
+	CacheTTL time.Duration
 }
 
 func Load() (*Config, error) {
@@ -114,6 +121,11 @@ func Load() (*Config, error) {
 		Format: v.GetString("LOG_FORMAT"),
 	}
 
+	cfg.Analytics = AnalyticsConfig{
+		Enabled:  v.GetBool("ENABLE_ANALYTICS"),
+		CacheTTL: parseDuration(v.GetString("ANALYTICS_CACHE_TTL"), 10*time.Minute),
+	}
+
 	return cfg, nil
 }
 
@@ -143,6 +155,9 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("ALLOWED_ORIGINS", "")
 	v.SetDefault("LOG_LEVEL", "info")
 	v.SetDefault("LOG_FORMAT", "json")
+
+	v.SetDefault("ENABLE_ANALYTICS", false)
+	v.SetDefault("ANALYTICS_CACHE_TTL", "10m")
 }
 
 func parseDuration(raw string, fallback time.Duration) time.Duration {

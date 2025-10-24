@@ -54,6 +54,8 @@ var (
 	ErrPreconditionFailed = New("PRECONDITION_FAILED", http.StatusPreconditionFailed, "precondition failed")
 	ErrValidation         = New("VALIDATION_ERROR", http.StatusBadRequest, "validation failed")
 	ErrInternal           = New("INTERNAL_ERROR", http.StatusInternalServerError, "internal server error")
+	ErrFinalized          = New("FINALIZED", http.StatusConflict, "resource finalized")
+	ErrInvalidWeights     = New("INVALID_WEIGHTS", http.StatusBadRequest, "invalid component weights")
 )
 
 // FromError normalises any error into an *Error.

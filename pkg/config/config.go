@@ -15,16 +15,17 @@ const (
 )
 
 type Config struct {
-	Env       string
-	Port      int
-	APIPrefix string
+        Env       string
+        Port      int
+        APIPrefix string
 
-	Database  DatabaseConfig
-	Redis     RedisConfig
-	JWT       JWTConfig
-	CORS      CORSConfig
-	Log       LogConfig
-	Analytics AnalyticsConfig
+        Database  DatabaseConfig
+        Redis     RedisConfig
+        JWT       JWTConfig
+        CORS      CORSConfig
+        Log       LogConfig
+        Analytics AnalyticsConfig
+        Cutover   CutoverConfig
 }
 
 type DatabaseConfig struct {
@@ -56,14 +57,27 @@ type CORSConfig struct {
 }
 
 type LogConfig struct {
-	Level  string
-	Format string
+        Level  string
+        Format string
 }
 
 // AnalyticsConfig governs feature flagging and cache behaviour for analytics endpoints.
 type AnalyticsConfig struct {
-	Enabled  bool
-	CacheTTL time.Duration
+        Enabled  bool
+        CacheTTL time.Duration
+}
+
+// CutoverConfig defines feature flags and routing controls for the legacy decommission.
+type CutoverConfig struct {
+        RouteToGo           bool
+        ShadowTraffic       bool
+        LegacyReadOnly      bool
+        CanaryPercentage    int
+        StageHeader         string
+        ClientSegmentHeader string
+        LegacyHealthURL     string
+        GoHealthURL         string
+        HealthCheckTimeout  time.Duration
 }
 
 func Load() (*Config, error) {
@@ -121,16 +135,28 @@ func Load() (*Config, error) {
 		Format: v.GetString("LOG_FORMAT"),
 	}
 
-	cfg.Analytics = AnalyticsConfig{
-		Enabled:  v.GetBool("ENABLE_ANALYTICS"),
-		CacheTTL: parseDuration(v.GetString("ANALYTICS_CACHE_TTL"), 10*time.Minute),
-	}
+        cfg.Analytics = AnalyticsConfig{
+                Enabled:  v.GetBool("ENABLE_ANALYTICS"),
+                CacheTTL: parseDuration(v.GetString("ANALYTICS_CACHE_TTL"), 10*time.Minute),
+        }
 
-	return cfg, nil
+        cfg.Cutover = CutoverConfig{
+                RouteToGo:           v.GetBool("ROUTE_TO_GO"),
+                ShadowTraffic:       v.GetBool("SHADOW_TRAFFIC"),
+                LegacyReadOnly:      v.GetBool("LEGACY_READONLY"),
+                CanaryPercentage:    v.GetInt("CANARY_PERCENTAGE"),
+                StageHeader:         v.GetString("CUTOVER_STAGE_HEADER"),
+                ClientSegmentHeader: v.GetString("CUTOVER_SEGMENT_HEADER"),
+                LegacyHealthURL:     v.GetString("LEGACY_HEALTH_URL"),
+                GoHealthURL:         v.GetString("GO_HEALTH_URL"),
+                HealthCheckTimeout:  parseDuration(v.GetString("CUTOVER_HEALTH_TIMEOUT"), 2*time.Second),
+        }
+
+        return cfg, nil
 }
 
 func setDefaults(v *viper.Viper) {
-	v.SetDefault("ENV", EnvDevelopment)
+        v.SetDefault("ENV", EnvDevelopment)
 	v.SetDefault("PORT", 8080)
 	v.SetDefault("API_PREFIX", "/api/v1")
 
@@ -153,11 +179,21 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("REFRESH_TOKEN_EXPIRATION", "168h")
 
 	v.SetDefault("ALLOWED_ORIGINS", "")
-	v.SetDefault("LOG_LEVEL", "info")
-	v.SetDefault("LOG_FORMAT", "json")
+        v.SetDefault("LOG_LEVEL", "info")
+        v.SetDefault("LOG_FORMAT", "json")
 
-	v.SetDefault("ENABLE_ANALYTICS", false)
-	v.SetDefault("ANALYTICS_CACHE_TTL", "10m")
+        v.SetDefault("ENABLE_ANALYTICS", false)
+        v.SetDefault("ANALYTICS_CACHE_TTL", "10m")
+
+        v.SetDefault("ROUTE_TO_GO", false)
+        v.SetDefault("SHADOW_TRAFFIC", false)
+        v.SetDefault("LEGACY_READONLY", false)
+        v.SetDefault("CANARY_PERCENTAGE", 0)
+        v.SetDefault("CUTOVER_STAGE_HEADER", "X-Cutover-Stage")
+        v.SetDefault("CUTOVER_SEGMENT_HEADER", "X-Client-Segment")
+        v.SetDefault("LEGACY_HEALTH_URL", "http://localhost:3000/health")
+        v.SetDefault("GO_HEALTH_URL", "http://localhost:8080/health")
+        v.SetDefault("CUTOVER_HEALTH_TIMEOUT", "2s")
 }
 
 func parseDuration(raw string, fallback time.Duration) time.Duration {

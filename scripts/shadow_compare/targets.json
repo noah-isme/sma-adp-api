@@ -1,0 +1,8 @@
+{
+  "targets": [
+    { "method": "GET", "path": "/health", "critical": true },
+    { "method": "GET", "path": "/ready", "critical": true },
+    { "method": "GET", "path": "/api/v1/analytics/attendance", "critical": false },
+    { "method": "GET", "path": "/api/v1/analytics/grades", "critical": false }
+  ]
+}

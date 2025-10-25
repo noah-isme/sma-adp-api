@@ -1,0 +1,40 @@
+name: contract-tests
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    env:
+      LEGACY_HEALTH_URL: http://localhost:8080/health
+      GO_HEALTH_URL: http://localhost:8080/health
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+      - name: Build
+        run: go build ./...
+      - name: Start API
+        run: |
+          go run ./cmd/api-gateway &
+          echo $! > api.pid
+          sleep 5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Newman
+        run: npm install -g newman
+      - name: Run contract tests
+        run: newman run tests/contract/contract.postman_collection.json --env-var baseUrl=http://localhost:8080
+      - name: Stop API
+        if: always()
+        run: |
+          if [ -f api.pid ]; then
+            kill $(cat api.pid)
+          fi

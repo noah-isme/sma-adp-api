@@ -52,6 +52,9 @@ func main() {
 	r.Use(reqidmiddleware.Middleware())
 	r.Use(logger.GinMiddleware(logr))
 	r.Use(corsmiddleware.New(cfg.CORS.AllowedOrigins))
+	cutoverSvc := service.NewCutoverService(cfg.Cutover, metricsSvc)
+
+	r.Use(internalmiddleware.CutoverStage(cutoverSvc))
 	r.Use(internalmiddleware.Metrics(metricsSvc))
 
 	r.GET("/health", metricsHandler.Health)
@@ -63,6 +66,12 @@ func main() {
 	}
 
 	r.GET("/metrics", metricsHandler.Prometheus)
+
+	cutoverHandler := internalhandler.NewCutoverHandler(cutoverSvc)
+
+	internalGroup := r.Group("/internal")
+	internalGroup.GET("/ping-legacy", cutoverHandler.PingLegacy)
+	internalGroup.GET("/ping-go", cutoverHandler.PingGo)
 
 	if cfg.Analytics.Enabled {
 		db, err := database.NewPostgres(cfg.Database)

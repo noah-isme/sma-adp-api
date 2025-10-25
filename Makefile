@@ -1,4 +1,4 @@
-.PHONY: help setup dev build test test-coverage migrate-create migrate-up migrate-down docker-up docker-down swag lint fmt
+.PHONY: help setup dev build test test-coverage migrate-create migrate-up migrate-down docker-up docker-down swag lint fmt contract-test shadow-compare toggle-go
 
 help:
 @grep -E '^[a-zA-Z_-]+:.*?## .*$$' \
@@ -15,6 +15,20 @@ gofmt -w $(shell find . -name '*.go' -not -path './vendor/*')
 
 lint: ## Run vet
 go vet ./...
+
+contract-test: ## Run Postman contract tests via Newman (requires Docker)
+	@BASE_URL=$${BASE_URL:-http://localhost:8080/api/v1}; \
+	docker run --rm -e BASE_URL=$$BASE_URL -v $(CURDIR)/tests/contract:/etc/newman postman/newman:alpine \
+	run contract.postman_collection.json --env-var baseUrl=$$BASE_URL
+
+shadow-compare: ## Compare legacy vs Go API responses for critical endpoints
+	GO_BASE_URL=$${GO_BASE_URL:-http://localhost:8080}; \
+	LEGACY_BASE_URL=$${LEGACY_BASE_URL:-http://localhost:3000}; \
+	go run ./scripts/shadow_compare --go-base $$GO_BASE_URL --legacy-base $$LEGACY_BASE_URL
+
+toggle-go: ## Toggle ROUTE_TO_GO flag in .env (usage: make toggle-go value=true|false)
+	@[ -n "$(value)" ] || (echo "Usage: make toggle-go value=true|false" && exit 1)
+	@bash scripts/toggle_go.sh $(value)
 
 dev: ## Run dev server with Air (if installed) or plain go run
 @if command -v air >/dev/null 2>&1; then air; else go run ./cmd/api-gateway; fi

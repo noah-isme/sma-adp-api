@@ -12,6 +12,9 @@ make dev
 ## Docs
 - Swagger: `/docs` (dev only)
 - Health: `/health`, `/ready`
+- Internal health diff: `/internal/ping-legacy`, `/internal/ping-go`
+- Cutover runbook: [`docs/operations.md`](docs/operations.md)
+- Decommission checklist: [`docs/decommission.md`](docs/decommission.md)
 
 ## Makefile
 Lihat target via `make help`.

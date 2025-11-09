@@ -1,0 +1,118 @@
+{
+  "info": {
+    "name": "SMA ADP API - Teachers",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Teacher roster, assignments, and preferences endpoints"
+  },
+  "item": [
+    {
+      "name": "List Teachers",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/teachers?search=&page=1&limit=20",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "teachers"],
+          "query": [
+            {"key": "search", "value": ""},
+            {"key": "page", "value": "1"},
+            {"key": "limit", "value": "20"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create Teacher",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/teachers",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "teachers"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"teacher01@example.com\",\n  \"full_name\": \"Bu Sari\",\n  \"nip\": \"198501011990032001\",\n  \"phone\": \"+628123456789\",\n  \"expertise\": \"Matematika\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Get Teacher Detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/teachers/{{teacher_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "teachers", "{{teacher_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Assign Teacher",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/teachers/{{teacher_id}}/assignments",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "teachers", "{{teacher_id}}", "assignments"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"class_id\": \"class_x_ipa_1\",\n  \"subject_id\": \"subject_math\",\n  \"term_id\": \"term_2024_1\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Get Preferences",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/teachers/{{teacher_id}}/preferences",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "teachers", "{{teacher_id}}", "preferences"]
+        }
+      }
+    },
+    {
+      "name": "Upsert Preferences",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/teachers/{{teacher_id}}/preferences",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "teachers", "{{teacher_id}}", "preferences"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"max_load_per_day\": 4,\n  \"max_load_per_week\": 16,\n  \"unavailable\": [\n    {\"day_of_week\": \"MONDAY\", \"time_range\": \"1\"},\n    {\"day_of_week\": \"FRIDAY\", \"time_range\": \"5\"}\n  ]\n}"
+        }
+      }
+    }
+  ],
+  "variable": [
+    {"key": "base_url", "value": "http://localhost:8080"},
+    {"key": "access_token", "value": ""},
+    {"key": "teacher_id", "value": ""}
+  ]
+}

@@ -12,6 +12,7 @@ import (
 	_ "github.com/noah-isme/sma-adp-api/api/swagger"
 	internalhandler "github.com/noah-isme/sma-adp-api/internal/handler"
 	internalmiddleware "github.com/noah-isme/sma-adp-api/internal/middleware"
+	"github.com/noah-isme/sma-adp-api/internal/models"
 	"github.com/noah-isme/sma-adp-api/internal/repository"
 	"github.com/noah-isme/sma-adp-api/internal/service"
 	"github.com/noah-isme/sma-adp-api/pkg/cache"
@@ -47,6 +48,12 @@ func main() {
 	metricsSvc := service.NewMetricsService()
 	metricsHandler := internalhandler.NewMetricsHandler(metricsSvc)
 
+	db, err := database.NewPostgres(cfg.Database)
+	if err != nil {
+		logr.Sugar().Fatalw("failed to initialise database", "error", err)
+	}
+	defer db.Close()
+
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(reqidmiddleware.Middleware())
@@ -73,13 +80,67 @@ func main() {
 	internalGroup.GET("/ping-legacy", cutoverHandler.PingLegacy)
 	internalGroup.GET("/ping-go", cutoverHandler.PingGo)
 
-	if cfg.Analytics.Enabled {
-		db, err := database.NewPostgres(cfg.Database)
-		if err != nil {
-			logr.Sugar().Fatalw("failed to initialise database", "error", err)
-		}
-		defer db.Close()
+	api := r.Group(cfg.APIPrefix)
 
+	authRepo := repository.NewUserRepository(db)
+	authSvc := service.NewAuthService(authRepo, nil, logr, service.AuthConfig{
+		AccessTokenSecret:  cfg.JWT.Secret,
+		AccessTokenExpiry:  cfg.JWT.Expiration,
+		RefreshTokenExpiry: cfg.JWT.RefreshExpiration,
+		Issuer:             "sma-adp-api",
+		Audience:           []string{"sma-adp-clients"},
+	})
+	authHandler := internalhandler.NewAuthHandler(authSvc)
+
+	authRoutes := api.Group("/auth")
+	authRoutes.POST("/login", authHandler.Login)
+	authRoutes.POST("/refresh", authHandler.Refresh)
+	authRoutes.POST("/forgot-password", authHandler.ForgotPassword)
+	authRoutes.POST("/reset-password", authHandler.ResetPassword)
+	protectedAuth := authRoutes.Group("")
+	protectedAuth.Use(internalmiddleware.JWT(authSvc))
+	protectedAuth.POST("/logout", authHandler.Logout)
+	protectedAuth.POST("/change-password", authHandler.ChangePassword)
+
+	teacherRepo := repository.NewTeacherRepository(db)
+	classRepo := repository.NewClassRepository(db)
+	subjectRepo := repository.NewSubjectRepository(db)
+	termRepo := repository.NewTermRepository(db)
+	scheduleRepo := repository.NewScheduleRepository(db)
+	assignmentRepo := repository.NewTeacherAssignmentRepository(db)
+	preferenceRepo := repository.NewTeacherPreferenceRepository(db)
+
+	teacherSvc := service.NewTeacherService(teacherRepo, nil, logr)
+	assignmentSvc := service.NewTeacherAssignmentService(
+		teacherRepo,
+		classRepo,
+		subjectRepo,
+		termRepo,
+		assignmentRepo,
+		scheduleRepo,
+		preferenceRepo,
+		nil,
+		logr,
+	)
+	preferenceSvc := service.NewTeacherPreferenceService(teacherRepo, preferenceRepo, nil, logr)
+	teacherHandler := internalhandler.NewTeacherHandler(teacherSvc, assignmentSvc, preferenceSvc)
+
+	secured := api.Group("")
+	secured.Use(internalmiddleware.JWT(authSvc))
+
+	teachersGroup := secured.Group("/teachers")
+	teachersGroup.GET("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.List)
+	teachersGroup.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.Create)
+	teachersGroup.GET("/:id", internalmiddleware.RBAC("SELF", string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.Get)
+	teachersGroup.PUT("/:id", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.Update)
+	teachersGroup.DELETE("/:id", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), teacherHandler.Delete)
+	teachersGroup.GET("/:id/assignments", internalmiddleware.RBAC("SELF", string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.ListAssignments)
+	teachersGroup.POST("/:id/assignments", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.CreateAssignment)
+	teachersGroup.DELETE("/:id/assignments/:aid", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.DeleteAssignment)
+	teachersGroup.GET("/:id/preferences", internalmiddleware.RBAC("SELF", string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.GetPreferences)
+	teachersGroup.PUT("/:id/preferences", internalmiddleware.RBAC("SELF", string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.UpsertPreferences)
+
+	if cfg.Analytics.Enabled {
 		var cacheRepo service.CacheRepository
 		if redisClient, err := cache.NewRedis(cfg.Redis); err != nil {
 			logr.Sugar().Warnw("analytics cache disabled", "error", err)
@@ -92,7 +153,6 @@ func main() {
 		analyticsSvc := service.NewAnalyticsService(repository.NewAnalyticsRepository(db), cacheSvc, metricsSvc, logr)
 		analyticsHandler := internalhandler.NewAnalyticsHandler(analyticsSvc)
 
-		api := r.Group(cfg.APIPrefix)
 		analyticsGroup := api.Group("/analytics")
 		analyticsGroup.Use(internalmiddleware.WithResponseMeta())
 		analyticsGroup.GET("/attendance", analyticsHandler.Attendance)

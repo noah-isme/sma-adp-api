@@ -1,0 +1,125 @@
+{
+  "info": {
+    "name": "Scheduler",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "8f48f4a8-0c5e-4c60-8c46-4caa0a35cc01"
+  },
+  "item": [
+    {
+      "name": "Generate Proposal",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/schedule/generate",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "schedule",
+            "generate"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"termId\": \"term-1\",\n  \"classId\": \"class-1\",\n  \"timeSlotsPerDay\": 6,\n  \"days\": [1, 2, 3, 4, 5],\n  \"subjectLoads\": [\n    {\n      \"subjectId\": \"math\",\n      \"teacherId\": \"teacher-1\",\n      \"weeklyCount\": 5,\n      \"difficulty\": 4\n    },\n    {\n      \"subjectId\": \"science\",\n      \"teacherId\": \"teacher-2\",\n      \"weeklyCount\": 5,\n      \"difficulty\": 5\n    }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "Save Proposal",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/schedule/save",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "schedule",
+            "save"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"proposalId\": \"<proposal-id>\",\n  \"commitToDaily\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "List Semester Schedules",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/semester-schedule?termId=term-1&classId=class-1",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "semester-schedule"
+          ],
+          "query": [
+            {
+              "key": "termId",
+              "value": "term-1"
+            },
+            {
+              "key": "classId",
+              "value": "class-1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Schedule Slots",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/semester-schedule/{{scheduleId}}/slots",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "semester-schedule",
+            "{{scheduleId}}",
+            "slots"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Delete Semester Schedule",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{baseUrl}}/semester-schedule/{{scheduleId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "semester-schedule",
+            "{{scheduleId}}"
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api/v1"
+    }
+  ]
+}

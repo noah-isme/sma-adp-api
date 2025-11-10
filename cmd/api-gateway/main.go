@@ -109,6 +109,8 @@ func main() {
 	scheduleRepo := repository.NewScheduleRepository(db)
 	assignmentRepo := repository.NewTeacherAssignmentRepository(db)
 	preferenceRepo := repository.NewTeacherPreferenceRepository(db)
+	semesterScheduleRepo := repository.NewSemesterScheduleRepository(db)
+	semesterSlotRepo := repository.NewSemesterScheduleSlotRepository(db)
 
 	teacherSvc := service.NewTeacherService(teacherRepo, nil, logr)
 	assignmentSvc := service.NewTeacherAssignmentService(
@@ -125,6 +127,26 @@ func main() {
 	preferenceSvc := service.NewTeacherPreferenceService(teacherRepo, preferenceRepo, nil, logr)
 	teacherHandler := internalhandler.NewTeacherHandler(teacherSvc, assignmentSvc, preferenceSvc)
 
+	var schedulerHandler *internalhandler.ScheduleGeneratorHandler
+	if cfg.Scheduler.Enabled {
+		schedulerSvc := service.NewScheduleGeneratorService(
+			termRepo,
+			classRepo,
+			subjectRepo,
+			assignmentRepo,
+			preferenceRepo,
+			scheduleRepo,
+			semesterScheduleRepo,
+			semesterSlotRepo,
+			nil,
+			db,
+			nil,
+			logr,
+			service.ScheduleGeneratorConfig{ProposalTTL: cfg.Scheduler.ProposalTTL},
+		)
+		schedulerHandler = internalhandler.NewScheduleGeneratorHandler(schedulerSvc)
+	}
+
 	secured := api.Group("")
 	secured.Use(internalmiddleware.JWT(authSvc))
 
@@ -139,6 +161,15 @@ func main() {
 	teachersGroup.DELETE("/:id/assignments/:aid", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.DeleteAssignment)
 	teachersGroup.GET("/:id/preferences", internalmiddleware.RBAC("SELF", string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.GetPreferences)
 	teachersGroup.PUT("/:id/preferences", internalmiddleware.RBAC("SELF", string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.UpsertPreferences)
+
+	if schedulerHandler != nil {
+		schedulerGroup := secured.Group("")
+		schedulerGroup.POST("/schedule/generate", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), schedulerHandler.Generate)
+		schedulerGroup.POST("/schedule/save", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), schedulerHandler.Save)
+		schedulerGroup.GET("/semester-schedule", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), schedulerHandler.List)
+		schedulerGroup.GET("/semester-schedule/:id/slots", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), schedulerHandler.Slots)
+		schedulerGroup.DELETE("/semester-schedule/:id", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), schedulerHandler.Delete)
+	}
 
 	if cfg.Analytics.Enabled {
 		var cacheRepo service.CacheRepository

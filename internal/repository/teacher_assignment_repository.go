@@ -41,6 +41,17 @@ ORDER BY t.start_date DESC, c.name ASC`
 	return assignments, nil
 }
 
+// ListByClassAndTerm returns assignments scoped to a class within a term.
+func (r *TeacherAssignmentRepository) ListByClassAndTerm(ctx context.Context, classID, termID string) ([]models.TeacherAssignment, error) {
+	const query = `SELECT id, teacher_id, class_id, subject_id, term_id, created_at
+FROM teacher_assignments WHERE class_id = $1 AND term_id = $2`
+	var assignments []models.TeacherAssignment
+	if err := r.db.SelectContext(ctx, &assignments, query, classID, termID); err != nil {
+		return nil, fmt.Errorf("list class teacher assignments: %w", err)
+	}
+	return assignments, nil
+}
+
 // Exists checks if the teacher-class-subject-term tuple already exists.
 func (r *TeacherAssignmentRepository) Exists(ctx context.Context, teacherID, classID, subjectID, termID string) (bool, error) {
 	const query = `SELECT 1 FROM teacher_assignments WHERE teacher_id = $1 AND class_id = $2 AND subject_id = $3 AND term_id = $4 LIMIT 1`

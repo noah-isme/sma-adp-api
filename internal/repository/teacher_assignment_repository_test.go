@@ -93,3 +93,20 @@ func TestTeacherAssignmentRepositoryExistsAndCount(t *testing.T) {
 	assert.Equal(t, 2, count)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
+
+func TestTeacherAssignmentRepositoryListByClassAndTerm(t *testing.T) {
+	db, mock, cleanup := newTeacherAssignmentMock(t)
+	defer cleanup()
+	repo := NewTeacherAssignmentRepository(db)
+
+	rows := sqlmock.NewRows([]string{"id", "teacher_id", "class_id", "subject_id", "term_id", "created_at"}).
+		AddRow("assign-1", "teacher-1", "class-1", "subject-1", "term-1", time.Now())
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, teacher_id, class_id, subject_id, term_id, created_at FROM teacher_assignments WHERE class_id = $1 AND term_id = $2")).
+		WithArgs("class-1", "term-1").
+		WillReturnRows(rows)
+
+	assignments, err := repo.ListByClassAndTerm(context.Background(), "class-1", "term-1")
+	require.NoError(t, err)
+	assert.Len(t, assignments, 1)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}

@@ -170,6 +170,25 @@ func (r *ScheduleRepository) BulkCreate(ctx context.Context, schedules []models.
 		}
 	}()
 
+	if err = r.bulkInsertSchedules(ctx, tx, schedules); err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("commit bulk create schedules: %w", err)
+	}
+	return nil
+}
+
+// BulkCreateWithTx inserts schedules using an existing transaction.
+func (r *ScheduleRepository) BulkCreateWithTx(ctx context.Context, tx *sqlx.Tx, schedules []models.Schedule) error {
+	if tx == nil {
+		return fmt.Errorf("nil transaction provided")
+	}
+	return r.bulkInsertSchedules(ctx, tx, schedules)
+}
+
+func (r *ScheduleRepository) bulkInsertSchedules(ctx context.Context, exec sqlx.ExtContext, schedules []models.Schedule) error {
 	now := time.Now().UTC()
 	for i := range schedules {
 		payload := schedules[i]
@@ -181,14 +200,10 @@ func (r *ScheduleRepository) BulkCreate(ctx context.Context, schedules []models.
 		}
 		payload.UpdatedAt = now
 
-		if _, err = tx.NamedExecContext(ctx, `INSERT INTO schedules (id, term_id, class_id, subject_id, teacher_id, day_of_week, time_slot, room, created_at, updated_at) VALUES (:id, :term_id, :class_id, :subject_id, :teacher_id, :day_of_week, :time_slot, :room, :created_at, :updated_at)`, &payload); err != nil {
+		if _, err := sqlx.NamedExecContext(ctx, exec, `INSERT INTO schedules (id, term_id, class_id, subject_id, teacher_id, day_of_week, time_slot, room, created_at, updated_at) VALUES (:id, :term_id, :class_id, :subject_id, :teacher_id, :day_of_week, :time_slot, :room, :created_at, :updated_at)`, &payload); err != nil {
 			return fmt.Errorf("bulk insert schedule: %w", err)
 		}
 		schedules[i] = payload
-	}
-
-	if err = tx.Commit(); err != nil {
-		return fmt.Errorf("commit bulk create schedules: %w", err)
 	}
 	return nil
 }

@@ -26,11 +26,11 @@ type studentReader interface {
 	FindByID(ctx context.Context, id string) (*models.StudentDetail, error)
 }
 
-type classReader interface {
+type enrollmentClassReader interface {
 	FindByID(ctx context.Context, id string) (*models.Class, error)
 }
 
-type termReader interface {
+type enrollmentTermReader interface {
 	FindByID(ctx context.Context, id string) (*models.Term, error)
 }
 
@@ -50,14 +50,14 @@ type TransferEnrollmentRequest struct {
 type EnrollmentService struct {
 	repo      enrollmentRepository
 	students  studentReader
-	classes   classReader
-	terms     termReader
+	classes   enrollmentClassReader
+	terms     enrollmentTermReader
 	validator *validator.Validate
 	logger    *zap.Logger
 }
 
 // NewEnrollmentService constructs EnrollmentService.
-func NewEnrollmentService(repo enrollmentRepository, students studentReader, classes classReader, terms termReader, validate *validator.Validate, logger *zap.Logger) *EnrollmentService {
+func NewEnrollmentService(repo enrollmentRepository, students studentReader, classes enrollmentClassReader, terms enrollmentTermReader, validate *validator.Validate, logger *zap.Logger) *EnrollmentService {
 	if validate == nil {
 		validate = validator.New()
 	}

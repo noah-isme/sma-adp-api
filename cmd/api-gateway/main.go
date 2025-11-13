@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http/pprof"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -18,9 +20,11 @@ import (
 	"github.com/noah-isme/sma-adp-api/pkg/cache"
 	"github.com/noah-isme/sma-adp-api/pkg/config"
 	"github.com/noah-isme/sma-adp-api/pkg/database"
+	"github.com/noah-isme/sma-adp-api/pkg/jobs"
 	"github.com/noah-isme/sma-adp-api/pkg/logger"
 	corsmiddleware "github.com/noah-isme/sma-adp-api/pkg/middleware/cors"
 	reqidmiddleware "github.com/noah-isme/sma-adp-api/pkg/middleware/requestid"
+	"github.com/noah-isme/sma-adp-api/pkg/storage"
 )
 
 // @title SMA ADP API
@@ -147,6 +151,67 @@ func main() {
 		schedulerHandler = internalhandler.NewScheduleGeneratorHandler(schedulerSvc)
 	}
 
+
+	var analyticsRepo *repository.AnalyticsRepository
+	if cfg.Analytics.Enabled || cfg.Dashboard.Enabled || cfg.Reports.Enabled {
+		analyticsRepo = repository.NewAnalyticsRepository(db)
+	}
+
+	var cacheRepo service.CacheRepository
+	var cacheCloser interface{ Close() error }
+	if cfg.Analytics.Enabled || cfg.Dashboard.Enabled {
+		if client, err := cache.NewRedis(cfg.Redis); err != nil {
+			logr.Sugar().Warnw("cache disabled", "error", err)
+		} else {
+			cacheCloser = client
+			cacheRepo = repository.NewCacheRepository(client, logr)
+		}
+	}
+	if cacheCloser != nil {
+		defer cacheCloser.Close()
+	}
+
+	var reportHandler *internalhandler.ReportHandler
+	if cfg.Reports.Enabled {
+		if analyticsRepo == nil {
+			analyticsRepo = repository.NewAnalyticsRepository(db)
+		}
+		reportRepo := repository.NewReportRepository(db)
+		fileStore, err := storage.NewLocalStorage(cfg.Reports.StorageDir)
+		if err != nil {
+			logr.Sugar().Fatalw("failed to init report storage", "error", err)
+		}
+		signer := storage.NewSignedURLSigner(cfg.Reports.SignedURLSecret, cfg.Reports.SignedURLTTL)
+		exportCfg := service.ExportConfig{APIPrefix: cfg.APIPrefix, ResultTTL: cfg.Reports.SignedURLTTL}
+		exportSvc := service.NewExportService(analyticsRepo, fileStore, signer, exportCfg, logr, nil, nil)
+		reportWorker := service.NewReportWorker(reportRepo, exportSvc, cfg.Reports.WorkerRetries, logr)
+		workers := cfg.Reports.WorkerConcurrency
+		if workers <= 0 {
+			workers = 1
+		}
+		queueCfg := jobs.QueueConfig{
+			Workers:    workers,
+			BufferSize: workers * 4,
+			MaxRetries: cfg.Reports.WorkerRetries,
+			RetryDelay: 5 * time.Second,
+			Logger:     logr,
+		}
+		queueCtx, cancel := context.WithCancel(context.Background())
+		reportQueue := jobs.NewQueue("reports", reportWorker.Handle, queueCfg)
+		reportQueue.Start(queueCtx)
+		defer func() {
+			cancel()
+			reportQueue.Stop()
+		}()
+		reportSvc := service.NewReportService(reportRepo, assignmentRepo, reportQueue, exportSvc, logr, service.ReportServiceConfig{
+			ResultTTL:       cfg.Reports.SignedURLTTL,
+			CleanupInterval: cfg.Reports.CleanupInterval,
+			MaxRetries:      cfg.Reports.WorkerRetries,
+		})
+		reportSvc.RecoverPendingJobs(queueCtx)
+		reportSvc.StartCleanup(queueCtx)
+		reportHandler = internalhandler.NewReportHandler(reportSvc, nil)
+	}
 	secured := api.Group("")
 	secured.Use(internalmiddleware.JWT(authSvc))
 
@@ -171,17 +236,18 @@ func main() {
 		schedulerGroup.DELETE("/semester-schedule/:id", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), schedulerHandler.Delete)
 	}
 
-	if cfg.Analytics.Enabled {
-		var cacheRepo service.CacheRepository
-		if redisClient, err := cache.NewRedis(cfg.Redis); err != nil {
-			logr.Sugar().Warnw("analytics cache disabled", "error", err)
-		} else {
-			defer redisClient.Close()
-			cacheRepo = repository.NewCacheRepository(redisClient, logr)
-		}
+	if reportHandler != nil {
+		reportsGroup := secured.Group("/reports")
+		reportsGroup.POST("/generate", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), reportHandler.GenerateReport)
+		reportsGroup.GET("/status/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), reportHandler.ReportStatus)
+		secured.GET("/export/:token", reportHandler.DownloadReport)
+	}
 
+
+	var analyticsSvc *service.AnalyticsService
+	if cfg.Analytics.Enabled {
 		cacheSvc := service.NewCacheService(cacheRepo, metricsSvc, cfg.Analytics.CacheTTL, logr, cacheRepo != nil)
-		analyticsSvc := service.NewAnalyticsService(repository.NewAnalyticsRepository(db), cacheSvc, metricsSvc, logr)
+		analyticsSvc = service.NewAnalyticsService(analyticsRepo, cacheSvc, metricsSvc, logr)
 		analyticsHandler := internalhandler.NewAnalyticsHandler(analyticsSvc)
 
 		analyticsGroup := api.Group("/analytics")
@@ -192,6 +258,30 @@ func main() {
 		analyticsGroup.GET("/system", analyticsHandler.System)
 
 		registerPprof(r)
+	}
+
+	if cfg.Dashboard.Enabled {
+		dashboardCache := service.NewCacheService(cacheRepo, metricsSvc, cfg.Dashboard.CacheTTL, logr, cacheRepo != nil)
+		calendarSvc := service.NewCalendarService(repository.NewCalendarRepository(db), nil, logr)
+		announcementSvc := service.NewAnnouncementService(repository.NewAnnouncementRepository(db), nil, logr)
+		scheduleSvc := service.NewScheduleService(scheduleRepo, nil, logr)
+		dashboardSvc := service.NewDashboardService(service.DashboardServiceParams{
+			Analytics:     analyticsSvc,
+			AnalyticsRepo: analyticsRepo,
+			Calendar:      calendarSvc,
+			Announcements: announcementSvc,
+			Schedules:     scheduleSvc,
+			Assignments:   assignmentSvc,
+			Cache:         dashboardCache,
+			Logger:        logr,
+			Config:        service.DashboardServiceConfig{CacheTTL: cfg.Dashboard.CacheTTL},
+		})
+		dashboardHandler := internalhandler.NewDashboardHandler(dashboardSvc)
+
+		dashboardGroup := secured.Group("")
+		dashboardGroup.Use(internalmiddleware.WithResponseMeta())
+		dashboardGroup.GET("/dashboard", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), dashboardHandler.Admin)
+		dashboardGroup.GET("/dashboard/academics", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), dashboardHandler.Teacher)
 	}
 
 	addr := fmt.Sprintf(":%d", cfg.Port)

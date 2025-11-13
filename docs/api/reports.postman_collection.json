@@ -1,0 +1,73 @@
+{
+  "info": {
+    "name": "SMA ADP API - Reports",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Asynchronous report generation and export workflow"
+  },
+  "item": [
+    {
+      "name": "Generate Report",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"type\": \"grades\",\n  \"termId\": \"{{term_id}}\",\n  \"classId\": \"{{class_id}}\",\n  \"format\": \"csv\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/reports/generate",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "reports", "generate"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Report Status",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/reports/status/{{job_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "reports", "status", "{{job_id}}"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Download Report",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/export/{{download_token}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "export", "{{download_token}}"]
+        }
+      },
+      "response": []
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {"key": "token", "value": "{{access_token}}", "type": "string"}
+    ]
+  },
+  "variable": [
+    {"key": "base_url", "value": "http://localhost:8080"},
+    {"key": "term_id", "value": "term_2024_1"},
+    {"key": "class_id", "value": "class_11a"},
+    {"key": "job_id", "value": ""},
+    {"key": "download_token", "value": ""},
+    {"key": "access_token", "value": "replace-with-jwt"}
+  ]
+}

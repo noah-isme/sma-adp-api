@@ -25,8 +25,10 @@ type Config struct {
 	CORS      CORSConfig
 	Log       LogConfig
 	Analytics AnalyticsConfig
+	Dashboard DashboardConfig
 	Cutover   CutoverConfig
 	Scheduler SchedulerConfig
+	Reports   ReportsConfig
 }
 
 type DatabaseConfig struct {
@@ -62,6 +64,17 @@ type LogConfig struct {
 	Format string
 }
 
+// ReportsConfig configures asynchronous report generation.
+type ReportsConfig struct {
+	Enabled           bool
+	StorageDir        string
+	SignedURLSecret   string
+	SignedURLTTL      time.Duration
+	CleanupInterval   time.Duration
+	WorkerConcurrency int
+	WorkerRetries     int
+}
+
 // SchedulerConfig toggles the constraint-based schedule generator.
 type SchedulerConfig struct {
 	Enabled     bool
@@ -70,6 +83,12 @@ type SchedulerConfig struct {
 
 // AnalyticsConfig governs feature flagging and cache behaviour for analytics endpoints.
 type AnalyticsConfig struct {
+	Enabled  bool
+	CacheTTL time.Duration
+}
+
+// DashboardConfig governs dashboard exposure and cache tuning.
+type DashboardConfig struct {
 	Enabled  bool
 	CacheTTL time.Duration
 }
@@ -147,6 +166,11 @@ func Load() (*Config, error) {
 		CacheTTL: parseDuration(v.GetString("ANALYTICS_CACHE_TTL"), 10*time.Minute),
 	}
 
+	cfg.Dashboard = DashboardConfig{
+		Enabled:  v.GetBool("ENABLE_DASHBOARD"),
+		CacheTTL: parseDuration(v.GetString("DASHBOARD_CACHE_TTL"), 5*time.Minute),
+	}
+
 	cfg.Scheduler = SchedulerConfig{
 		Enabled:     v.GetBool("ENABLE_SCHEDULER"),
 		ProposalTTL: parseDuration(v.GetString("SCHEDULER_PROPOSAL_TTL"), 30*time.Minute),
@@ -162,6 +186,16 @@ func Load() (*Config, error) {
 		LegacyHealthURL:     v.GetString("LEGACY_HEALTH_URL"),
 		GoHealthURL:         v.GetString("GO_HEALTH_URL"),
 		HealthCheckTimeout:  parseDuration(v.GetString("CUTOVER_HEALTH_TIMEOUT"), 2*time.Second),
+	}
+
+	cfg.Reports = ReportsConfig{
+		Enabled:           v.GetBool("ENABLE_REPORTS"),
+		StorageDir:        v.GetString("REPORTS_STORAGE_DIR"),
+		SignedURLSecret:   v.GetString("REPORTS_SIGNED_URL_SECRET"),
+		SignedURLTTL:      parseDuration(v.GetString("REPORTS_SIGNED_URL_TTL"), 24*time.Hour),
+		CleanupInterval:   parseDuration(v.GetString("REPORTS_CLEANUP_INTERVAL"), time.Hour),
+		WorkerConcurrency: v.GetInt("REPORTS_WORKER_CONCURRENCY"),
+		WorkerRetries:     v.GetInt("REPORTS_WORKER_RETRIES"),
 	}
 
 	return cfg, nil
@@ -196,6 +230,8 @@ func setDefaults(v *viper.Viper) {
 
 	v.SetDefault("ENABLE_ANALYTICS", false)
 	v.SetDefault("ANALYTICS_CACHE_TTL", "10m")
+	v.SetDefault("ENABLE_DASHBOARD", false)
+	v.SetDefault("DASHBOARD_CACHE_TTL", "5m")
 
 	v.SetDefault("ENABLE_SCHEDULER", false)
 	v.SetDefault("SCHEDULER_PROPOSAL_TTL", "30m")
@@ -209,6 +245,14 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("LEGACY_HEALTH_URL", "http://localhost:3000/health")
 	v.SetDefault("GO_HEALTH_URL", "http://localhost:8080/health")
 	v.SetDefault("CUTOVER_HEALTH_TIMEOUT", "2s")
+
+	v.SetDefault("ENABLE_REPORTS", false)
+	v.SetDefault("REPORTS_STORAGE_DIR", "./exports")
+	v.SetDefault("REPORTS_SIGNED_URL_SECRET", "dev_reports_secret")
+	v.SetDefault("REPORTS_SIGNED_URL_TTL", "24h")
+	v.SetDefault("REPORTS_CLEANUP_INTERVAL", "1h")
+	v.SetDefault("REPORTS_WORKER_CONCURRENCY", 1)
+	v.SetDefault("REPORTS_WORKER_RETRIES", 3)
 }
 
 func parseDuration(raw string, fallback time.Duration) time.Duration {

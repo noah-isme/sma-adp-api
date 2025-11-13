@@ -16,7 +16,9 @@ const docTemplate = `{
     "tags": [
         {"name": "Teachers", "description": "Teacher roster management"},
         {"name": "Teacher Assignments", "description": "Teacher ↔ class/subject roster"},
-        {"name": "Teacher Preferences", "description": "Teacher workload & availability"}
+        {"name": "Teacher Preferences", "description": "Teacher workload & availability"},
+        {"name": "Dashboard", "description": "Dashboard summaries for admin and teacher personas"},
+        {"name": "Reports", "description": "Asynchronous report generation & exports"}
     ],
     "paths": {
         "/health": {
@@ -32,6 +34,31 @@ const docTemplate = `{
                 "summary": "Readiness check",
                 "responses": {
                     "200": {"description": "Ready"}
+                }
+            }
+        },
+        "/dashboard": {
+            "get": {
+                "tags": ["Dashboard"],
+                "summary": "Admin dashboard summary",
+                "parameters": [
+                    {"name": "termId", "in": "query", "required": true, "type": "string", "description": "Term ID"}
+                ],
+                "responses": {
+                    "200": {"description": "OK", "schema": {"$ref": "#/definitions/ResponseEnvelope"}}
+                }
+            }
+        },
+        "/dashboard/academics": {
+            "get": {
+                "tags": ["Dashboard"],
+                "summary": "Teacher academics dashboard",
+                "parameters": [
+                    {"name": "termId", "in": "query", "required": true, "type": "string", "description": "Term ID"},
+                    {"name": "date", "in": "query", "type": "string", "description": "Date (YYYY-MM-DD)"}
+                ],
+                "responses": {
+                    "200": {"description": "OK", "schema": {"$ref": "#/definitions/ResponseEnvelope"}}
                 }
             }
         },
@@ -151,6 +178,56 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {"description": "OK", "schema": {"$ref": "#/definitions/ResponseEnvelope"}}
+                }
+            }
+        },
+        "/reports/generate": {
+            "post": {
+                "tags": ["Reports"],
+                "summary": "Queue a new report job",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "required": ["type", "termId", "format"],
+                            "properties": {
+                                "type": {"type": "string", "enum": ["attendance", "grades", "behavior", "summary"]},
+                                "termId": {"type": "string"},
+                                "classId": {"type": "string"},
+                                "format": {"type": "string", "enum": ["csv", "pdf"]}
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {"description": "Accepted", "schema": {"$ref": "#/definitions/ResponseEnvelope"}}
+                }
+            }
+        },
+        "/reports/status/{id}": {
+            "get": {
+                "tags": ["Reports"],
+                "summary": "Get report job status",
+                "parameters": [
+                    {"name": "id", "in": "path", "required": true, "type": "string"}
+                ],
+                "responses": {
+                    "200": {"description": "OK", "schema": {"$ref": "#/definitions/ResponseEnvelope"}}
+                }
+            }
+        },
+        "/export/{token}": {
+            "get": {
+                "tags": ["Reports"],
+                "summary": "Download report using signed token",
+                "parameters": [
+                    {"name": "token", "in": "path", "required": true, "type": "string"}
+                ],
+                "responses": {
+                    "200": {"description": "OK"}
                 }
             }
         }

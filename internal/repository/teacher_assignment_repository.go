@@ -108,3 +108,16 @@ func (r *TeacherAssignmentRepository) CountByTeacherAndTerm(ctx context.Context,
 	}
 	return count, nil
 }
+
+// HasClassAccess checks whether the teacher is assigned to the class within the term across any subject.
+func (r *TeacherAssignmentRepository) HasClassAccess(ctx context.Context, teacherID, classID, termID string) (bool, error) {
+	const query = `SELECT 1 FROM teacher_assignments WHERE teacher_id = $1 AND class_id = $2 AND term_id = $3 LIMIT 1`
+	var exists int
+	if err := r.db.GetContext(ctx, &exists, query, teacherID, classID, termID); err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, fmt.Errorf("check teacher class access: %w", err)
+	}
+	return true, nil
+}

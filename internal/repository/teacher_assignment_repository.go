@@ -25,7 +25,7 @@ func NewTeacherAssignmentRepository(db *sqlx.DB) *TeacherAssignmentRepository {
 // ListByTeacher returns assignments owned by teacher.
 func (r *TeacherAssignmentRepository) ListByTeacher(ctx context.Context, teacherID string) ([]models.TeacherAssignmentDetail, error) {
 	const query = `
-SELECT ta.id, ta.teacher_id, ta.class_id, ta.subject_id, ta.term_id, ta.created_at,
+SELECT ta.id, ta.teacher_id, ta.class_id, ta.subject_id, ta.term_id, ta.role, ta.created_at,
        c.name AS class_name, s.name AS subject_name, t.name AS term_name, tr.full_name AS teacher_name
 FROM teacher_assignments ta
 JOIN classes c ON c.id = ta.class_id
@@ -43,7 +43,7 @@ ORDER BY t.start_date DESC, c.name ASC`
 
 // ListByClassAndTerm returns assignments scoped to a class within a term.
 func (r *TeacherAssignmentRepository) ListByClassAndTerm(ctx context.Context, classID, termID string) ([]models.TeacherAssignment, error) {
-	const query = `SELECT id, teacher_id, class_id, subject_id, term_id, created_at
+	const query = `SELECT id, teacher_id, class_id, subject_id, term_id, role, created_at
 FROM teacher_assignments WHERE class_id = $1 AND term_id = $2`
 	var assignments []models.TeacherAssignment
 	if err := r.db.SelectContext(ctx, &assignments, query, classID, termID); err != nil {
@@ -74,8 +74,11 @@ func (r *TeacherAssignmentRepository) Create(ctx context.Context, assignment *mo
 	if assignment.CreatedAt.IsZero() {
 		assignment.CreatedAt = now
 	}
-	const query = `INSERT INTO teacher_assignments (id, teacher_id, class_id, subject_id, term_id, created_at)
-		VALUES (:id, :teacher_id, :class_id, :subject_id, :term_id, :created_at)`
+	if assignment.Role == "" {
+		assignment.Role = models.TeacherAssignmentRoleSubject
+	}
+	const query = `INSERT INTO teacher_assignments (id, teacher_id, class_id, subject_id, term_id, role, created_at)
+		VALUES (:id, :teacher_id, :class_id, :subject_id, :term_id, :role, :created_at)`
 	if _, err := r.db.NamedExecContext(ctx, query, assignment); err != nil {
 		return fmt.Errorf("create teacher assignment: %w", err)
 	}

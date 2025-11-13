@@ -25,10 +25,10 @@ func TestTeacherAssignmentRepositoryList(t *testing.T) {
 	defer cleanup()
 	repo := NewTeacherAssignmentRepository(db)
 
-	rows := sqlmock.NewRows([]string{"id", "teacher_id", "class_id", "subject_id", "term_id", "created_at", "class_name", "subject_name", "term_name", "teacher_name"}).
-		AddRow("assign-1", "teacher-1", "class-1", "subject-1", "term-1", time.Now(), "Class A", "Math", "Semester 1", "Teacher One")
+	rows := sqlmock.NewRows([]string{"id", "teacher_id", "class_id", "subject_id", "term_id", "role", "created_at", "class_name", "subject_name", "term_name", "teacher_name"}).
+		AddRow("assign-1", "teacher-1", "class-1", "subject-1", "term-1", "SUBJECT_TEACHER", time.Now(), "Class A", "Math", "Semester 1", "Teacher One")
 	mock.ExpectQuery(regexp.QuoteMeta(`
-SELECT ta.id, ta.teacher_id, ta.class_id, ta.subject_id, ta.term_id, ta.created_at,
+SELECT ta.id, ta.teacher_id, ta.class_id, ta.subject_id, ta.term_id, ta.role, ta.created_at,
        c.name AS class_name, s.name AS subject_name, t.name AS term_name, tr.full_name AS teacher_name
 FROM teacher_assignments ta
 JOIN classes c ON c.id = ta.class_id
@@ -52,7 +52,7 @@ func TestTeacherAssignmentRepositoryCreateDelete(t *testing.T) {
 	repo := NewTeacherAssignmentRepository(db)
 
 	mock.ExpectExec("INSERT INTO teacher_assignments").
-		WithArgs(sqlmock.AnyArg(), "teacher-1", "class-1", "subject-1", "term-1", sqlmock.AnyArg()).
+		WithArgs(sqlmock.AnyArg(), "teacher-1", "class-1", "subject-1", "term-1", "SUBJECT_TEACHER", sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	err := repo.Create(context.Background(), &models.TeacherAssignment{
@@ -99,9 +99,9 @@ func TestTeacherAssignmentRepositoryListByClassAndTerm(t *testing.T) {
 	defer cleanup()
 	repo := NewTeacherAssignmentRepository(db)
 
-	rows := sqlmock.NewRows([]string{"id", "teacher_id", "class_id", "subject_id", "term_id", "created_at"}).
-		AddRow("assign-1", "teacher-1", "class-1", "subject-1", "term-1", time.Now())
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, teacher_id, class_id, subject_id, term_id, created_at FROM teacher_assignments WHERE class_id = $1 AND term_id = $2")).
+	rows := sqlmock.NewRows([]string{"id", "teacher_id", "class_id", "subject_id", "term_id", "role", "created_at"}).
+		AddRow("assign-1", "teacher-1", "class-1", "subject-1", "term-1", "SUBJECT_TEACHER", time.Now())
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, teacher_id, class_id, subject_id, term_id, role, created_at FROM teacher_assignments WHERE class_id = $1 AND term_id = $2")).
 		WithArgs("class-1", "term-1").
 		WillReturnRows(rows)
 

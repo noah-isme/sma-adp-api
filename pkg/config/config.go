@@ -31,6 +31,7 @@ type Config struct {
 	Reports   ReportsConfig
 	Mutations MutationsConfig
 	Archives  ArchivesConfig
+	Homerooms HomeroomConfig
 }
 
 type DatabaseConfig struct {
@@ -90,6 +91,11 @@ type ArchivesConfig struct {
 	SignedURLTTL     time.Duration
 	MaxFileSizeBytes int64
 	AllowedMIMEs     []string
+}
+
+// HomeroomConfig gates the homeroom management endpoints.
+type HomeroomConfig struct {
+	Enabled bool
 }
 
 // SchedulerConfig toggles the constraint-based schedule generator.
@@ -232,6 +238,10 @@ func Load() (*Config, error) {
 		AllowedMIMEs:     splitAndTrim(v.GetString("ARCHIVES_ALLOWED_MIME_TYPES")),
 	}
 
+	cfg.Homerooms = HomeroomConfig{
+		Enabled: v.GetBool("ENABLE_HOMEROOMS"),
+	}
+
 	return cfg, nil
 }
 
@@ -295,6 +305,7 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("ARCHIVES_SIGNED_URL_TTL", "30m")
 	v.SetDefault("ARCHIVES_MAX_FILE_SIZE", 10*1024*1024)
 	v.SetDefault("ARCHIVES_ALLOWED_MIME_TYPES", "application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip")
+	v.SetDefault("ENABLE_HOMEROOMS", false)
 }
 
 func parseDuration(raw string, fallback time.Duration) time.Duration {

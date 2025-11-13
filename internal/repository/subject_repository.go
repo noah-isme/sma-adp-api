@@ -101,6 +101,16 @@ func (r *SubjectRepository) FindByID(ctx context.Context, id string) (*models.Su
 	return &subject, nil
 }
 
+// FindByCode returns a subject by its unique code.
+func (r *SubjectRepository) FindByCode(ctx context.Context, code string) (*models.Subject, error) {
+	const query = `SELECT id, code, name, track, subject_group, created_at, updated_at FROM subjects WHERE LOWER(code) = LOWER($1)`
+	var subject models.Subject
+	if err := r.db.GetContext(ctx, &subject, query, code); err != nil {
+		return nil, err
+	}
+	return &subject, nil
+}
+
 // ExistsByCode checks uniqueness of subject code.
 func (r *SubjectRepository) ExistsByCode(ctx context.Context, code string, excludeID string) (bool, error) {
 	query := "SELECT 1 FROM subjects WHERE LOWER(code) = LOWER($1)"

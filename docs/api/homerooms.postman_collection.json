@@ -1,0 +1,70 @@
+{
+  "info": {
+    "name": "SMA ADP API - Homerooms",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Manage homeroom teachers per class and term"
+  },
+  "item": [
+    {
+      "name": "List Homerooms",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/homerooms?termId={{term_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "homerooms"],
+          "query": [
+            {"key": "termId", "value": "{{term_id}}"},
+            {"key": "classId", "value": "{{class_id}}", "disabled": true}
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Homeroom Detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/homerooms/{{class_id}}?termId={{term_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "homerooms", "{{class_id}}"],
+          "query": [
+            {"key": "termId", "value": "{{term_id}}", "description": "Optional term filter"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "Set Homeroom",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/homerooms",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "homerooms"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"classId\": \"{{class_id}}\",\n  \"termId\": \"{{term_id}}\",\n  \"teacherId\": \"{{teacher_id}}\"\n}"
+        }
+      }
+    }
+  ],
+  "variable": [
+    {"key": "base_url", "value": "http://localhost:8080"},
+    {"key": "access_token", "value": ""},
+    {"key": "class_id", "value": ""},
+    {"key": "term_id", "value": ""},
+    {"key": "teacher_id", "value": ""}
+  ]
+}

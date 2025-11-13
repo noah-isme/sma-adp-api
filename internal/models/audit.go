@@ -14,6 +14,7 @@ const (
 	AuditActionMutationReview = "MUTATION_REVIEW"
 	AuditActionArchiveUpload  = "ARCHIVE_UPLOAD"
 	AuditActionArchiveDelete  = "ARCHIVE_DELETE"
+	AuditActionHomeroomUpdate = "HOMEROOM_UPDATE"
 )
 
 // AuditLog represents an audit trail record.

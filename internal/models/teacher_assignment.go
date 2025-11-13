@@ -2,14 +2,23 @@ package models
 
 import "time"
 
+// TeacherAssignmentRole defines the type of assignment relationship.
+type TeacherAssignmentRole string
+
+const (
+	TeacherAssignmentRoleSubject  TeacherAssignmentRole = "SUBJECT_TEACHER"
+	TeacherAssignmentRoleHomeroom TeacherAssignmentRole = "HOMEROOM"
+)
+
 // TeacherAssignment links a teacher to a class/subject/term tuple.
 type TeacherAssignment struct {
-	ID        string    `db:"id" json:"id"`
-	TeacherID string    `db:"teacher_id" json:"teacher_id"`
-	ClassID   string    `db:"class_id" json:"class_id"`
-	SubjectID string    `db:"subject_id" json:"subject_id"`
-	TermID    string    `db:"term_id" json:"term_id"`
-	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	ID        string                `db:"id" json:"id"`
+	TeacherID string                `db:"teacher_id" json:"teacher_id"`
+	ClassID   string                `db:"class_id" json:"class_id"`
+	SubjectID string                `db:"subject_id" json:"subject_id"`
+	TermID    string                `db:"term_id" json:"term_id"`
+	Role      TeacherAssignmentRole `db:"role" json:"role"`
+	CreatedAt time.Time             `db:"created_at" json:"created_at"`
 }
 
 // TeacherAssignmentDetail enriches assignments with descriptive fields.

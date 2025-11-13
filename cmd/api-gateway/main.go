@@ -112,6 +112,7 @@ func main() {
 	termRepo := repository.NewTermRepository(db)
 	scheduleRepo := repository.NewScheduleRepository(db)
 	assignmentRepo := repository.NewTeacherAssignmentRepository(db)
+	homeroomRepo := repository.NewHomeroomRepository(db)
 	preferenceRepo := repository.NewTeacherPreferenceRepository(db)
 	semesterScheduleRepo := repository.NewSemesterScheduleRepository(db)
 	semesterSlotRepo := repository.NewSemesterScheduleSlotRepository(db)
@@ -130,6 +131,22 @@ func main() {
 	)
 	preferenceSvc := service.NewTeacherPreferenceService(teacherRepo, preferenceRepo, nil, logr)
 	teacherHandler := internalhandler.NewTeacherHandler(teacherSvc, assignmentSvc, preferenceSvc)
+
+	var homeroomHandler *internalhandler.HomeroomHandler
+	if cfg.Homerooms.Enabled {
+		homeroomSvc := service.NewHomeroomService(
+			homeroomRepo,
+			classRepo,
+			termRepo,
+			teacherRepo,
+			subjectRepo,
+			assignmentRepo,
+			authRepo,
+			nil,
+			logr,
+		)
+		homeroomHandler = internalhandler.NewHomeroomHandler(homeroomSvc)
+	}
 
 	var schedulerHandler *internalhandler.ScheduleGeneratorHandler
 	if cfg.Scheduler.Enabled {
@@ -265,6 +282,13 @@ func main() {
 	teachersGroup.DELETE("/:id/assignments/:aid", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.DeleteAssignment)
 	teachersGroup.GET("/:id/preferences", internalmiddleware.RBAC("SELF", string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.GetPreferences)
 	teachersGroup.PUT("/:id/preferences", internalmiddleware.RBAC("SELF", string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.UpsertPreferences)
+
+	if homeroomHandler != nil {
+		homerooms := secured.Group("/homerooms")
+		homerooms.GET("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), homeroomHandler.List)
+		homerooms.GET("/:classId", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), homeroomHandler.Get)
+		homerooms.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), homeroomHandler.Set)
+	}
 
 	if schedulerHandler != nil {
 		schedulerGroup := secured.Group("")

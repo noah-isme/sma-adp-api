@@ -10,6 +10,10 @@ const (
 	AuditActionUserUpdate     = "USER_UPDATE"
 	AuditActionUserDelete     = "USER_DELETE"
 	AuditActionPasswordChange = "PASSWORD_CHANGE"
+	AuditActionMutationCreate = "MUTATION_REQUEST"
+	AuditActionMutationReview = "MUTATION_REVIEW"
+	AuditActionArchiveUpload  = "ARCHIVE_UPLOAD"
+	AuditActionArchiveDelete  = "ARCHIVE_DELETE"
 )
 
 // AuditLog represents an audit trail record.

@@ -1,0 +1,57 @@
+{
+  "info": {
+    "name": "SMA ADP API - Dashboard",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Dashboard summaries for admin and teacher personas"
+  },
+  "item": [
+    {
+      "name": "Admin Dashboard",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/dashboard?termId={{term_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "dashboard"],
+          "query": [
+            {"key": "termId", "value": "{{term_id}}", "description": "Academic term identifier"}
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Teacher Dashboard",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/dashboard/academics?termId={{term_id}}&date={{today}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "dashboard", "academics"],
+          "query": [
+            {"key": "termId", "value": "{{term_id}}", "description": "Academic term identifier"},
+            {"key": "date", "value": "{{today}}", "description": "Date snapshot YYYY-MM-DD (optional)"}
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {"key": "token", "value": "{{access_token}}", "type": "string"}
+    ]
+  },
+  "variable": [
+    {"key": "base_url", "value": "http://localhost:8080"},
+    {"key": "term_id", "value": "term_2024_1"},
+    {"key": "today", "value": "2024-11-11"}
+  ]
+}

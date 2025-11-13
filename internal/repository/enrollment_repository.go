@@ -200,6 +200,16 @@ func (r *EnrollmentRepository) FindActiveByStudentAndTerm(ctx context.Context, s
 	return enrollments, nil
 }
 
+// ListActiveByStudent returns all active enrollments for a student regardless of term.
+func (r *EnrollmentRepository) ListActiveByStudent(ctx context.Context, studentID string) ([]models.Enrollment, error) {
+	const query = `SELECT id, student_id, class_id, term_id, joined_at, left_at, status FROM enrollments WHERE student_id = $1 AND status = $2`
+	var enrollments []models.Enrollment
+	if err := r.db.SelectContext(ctx, &enrollments, query, studentID, models.EnrollmentStatusActive); err != nil {
+		return nil, fmt.Errorf("list student enrollments: %w", err)
+	}
+	return enrollments, nil
+}
+
 // ValidateBulkIDs ensures all IDs exist returning missing ones.
 func (r *EnrollmentRepository) ValidateBulkIDs(ctx context.Context, enrollmentIDs []string) (map[string]bool, error) {
 	if len(enrollmentIDs) == 0 {

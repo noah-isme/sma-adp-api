@@ -151,7 +151,6 @@ func main() {
 		schedulerHandler = internalhandler.NewScheduleGeneratorHandler(schedulerSvc)
 	}
 
-
 	var analyticsRepo *repository.AnalyticsRepository
 	if cfg.Analytics.Enabled || cfg.Dashboard.Enabled || cfg.Reports.Enabled {
 		analyticsRepo = repository.NewAnalyticsRepository(db)
@@ -212,6 +211,46 @@ func main() {
 		reportSvc.StartCleanup(queueCtx)
 		reportHandler = internalhandler.NewReportHandler(reportSvc, nil)
 	}
+
+	var mutationHandler *internalhandler.MutationHandler
+	if cfg.Mutations.Enabled {
+		mutationRepo := repository.NewMutationRepository(db)
+		studentRepo := repository.NewStudentRepository(db)
+		mutationSvc := service.NewMutationService(mutationRepo, authRepo, logr, service.WithMutationAppliers(map[string]service.MutationApplier{
+			"student": service.NewStudentMutationApplier(studentRepo, logr),
+		}))
+		mutationHandler = internalhandler.NewMutationHandler(mutationSvc)
+	}
+
+	var archiveHandler *internalhandler.ArchiveHandler
+	if cfg.Archives.Enabled {
+		if cfg.Archives.SignedURLSecret == "" {
+			logr.Sugar().Fatal("archives signed url secret not configured")
+		}
+		archiveRepo := repository.NewArchiveRepository(db)
+		enrollmentRepo := repository.NewEnrollmentRepository(db)
+		archiveStore, err := storage.NewLocalStorage(cfg.Archives.StorageDir)
+		if err != nil {
+			logr.Sugar().Fatalw("failed to init archive storage", "error", err)
+		}
+		archiveSigner := storage.NewSignedURLSigner(cfg.Archives.SignedURLSecret, cfg.Archives.SignedURLTTL)
+		archiveSvc := service.NewArchiveService(
+			archiveRepo,
+			assignmentRepo,
+			enrollmentRepo,
+			archiveStore,
+			archiveSigner,
+			authRepo,
+			logr,
+			service.ArchiveServiceConfig{
+				MaxFileSize:  cfg.Archives.MaxFileSizeBytes,
+				AllowedMIMEs: cfg.Archives.AllowedMIMEs,
+				APIPrefix:    cfg.APIPrefix,
+			},
+		)
+		archiveHandler = internalhandler.NewArchiveHandler(archiveSvc)
+	}
+
 	secured := api.Group("")
 	secured.Use(internalmiddleware.JWT(authSvc))
 
@@ -243,6 +282,22 @@ func main() {
 		secured.GET("/export/:token", reportHandler.DownloadReport)
 	}
 
+	if mutationHandler != nil {
+		mutations := secured.Group("/mutations")
+		mutations.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), mutationHandler.Create)
+		mutations.GET("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), mutationHandler.List)
+		mutations.GET("/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), mutationHandler.Get)
+		mutations.POST("/:id/review", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), mutationHandler.Review)
+	}
+
+	if archiveHandler != nil {
+		archives := secured.Group("/archives")
+		archives.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), archiveHandler.Upload)
+		archives.GET("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), archiveHandler.List)
+		archives.GET("/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), archiveHandler.Get)
+		archives.GET("/:id/download", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), archiveHandler.Download)
+		archives.DELETE("/:id", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), archiveHandler.Delete)
+	}
 
 	var analyticsSvc *service.AnalyticsService
 	if cfg.Analytics.Enabled {

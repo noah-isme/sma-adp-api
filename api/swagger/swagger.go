@@ -18,7 +18,9 @@ const docTemplate = `{
         {"name": "Teacher Assignments", "description": "Teacher ↔ class/subject roster"},
         {"name": "Teacher Preferences", "description": "Teacher workload & availability"},
         {"name": "Dashboard", "description": "Dashboard summaries for admin and teacher personas"},
-        {"name": "Reports", "description": "Asynchronous report generation & exports"}
+        {"name": "Reports", "description": "Asynchronous report generation & exports"},
+        {"name": "Mutations", "description": "Data change approvals"},
+        {"name": "Archives", "description": "Secure archive storage"}
     ],
     "paths": {
         "/health": {
@@ -230,6 +232,122 @@ const docTemplate = `{
                     "200": {"description": "OK"}
                 }
             }
+        },
+        "/mutations": {
+            "get": {
+                "tags": ["Mutations"],
+                "summary": "List mutation requests",
+                "parameters": [
+                    {"name": "status", "in": "query", "type": "string", "description": "Comma separated statuses"},
+                    {"name": "entity", "in": "query", "type": "string"},
+                    {"name": "type", "in": "query", "type": "string"}
+                ],
+                "responses": {
+                    "200": {"description": "OK", "schema": {"$ref": "#/definitions/ResponseEnvelope"}}
+                }
+            },
+            "post": {
+                "tags": ["Mutations"],
+                "summary": "Submit mutation request",
+                "parameters": [
+                    {"name": "payload", "in": "body", "required": true, "schema": {"$ref": "#/definitions/MutationRequest"}}
+                ],
+                "responses": {
+                    "201": {"description": "Created", "schema": {"$ref": "#/definitions/ResponseEnvelope"}}
+                }
+            }
+        },
+        "/mutations/{id}": {
+            "get": {
+                "tags": ["Mutations"],
+                "summary": "Get mutation detail",
+                "parameters": [
+                    {"name": "id", "in": "path", "required": true, "type": "string"}
+                ],
+                "responses": {
+                    "200": {"description": "OK", "schema": {"$ref": "#/definitions/ResponseEnvelope"}}
+                }
+            }
+        },
+        "/mutations/{id}/review": {
+            "post": {
+                "tags": ["Mutations"],
+                "summary": "Review mutation request",
+                "parameters": [
+                    {"name": "id", "in": "path", "required": true, "type": "string"},
+                    {"name": "payload", "in": "body", "required": true, "schema": {"$ref": "#/definitions/MutationReviewRequest"}}
+                ],
+                "responses": {
+                    "200": {"description": "OK", "schema": {"$ref": "#/definitions/ResponseEnvelope"}}
+                }
+            }
+        },
+        "/archives": {
+            "get": {
+                "tags": ["Archives"],
+                "summary": "List archives",
+                "parameters": [
+                    {"name": "scope", "in": "query", "type": "string"},
+                    {"name": "category", "in": "query", "type": "string"},
+                    {"name": "termId", "in": "query", "type": "string"},
+                    {"name": "classId", "in": "query", "type": "string"}
+                ],
+                "responses": {
+                    "200": {"description": "OK", "schema": {"$ref": "#/definitions/ResponseEnvelope"}}
+                }
+            },
+            "post": {
+                "tags": ["Archives"],
+                "summary": "Upload archive document",
+                "consumes": ["multipart/form-data"],
+                "parameters": [
+                    {"name": "title", "in": "formData", "required": true, "type": "string"},
+                    {"name": "category", "in": "formData", "required": true, "type": "string"},
+                    {"name": "scope", "in": "formData", "required": true, "type": "string"},
+                    {"name": "refTermId", "in": "formData", "type": "string"},
+                    {"name": "refClassId", "in": "formData", "type": "string"},
+                    {"name": "refStudentId", "in": "formData", "type": "string"},
+                    {"name": "file", "in": "formData", "required": true, "type": "file"}
+                ],
+                "responses": {
+                    "201": {"description": "Created", "schema": {"$ref": "#/definitions/ResponseEnvelope"}}
+                }
+            }
+        },
+        "/archives/{id}": {
+            "get": {
+                "tags": ["Archives"],
+                "summary": "Get archive metadata",
+                "parameters": [
+                    {"name": "id", "in": "path", "required": true, "type": "string"}
+                ],
+                "responses": {
+                    "200": {"description": "OK", "schema": {"$ref": "#/definitions/ResponseEnvelope"}}
+                }
+            },
+            "delete": {
+                "tags": ["Archives"],
+                "summary": "Soft delete archive",
+                "parameters": [
+                    {"name": "id", "in": "path", "required": true, "type": "string"}
+                ],
+                "responses": {
+                    "204": {"description": "No Content"}
+                }
+            }
+        },
+        "/archives/{id}/download": {
+            "get": {
+                "tags": ["Archives"],
+                "summary": "Download archive file",
+                "parameters": [
+                    {"name": "id", "in": "path", "required": true, "type": "string"},
+                    {"name": "token", "in": "query", "required": true, "type": "string"}
+                ],
+                "responses": {
+                    "200": {"description": "OK"}
+                }
+            }
         }
     },
     "definitions": {
@@ -325,6 +443,25 @@ const docTemplate = `{
                     "items": {"$ref": "#/definitions/TeacherUnavailableSlot"}
                 }
             }
+        },
+        "MutationRequest": {
+            "type": "object",
+            "properties": {
+                "type": {"type": "string"},
+                "entity": {"type": "string"},
+                "entityId": {"type": "string"},
+                "reason": {"type": "string"},
+                "requestedChanges": {"type": "object"}
+            },
+            "required": ["type", "entity", "entityId", "reason", "requestedChanges"]
+        },
+        "MutationReviewRequest": {
+            "type": "object",
+            "properties": {
+                "status": {"type": "string", "enum": ["APPROVED", "REJECTED"]},
+                "note": {"type": "string"}
+            },
+            "required": ["status"]
         },
         "Pagination": {
             "type": "object",

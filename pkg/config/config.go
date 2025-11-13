@@ -29,6 +29,8 @@ type Config struct {
 	Cutover   CutoverConfig
 	Scheduler SchedulerConfig
 	Reports   ReportsConfig
+	Mutations MutationsConfig
+	Archives  ArchivesConfig
 }
 
 type DatabaseConfig struct {
@@ -73,6 +75,21 @@ type ReportsConfig struct {
 	CleanupInterval   time.Duration
 	WorkerConcurrency int
 	WorkerRetries     int
+}
+
+// MutationsConfig toggles workflow exposure.
+type MutationsConfig struct {
+	Enabled bool
+}
+
+// ArchivesConfig controls archive storage & validation.
+type ArchivesConfig struct {
+	Enabled          bool
+	StorageDir       string
+	SignedURLSecret  string
+	SignedURLTTL     time.Duration
+	MaxFileSizeBytes int64
+	AllowedMIMEs     []string
 }
 
 // SchedulerConfig toggles the constraint-based schedule generator.
@@ -198,6 +215,23 @@ func Load() (*Config, error) {
 		WorkerRetries:     v.GetInt("REPORTS_WORKER_RETRIES"),
 	}
 
+	cfg.Mutations = MutationsConfig{
+		Enabled: v.GetBool("ENABLE_MUTATIONS"),
+	}
+
+	maxArchiveSize := v.GetInt64("ARCHIVES_MAX_FILE_SIZE")
+	if maxArchiveSize <= 0 {
+		maxArchiveSize = 10 * 1024 * 1024
+	}
+	cfg.Archives = ArchivesConfig{
+		Enabled:          v.GetBool("ENABLE_ARCHIVES"),
+		StorageDir:       v.GetString("ARCHIVES_STORAGE_DIR"),
+		SignedURLSecret:  v.GetString("ARCHIVES_SIGNED_URL_SECRET"),
+		SignedURLTTL:     parseDuration(v.GetString("ARCHIVES_SIGNED_URL_TTL"), 30*time.Minute),
+		MaxFileSizeBytes: maxArchiveSize,
+		AllowedMIMEs:     splitAndTrim(v.GetString("ARCHIVES_ALLOWED_MIME_TYPES")),
+	}
+
 	return cfg, nil
 }
 
@@ -253,6 +287,14 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("REPORTS_CLEANUP_INTERVAL", "1h")
 	v.SetDefault("REPORTS_WORKER_CONCURRENCY", 1)
 	v.SetDefault("REPORTS_WORKER_RETRIES", 3)
+
+	v.SetDefault("ENABLE_MUTATIONS", false)
+	v.SetDefault("ENABLE_ARCHIVES", false)
+	v.SetDefault("ARCHIVES_STORAGE_DIR", "./archives")
+	v.SetDefault("ARCHIVES_SIGNED_URL_SECRET", "dev_archives_secret")
+	v.SetDefault("ARCHIVES_SIGNED_URL_TTL", "30m")
+	v.SetDefault("ARCHIVES_MAX_FILE_SIZE", 10*1024*1024)
+	v.SetDefault("ARCHIVES_ALLOWED_MIME_TYPES", "application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip")
 }
 
 func parseDuration(raw string, fallback time.Duration) time.Duration {

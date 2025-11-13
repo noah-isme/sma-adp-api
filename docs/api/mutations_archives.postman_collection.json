@@ -1,0 +1,164 @@
+{
+  "info": {
+    "name": "SMA ADP API - Mutations & Archives",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Workflows for mutation approvals and archive storage"
+  },
+  "item": [
+    {
+      "name": "Create Mutation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/mutations",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "mutations"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"type\": \"STUDENT_DATA\",\n  \"entity\": \"student\",\n  \"entityId\": \"student-123\",\n  \"reason\": \"Perbaiki nama\",\n  \"requestedChanges\": {\n    \"fullName\": \"Adi Nugraha\"\n  }\n}"
+        }
+      }
+    },
+    {
+      "name": "List Mutations",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/mutations?status=PENDING",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "mutations"],
+          "query": [
+            {"key": "status", "value": "PENDING"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Mutation Detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/mutations/{{mutation_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "mutations", "{{mutation_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Review Mutation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/mutations/{{mutation_id}}/review",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "mutations", "{{mutation_id}}", "review"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"APPROVED\",\n  \"note\": \"Valid\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Upload Archive",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/archives",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "archives"]
+        },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {"key": "title", "value": "Laporan Semester", "type": "text"},
+            {"key": "category", "value": "ACADEMIC", "type": "text"},
+            {"key": "scope", "value": "TERM", "type": "text"},
+            {"key": "refTermId", "value": "term-2024-1", "type": "text"},
+            {"key": "file", "src": "/path/to/report.pdf", "type": "file"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "List Archives",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/archives?scope=GLOBAL",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "archives"],
+          "query": [
+            {"key": "scope", "value": "GLOBAL"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Archive Metadata",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/archives/{{archive_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "archives", "{{archive_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Download Archive",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/archives/{{archive_id}}/download?token={{download_token}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "archives", "{{archive_id}}", "download"],
+          "query": [
+            {"key": "token", "value": "{{download_token}}"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "Delete Archive",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/archives/{{archive_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "archives", "{{archive_id}}"]
+        }
+      }
+    }
+  ]
+}

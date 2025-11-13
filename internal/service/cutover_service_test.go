@@ -2,8 +2,10 @@ package service
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -74,13 +76,19 @@ func TestCutoverHeaders(t *testing.T) {
 }
 
 func TestPingSuccess(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	}))
-	t.Cleanup(server.Close)
+	client := &http.Client{
+		Transport: roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(strings.NewReader("ok")),
+				Header:     make(http.Header),
+				Request:    req,
+			}, nil
+		}),
+	}
 
-	svc := NewCutoverService(config.CutoverConfig{GoHealthURL: server.URL, HealthCheckTimeout: time.Second}, nil)
-	svc.client = server.Client()
+	svc := NewCutoverService(config.CutoverConfig{GoHealthURL: "http://go.test/health", HealthCheckTimeout: time.Second}, nil)
+	svc.client = client
 
 	res, err := svc.PingGo(context.Background())
 	if err != nil {
@@ -98,13 +106,19 @@ func TestPingSuccess(t *testing.T) {
 }
 
 func TestPingFailure(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusInternalServerError)
-	}))
-	t.Cleanup(server.Close)
+	client := &http.Client{
+		Transport: roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusInternalServerError,
+				Body:       io.NopCloser(strings.NewReader("fail")),
+				Header:     make(http.Header),
+				Request:    req,
+			}, nil
+		}),
+	}
 
-	svc := NewCutoverService(config.CutoverConfig{LegacyHealthURL: server.URL, HealthCheckTimeout: time.Second}, nil)
-	svc.client = server.Client()
+	svc := NewCutoverService(config.CutoverConfig{LegacyHealthURL: "http://legacy.test/health", HealthCheckTimeout: time.Second}, nil)
+	svc.client = client
 
 	res, err := svc.PingLegacy(context.Background())
 	if err == nil {
@@ -126,4 +140,10 @@ func TestPingMissingURL(t *testing.T) {
 	if _, err := svc.PingLegacy(context.Background()); err == nil {
 		t.Fatalf("expected error for missing URL")
 	}
+}
+
+type roundTripperFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
 }

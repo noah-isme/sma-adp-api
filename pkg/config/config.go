@@ -19,19 +19,21 @@ type Config struct {
 	Port      int
 	APIPrefix string
 
-	Database  DatabaseConfig
-	Redis     RedisConfig
-	JWT       JWTConfig
-	CORS      CORSConfig
-	Log       LogConfig
-	Analytics AnalyticsConfig
-	Dashboard DashboardConfig
-	Cutover   CutoverConfig
-	Scheduler SchedulerConfig
-	Reports   ReportsConfig
-	Mutations MutationsConfig
-	Archives  ArchivesConfig
-	Homerooms HomeroomConfig
+	Database      DatabaseConfig
+	Redis         RedisConfig
+	JWT           JWTConfig
+	CORS          CORSConfig
+	Log           LogConfig
+	Analytics     AnalyticsConfig
+	Dashboard     DashboardConfig
+	Cutover       CutoverConfig
+	Scheduler     SchedulerConfig
+	Reports       ReportsConfig
+	Mutations     MutationsConfig
+	Archives      ArchivesConfig
+	Homerooms     HomeroomConfig
+	Aliases       AliasConfig
+	Configuration ConfigurationAPIConfig
 }
 
 type DatabaseConfig struct {
@@ -96,6 +98,20 @@ type ArchivesConfig struct {
 // HomeroomConfig gates the homeroom management endpoints.
 type HomeroomConfig struct {
 	Enabled bool
+}
+
+// AliasConfig toggles thin alias endpoints for existing modules.
+type AliasConfig struct {
+	CalendarEnabled   bool
+	AttendanceEnabled bool
+}
+
+// ConfigurationAPIConfig toggles the configuration admin API.
+type ConfigurationAPIConfig struct {
+	Enabled                bool
+	ActiveTermID           string
+	DefaultDashboardTermID string
+	DefaultCalendarTermID  string
 }
 
 // SchedulerConfig toggles the constraint-based schedule generator.
@@ -242,6 +258,18 @@ func Load() (*Config, error) {
 		Enabled: v.GetBool("ENABLE_HOMEROOMS"),
 	}
 
+	cfg.Aliases = AliasConfig{
+		CalendarEnabled:   v.GetBool("ENABLE_CALENDAR_ALIAS"),
+		AttendanceEnabled: v.GetBool("ENABLE_ATTENDANCE_ALIAS"),
+	}
+
+	cfg.Configuration = ConfigurationAPIConfig{
+		Enabled:                v.GetBool("ENABLE_CONFIGURATION_API"),
+		ActiveTermID:           v.GetString("CONFIG_ACTIVE_TERM_ID"),
+		DefaultDashboardTermID: v.GetString("CONFIG_DEFAULT_DASHBOARD_TERM_ID"),
+		DefaultCalendarTermID:  v.GetString("CONFIG_DEFAULT_CALENDAR_TERM_ID"),
+	}
+
 	return cfg, nil
 }
 
@@ -306,6 +334,12 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("ARCHIVES_MAX_FILE_SIZE", 10*1024*1024)
 	v.SetDefault("ARCHIVES_ALLOWED_MIME_TYPES", "application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip")
 	v.SetDefault("ENABLE_HOMEROOMS", false)
+	v.SetDefault("ENABLE_CALENDAR_ALIAS", false)
+	v.SetDefault("ENABLE_ATTENDANCE_ALIAS", false)
+	v.SetDefault("ENABLE_CONFIGURATION_API", false)
+	v.SetDefault("CONFIG_ACTIVE_TERM_ID", "")
+	v.SetDefault("CONFIG_DEFAULT_DASHBOARD_TERM_ID", "")
+	v.SetDefault("CONFIG_DEFAULT_CALENDAR_TERM_ID", "")
 }
 
 func parseDuration(raw string, fallback time.Duration) time.Duration {

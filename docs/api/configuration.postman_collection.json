@@ -1,0 +1,81 @@
+{
+  "info": {
+    "name": "SMA ADP API - Configuration",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Configuration admin endpoints"
+  },
+  "item": [
+    {
+      "name": "List Configurations",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/configuration",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "configuration"]
+        }
+      }
+    },
+    {
+      "name": "Get Configuration",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/configuration/{{key}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "configuration", "{{key}}"]
+        }
+      }
+    },
+    {
+      "name": "Update Configuration",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/configuration/{{key}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "configuration", "{{key}}"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"key\": \"{{key}}\",\n  \"value\": \"{{value}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Bulk Update",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/configuration/bulk",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "configuration", "bulk"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"items\": [\n    {\"key\": \"enable_reports_ui\", \"value\": \"true\"},\n    {\"key\": \"school_display_name\", \"value\": \"SMA ADP\"}\n  ]\n}"
+        }
+      }
+    }
+  ],
+  "variable": [
+    {"key": "base_url", "value": "http://localhost:8080"},
+    {"key": "access_token", "value": ""},
+    {"key": "key", "value": "enable_reports_ui"},
+    {"key": "value", "value": "true"}
+  ]
+}

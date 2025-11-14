@@ -114,10 +114,14 @@ func main() {
 	assignmentRepo := repository.NewTeacherAssignmentRepository(db)
 	homeroomRepo := repository.NewHomeroomRepository(db)
 	preferenceRepo := repository.NewTeacherPreferenceRepository(db)
+	calendarRepo := repository.NewCalendarRepository(db)
+	enrollmentRepo := repository.NewEnrollmentRepository(db)
 	semesterScheduleRepo := repository.NewSemesterScheduleRepository(db)
 	semesterSlotRepo := repository.NewSemesterScheduleSlotRepository(db)
+	configurationRepo := repository.NewConfigurationRepository(db)
 
 	teacherSvc := service.NewTeacherService(teacherRepo, nil, logr)
+	calendarSvc := service.NewCalendarService(calendarRepo, nil, logr)
 	assignmentSvc := service.NewTeacherAssignmentService(
 		teacherRepo,
 		classRepo,
@@ -148,6 +152,46 @@ func main() {
 		homeroomHandler = internalhandler.NewHomeroomHandler(homeroomSvc)
 	}
 
+	var calendarAliasHandler *internalhandler.CalendarAliasHandler
+	if cfg.Aliases.CalendarEnabled {
+		calendarAliasSvc := service.NewCalendarAliasService(calendarSvc, termRepo, assignmentRepo, logr)
+		calendarAliasHandler = internalhandler.NewCalendarAliasHandler(calendarAliasSvc)
+	}
+
+	var attendanceSvc *service.AttendanceService
+	var attendanceSummaryRepo *repository.AttendanceAliasRepository
+	if cfg.Aliases.AttendanceEnabled {
+		dailyAttendanceRepo := repository.NewDailyAttendanceRepository(db)
+		subjectAttendanceRepo := repository.NewSubjectAttendanceRepository(db)
+		attendanceSvc = service.NewAttendanceService(dailyAttendanceRepo, subjectAttendanceRepo, nil, logr)
+		attendanceSummaryRepo = repository.NewAttendanceAliasRepository(db)
+	}
+
+	var attendanceAliasHandler *internalhandler.AttendanceAliasHandler
+
+	var configurationHandler *internalhandler.ConfigurationHandler
+	if cfg.Configuration.Enabled {
+		defaults := map[string]string{}
+		if cfg.Configuration.ActiveTermID != "" {
+			defaults["active_term_id"] = cfg.Configuration.ActiveTermID
+		}
+		if cfg.Configuration.DefaultDashboardTermID != "" {
+			defaults["default_dashboard_term_id"] = cfg.Configuration.DefaultDashboardTermID
+		}
+		if cfg.Configuration.DefaultCalendarTermID != "" {
+			defaults["default_calendar_term_id"] = cfg.Configuration.DefaultCalendarTermID
+		}
+		configurationSvc := service.NewConfigurationService(
+			configurationRepo,
+			termRepo,
+			authRepo,
+			nil,
+			logr,
+			service.ConfigurationServiceConfig{Defaults: defaults},
+		)
+		configurationHandler = internalhandler.NewConfigurationHandler(configurationSvc)
+	}
+
 	var schedulerHandler *internalhandler.ScheduleGeneratorHandler
 	if cfg.Scheduler.Enabled {
 		schedulerSvc := service.NewScheduleGeneratorService(
@@ -169,7 +213,7 @@ func main() {
 	}
 
 	var analyticsRepo *repository.AnalyticsRepository
-	if cfg.Analytics.Enabled || cfg.Dashboard.Enabled || cfg.Reports.Enabled {
+	if cfg.Analytics.Enabled || cfg.Dashboard.Enabled || cfg.Reports.Enabled || cfg.Aliases.AttendanceEnabled {
 		analyticsRepo = repository.NewAnalyticsRepository(db)
 	}
 
@@ -185,6 +229,27 @@ func main() {
 	}
 	if cacheCloser != nil {
 		defer cacheCloser.Close()
+	}
+
+	var analyticsSvc *service.AnalyticsService
+	if cfg.Analytics.Enabled {
+		cacheSvc := service.NewCacheService(cacheRepo, metricsSvc, cfg.Analytics.CacheTTL, logr, cacheRepo != nil)
+		analyticsSvc = service.NewAnalyticsService(analyticsRepo, cacheSvc, metricsSvc, logr)
+		analyticsHandler := internalhandler.NewAnalyticsHandler(analyticsSvc)
+
+		analyticsGroup := api.Group("/analytics")
+		analyticsGroup.Use(internalmiddleware.WithResponseMeta())
+		analyticsGroup.GET("/attendance", analyticsHandler.Attendance)
+		analyticsGroup.GET("/grades", analyticsHandler.Grades)
+		analyticsGroup.GET("/behavior", analyticsHandler.Behavior)
+		analyticsGroup.GET("/system", analyticsHandler.System)
+
+		registerPprof(r)
+	}
+
+	if cfg.Aliases.AttendanceEnabled && attendanceSvc != nil && attendanceSummaryRepo != nil {
+		attendanceAliasSvc := service.NewAttendanceAliasService(attendanceSvc, analyticsSvc, attendanceSummaryRepo, assignmentRepo, enrollmentRepo, termRepo, logr)
+		attendanceAliasHandler = internalhandler.NewAttendanceAliasHandler(attendanceAliasSvc)
 	}
 
 	var reportHandler *internalhandler.ReportHandler
@@ -245,7 +310,6 @@ func main() {
 			logr.Sugar().Fatal("archives signed url secret not configured")
 		}
 		archiveRepo := repository.NewArchiveRepository(db)
-		enrollmentRepo := repository.NewEnrollmentRepository(db)
 		archiveStore, err := storage.NewLocalStorage(cfg.Archives.StorageDir)
 		if err != nil {
 			logr.Sugar().Fatalw("failed to init archive storage", "error", err)
@@ -282,6 +346,26 @@ func main() {
 	teachersGroup.DELETE("/:id/assignments/:aid", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.DeleteAssignment)
 	teachersGroup.GET("/:id/preferences", internalmiddleware.RBAC("SELF", string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.GetPreferences)
 	teachersGroup.PUT("/:id/preferences", internalmiddleware.RBAC("SELF", string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.UpsertPreferences)
+
+	if calendarAliasHandler != nil {
+		secured.GET("/calendar", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), calendarAliasHandler.List)
+	}
+
+	if attendanceAliasHandler != nil {
+		attendanceGroup := secured.Group("/attendance")
+		attendanceGroup.Use(internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)))
+		attendanceGroup.GET("", attendanceAliasHandler.Summary)
+		attendanceGroup.GET("/daily", attendanceAliasHandler.Daily)
+	}
+
+	if configurationHandler != nil {
+		configGroup := secured.Group("/configuration")
+		configGroup.Use(internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)))
+		configGroup.GET("", configurationHandler.List)
+		configGroup.GET("/:key", configurationHandler.Get)
+		configGroup.PUT("/:key", configurationHandler.Update)
+		configGroup.PUT("/bulk", configurationHandler.BulkUpdate)
+	}
 
 	if homeroomHandler != nil {
 		homerooms := secured.Group("/homerooms")
@@ -323,25 +407,8 @@ func main() {
 		archives.DELETE("/:id", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), archiveHandler.Delete)
 	}
 
-	var analyticsSvc *service.AnalyticsService
-	if cfg.Analytics.Enabled {
-		cacheSvc := service.NewCacheService(cacheRepo, metricsSvc, cfg.Analytics.CacheTTL, logr, cacheRepo != nil)
-		analyticsSvc = service.NewAnalyticsService(analyticsRepo, cacheSvc, metricsSvc, logr)
-		analyticsHandler := internalhandler.NewAnalyticsHandler(analyticsSvc)
-
-		analyticsGroup := api.Group("/analytics")
-		analyticsGroup.Use(internalmiddleware.WithResponseMeta())
-		analyticsGroup.GET("/attendance", analyticsHandler.Attendance)
-		analyticsGroup.GET("/grades", analyticsHandler.Grades)
-		analyticsGroup.GET("/behavior", analyticsHandler.Behavior)
-		analyticsGroup.GET("/system", analyticsHandler.System)
-
-		registerPprof(r)
-	}
-
 	if cfg.Dashboard.Enabled {
 		dashboardCache := service.NewCacheService(cacheRepo, metricsSvc, cfg.Dashboard.CacheTTL, logr, cacheRepo != nil)
-		calendarSvc := service.NewCalendarService(repository.NewCalendarRepository(db), nil, logr)
 		announcementSvc := service.NewAnnouncementService(repository.NewAnnouncementRepository(db), nil, logr)
 		scheduleSvc := service.NewScheduleService(scheduleRepo, nil, logr)
 		dashboardSvc := service.NewDashboardService(service.DashboardServiceParams{

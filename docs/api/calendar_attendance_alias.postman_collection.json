@@ -1,0 +1,80 @@
+{
+  "info": {
+    "name": "SMA ADP API - Calendar & Attendance Alias",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Alias endpoints that mirror the admin menu structure for Calendar and Attendance."
+  },
+  "item": [
+    {
+      "name": "Get Calendar Events",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/calendar?termId={{term_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "calendar"],
+          "query": [
+            {"key": "termId", "value": "{{term_id}}"},
+            {"key": "classId", "value": "{{class_id}}", "disabled": true},
+            {"key": "startDate", "value": "2024-01-01", "disabled": true},
+            {"key": "endDate", "value": "2024-01-31", "disabled": true}
+          ]
+        }
+      }
+    },
+    {
+      "name": "Attendance Summary",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/attendance?termId={{term_id}}&classId={{class_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "attendance"],
+          "query": [
+            {"key": "termId", "value": "{{term_id}}"},
+            {"key": "classId", "value": "{{class_id}}"},
+            {"key": "studentId", "value": "{{student_id}}", "disabled": true},
+            {"key": "from", "value": "2024-01-01", "disabled": true},
+            {"key": "to", "value": "2024-01-31", "disabled": true}
+          ]
+        }
+      }
+    },
+    {
+      "name": "Attendance Daily",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/attendance/daily?termId={{term_id}}&classId={{class_id}}&page=1&limit=50",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "attendance", "daily"],
+          "query": [
+            {"key": "termId", "value": "{{term_id}}"},
+            {"key": "classId", "value": "{{class_id}}"},
+            {"key": "status", "value": "H", "disabled": true},
+            {"key": "dateFrom", "value": "2024-01-01", "disabled": true},
+            {"key": "dateTo", "value": "2024-01-31", "disabled": true},
+            {"key": "page", "value": "1"},
+            {"key": "limit", "value": "50"}
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {"key": "base_url", "value": "http://localhost:8080"},
+    {"key": "access_token", "value": ""},
+    {"key": "term_id", "value": ""},
+    {"key": "class_id", "value": ""},
+    {"key": "student_id", "value": ""}
+  ]
+}

@@ -18,21 +18,35 @@ import (
 
 type calendarAliasServiceMock struct {
 	captured dto.CalendarAliasRequest
+	resp     *dto.CalendarAliasResponse
+	err      error
 }
 
-func (m *calendarAliasServiceMock) List(ctx context.Context, req dto.CalendarAliasRequest, claims *models.JWTClaims) ([]dto.CalendarAliasEvent, error) {
+func (m *calendarAliasServiceMock) List(ctx context.Context, req dto.CalendarAliasRequest, claims *models.JWTClaims) (*dto.CalendarAliasResponse, error) {
 	if claims == nil {
 		return nil, appErrors.ErrUnauthorized
 	}
 	m.captured = req
-	return []dto.CalendarAliasEvent{
-		{ID: "event-1", Title: "Test", Type: "EXAM", StartDate: "2025-01-01", EndDate: "2025-01-01", Audience: "ALL"},
+	if m.err != nil {
+		return nil, m.err
+	}
+	if m.resp != nil {
+		return m.resp, nil
+	}
+	return &dto.CalendarAliasResponse{
+		Range: dto.CalendarAliasRange{
+			StartDate: "2025-01-01",
+			EndDate:   "2025-01-07",
+		},
+		Events: []dto.CalendarAliasEvent{
+			{ID: "event-1", Title: "Test", Type: "EXAM", StartDate: "2025-01-01", EndDate: "2025-01-01", Audience: "ALL"},
+		},
 	}, nil
 }
 
 func TestCalendarAliasHandlerRequiresAuth(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	handler := NewCalendarAliasHandler(&calendarAliasServiceMock{})
+	handler := NewCalendarAliasHandler(&calendarAliasServiceMock{}, nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	req, _ := http.NewRequest(http.MethodGet, "/calendar", nil)
@@ -46,7 +60,7 @@ func TestCalendarAliasHandlerRequiresAuth(t *testing.T) {
 func TestCalendarAliasHandlerParsesSnakeCaseParams(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	mockSvc := &calendarAliasServiceMock{}
-	handler := NewCalendarAliasHandler(mockSvc)
+	handler := NewCalendarAliasHandler(mockSvc, nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	req, _ := http.NewRequest(http.MethodGet, "/calendar?term_id=2025&class_id=10a&start_date=2025-01-10&end_date=2025-01-11", nil)
@@ -66,7 +80,7 @@ func TestCalendarAliasHandlerParsesSnakeCaseParams(t *testing.T) {
 
 func TestCalendarAliasHandlerRejectsInvalidDate(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	handler := NewCalendarAliasHandler(&calendarAliasServiceMock{})
+	handler := NewCalendarAliasHandler(&calendarAliasServiceMock{}, nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	req, _ := http.NewRequest(http.MethodGet, "/calendar?start_date=bad", nil)
@@ -76,4 +90,34 @@ func TestCalendarAliasHandlerRejectsInvalidDate(t *testing.T) {
 	handler.List(c)
 
 	require.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestCalendarAliasHandlerRangeValidation(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	handler := NewCalendarAliasHandler(&calendarAliasServiceMock{}, nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	req, _ := http.NewRequest(http.MethodGet, "/calendar?start_date=2025-01-10&end_date=2025-01-01", nil)
+	c.Request = req
+	c.Set(middleware.ContextUserKey, &models.JWTClaims{UserID: "admin", Role: models.RoleAdmin})
+
+	handler.List(c)
+
+	require.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestCalendarAliasHandlerPropagatesNotFound(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	handler := NewCalendarAliasHandler(&calendarAliasServiceMock{
+		err: appErrors.Clone(appErrors.ErrNotFound, "class not found"),
+	}, nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	req, _ := http.NewRequest(http.MethodGet, "/calendar?class_id=missing", nil)
+	c.Request = req
+	c.Set(middleware.ContextUserKey, &models.JWTClaims{UserID: "admin", Role: models.RoleAdmin})
+
+	handler.List(c)
+
+	require.Equal(t, http.StatusNotFound, w.Code)
 }

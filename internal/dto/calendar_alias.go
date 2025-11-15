@@ -21,3 +21,17 @@ type CalendarAliasEvent struct {
 	Audience    string  `json:"audience"`
 	ClassID     *string `json:"classId,omitempty"`
 }
+
+// CalendarAliasRange describes the summarised date range returned to FE.
+type CalendarAliasRange struct {
+	StartDate string `json:"start_date"`
+	EndDate   string `json:"end_date"`
+}
+
+// CalendarAliasResponse wraps the curated payload for frontend consumption.
+type CalendarAliasResponse struct {
+	TermID  *string              `json:"term_id,omitempty"`
+	ClassID *string              `json:"class_id,omitempty"`
+	Range   CalendarAliasRange   `json:"range"`
+	Events  []CalendarAliasEvent `json:"events"`
+}

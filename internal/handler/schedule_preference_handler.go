@@ -3,6 +3,8 @@ package handler
 import (
 	"context"
 	"net/http"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -18,7 +20,7 @@ type schedulePreferenceService interface {
 	Upsert(ctx context.Context, teacherID string, req service.UpsertTeacherPreferenceRequest) (*models.TeacherPreference, error)
 }
 
-// SchedulePreferenceHandler exposes /schedules/preferences alias endpoints.
+// SchedulePreferenceAliasHandler exposes /schedules/preferences alias endpoints.
 type SchedulePreferenceAliasHandler struct {
 	service schedulePreferenceService
 }
@@ -28,11 +30,13 @@ func NewSchedulePreferenceHandler(service schedulePreferenceService) *SchedulePr
 	return &SchedulePreferenceAliasHandler{service: service}
 }
 
+var teacherIDPattern = regexp.MustCompile(`^[a-zA-Z0-9_-]{3,64}$`)
+
 // Get godoc
 // @Summary Get teacher schedule preferences (alias)
-// @Tags Scheduler
+// @Tags Academics
 // @Produce json
-// @Param teacher_id query string true "Teacher ID"
+// @Param teacher_id query string true "Teacher ID" example(teacher_123)
 // @Success 200 {object} response.Envelope
 // @Router /schedules/preferences [get]
 func (h *SchedulePreferenceAliasHandler) Get(c *gin.Context) {
@@ -50,10 +54,10 @@ func (h *SchedulePreferenceAliasHandler) Get(c *gin.Context) {
 
 // Upsert godoc
 // @Summary Upsert teacher schedule preferences (alias)
-// @Tags Scheduler
+// @Tags Academics
 // @Accept json
 // @Produce json
-// @Param teacher_id query string true "Teacher ID"
+// @Param teacher_id query string true "Teacher ID" example(teacher_123)
 // @Param payload body service.UpsertTeacherPreferenceRequest true "Preference payload"
 // @Success 200 {object} response.Envelope
 // @Router /schedules/preferences [post]
@@ -83,6 +87,12 @@ func requireTeacherID(c *gin.Context) string {
 	if teacherID == "" {
 		response.Error(c, appErrors.Clone(appErrors.ErrValidation, "teacher_id is required"))
 		return ""
+	}
+	if _, err := strconv.Atoi(teacherID); err != nil {
+		if !teacherIDPattern.MatchString(teacherID) {
+			response.Error(c, appErrors.Clone(appErrors.ErrValidation, "teacher_id must be numeric or a slug/uuid"))
+			return ""
+		}
 	}
 	return teacherID
 }

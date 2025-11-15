@@ -158,8 +158,8 @@ func main() {
 
 	var calendarAliasHandler *internalhandler.CalendarAliasHandler
 	if cfg.Aliases.CalendarEnabled {
-		calendarAliasSvc := service.NewCalendarAliasService(calendarSvc, termRepo, assignmentRepo, logr)
-		calendarAliasHandler = internalhandler.NewCalendarAliasHandler(calendarAliasSvc)
+		calendarAliasSvc := service.NewCalendarAliasService(calendarSvc, termRepo, assignmentSvc, classRepo, logr)
+		calendarAliasHandler = internalhandler.NewCalendarAliasHandler(calendarAliasSvc, logr)
 	}
 
 	var attendanceSvc *service.AttendanceService

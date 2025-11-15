@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 	"time"
 
@@ -52,8 +53,19 @@ func (s assignmentListerStub) ListByTeacher(ctx context.Context, teacherID strin
 	return s.items, nil
 }
 
+type classReaderStub struct {
+	err error
+}
+
+func (s classReaderStub) FindByID(ctx context.Context, id string) (*models.Class, error) {
+	if s.err != nil {
+		return nil, s.err
+	}
+	return &models.Class{ID: id}, nil
+}
+
 func TestCalendarAliasServiceListTeacherFiltered(t *testing.T) {
-	now := time.Now()
+	now := time.Date(2025, time.November, 16, 7, 0, 0, 0, time.UTC)
 	events := []models.CalendarEvent{
 		{ID: "event-1", Title: "All Hands", EventType: "EVENT", StartDate: now, EndDate: now},
 		{ID: "event-2", Title: "Class Specific", EventType: "EVENT", StartDate: now, EndDate: now, TargetClassID: testStringPtr("class-1")},
@@ -65,14 +77,19 @@ func TestCalendarAliasServiceListTeacherFiltered(t *testing.T) {
 		assignmentListerStub{items: []models.TeacherAssignmentDetail{
 			{TeacherAssignment: models.TeacherAssignment{ClassID: "class-1", TermID: "term-1"}},
 		}},
+		classReaderStub{},
 		nil,
 	)
 
 	result, err := service.List(context.Background(), dto.CalendarAliasRequest{TermID: "term-1"}, &models.JWTClaims{UserID: "teacher-1", Role: models.RoleTeacher})
 	require.NoError(t, err)
-	require.Len(t, result, 2)
-	assert.Equal(t, "event-1", result[0].ID)
-	assert.Equal(t, "event-2", result[1].ID)
+	require.Len(t, result.Events, 2)
+	assert.Equal(t, "event-1", result.Events[0].ID)
+	assert.Equal(t, "event-2", result.Events[1].ID)
+	require.NotNil(t, result.TermID)
+	assert.Equal(t, "term-1", *result.TermID)
+	assert.Equal(t, "term-1", *result.TermID)
+	assert.Equal(t, now.Add(-time.Hour).Format("2006-01-02"), result.Range.StartDate)
 }
 
 func TestCalendarAliasServiceListForbiddenClass(t *testing.T) {
@@ -80,11 +97,25 @@ func TestCalendarAliasServiceListForbiddenClass(t *testing.T) {
 		calendarProviderStub{},
 		termReaderStub{},
 		assignmentListerStub{},
+		classReaderStub{},
 		nil,
 	)
 	_, err := service.List(context.Background(), dto.CalendarAliasRequest{TermID: "term-1", ClassID: "class-x"}, &models.JWTClaims{UserID: "teacher-1", Role: models.RoleTeacher})
 	require.Error(t, err)
 	assert.Equal(t, appErrors.ErrForbidden.Code, appErrors.FromError(err).Code)
+}
+
+func TestCalendarAliasServiceClassValidation(t *testing.T) {
+	service := NewCalendarAliasService(
+		calendarProviderStub{},
+		termReaderStub{},
+		assignmentListerStub{},
+		classReaderStub{err: sql.ErrNoRows},
+		nil,
+	)
+	_, err := service.List(context.Background(), dto.CalendarAliasRequest{TermID: "term-1", ClassID: "invalid"}, &models.JWTClaims{UserID: "admin", Role: models.RoleAdmin})
+	require.Error(t, err)
+	assert.Equal(t, appErrors.ErrNotFound.Code, appErrors.FromError(err).Code)
 }
 
 func testStringPtr(val string) *string {

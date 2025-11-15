@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 
 	"github.com/noah-isme/sma-adp-api/internal/dto"
 	"github.com/noah-isme/sma-adp-api/internal/models"
@@ -14,28 +15,33 @@ import (
 )
 
 type calendarAliasService interface {
-	List(ctx context.Context, req dto.CalendarAliasRequest, claims *models.JWTClaims) ([]dto.CalendarAliasEvent, error)
+	List(ctx context.Context, req dto.CalendarAliasRequest, claims *models.JWTClaims) (*dto.CalendarAliasResponse, error)
 }
 
 // CalendarAliasHandler exposes the /calendar alias endpoint.
 type CalendarAliasHandler struct {
 	service calendarAliasService
+	logger  *zap.Logger
 }
 
 // NewCalendarAliasHandler constructs the handler.
-func NewCalendarAliasHandler(service calendarAliasService) *CalendarAliasHandler {
-	return &CalendarAliasHandler{service: service}
+func NewCalendarAliasHandler(service calendarAliasService, logger *zap.Logger) *CalendarAliasHandler {
+	if logger == nil {
+		logger = zap.NewNop()
+	}
+	return &CalendarAliasHandler{service: service, logger: logger}
 }
 
 // List godoc
-// @Summary Calendar alias endpoint
-// @Tags Calendar
+// @Summary Calendar alias endpoint (canonical)
+// @Description Preferred FE endpoint that returns curated calendar events scoped by term/class.
+// @Tags Academics
 // @Produce json
-// @Param termId query string false "Term ID"
-// @Param classId query string false "Class ID"
-// @Param startDate query string false "Start date (YYYY-MM-DD)"
-// @Param endDate query string false "End date (YYYY-MM-DD)"
-// @Success 200 {object} response.Envelope
+// @Param term_id query string false "Term ID" example(2024_1)
+// @Param class_id query string false "Class ID" example(10A)
+// @Param start_date query string false "Start date (YYYY-MM-DD)" example(2024-01-01)
+// @Param end_date query string false "End date (YYYY-MM-DD)" example(2024-01-31)
+// @Success 200 {object} response.Envelope{data=dto.CalendarAliasResponse}
 // @Router /calendar [get]
 func (h *CalendarAliasHandler) List(c *gin.Context) {
 	claims := claimsFromContext(c)
@@ -62,12 +68,25 @@ func (h *CalendarAliasHandler) List(c *gin.Context) {
 	req.StartDate = start
 	req.EndDate = end
 
-	events, err := h.service.List(c.Request.Context(), req, claims)
+	if req.StartDate != nil && req.EndDate != nil && req.StartDate.After(*req.EndDate) {
+		response.Error(c, appErrors.Clone(appErrors.ErrValidation, "start_date cannot be after end_date"))
+		return
+	}
+
+	result, err := h.service.List(c.Request.Context(), req, claims)
 	if err != nil {
 		response.Error(c, err)
 		return
 	}
-	response.JSON(c, http.StatusOK, events, nil)
+	h.logger.Info("calendar_alias",
+		zap.String("term_id", pickOrEmpty(result.TermID)),
+		zap.String("class_id", pickOrEmpty(result.ClassID)),
+		zap.String("start_date", result.Range.StartDate),
+		zap.String("end_date", result.Range.EndDate),
+		zap.String("user_id", claims.UserID),
+		zap.String("role", string(claims.Role)),
+	)
+	response.JSON(c, http.StatusOK, result, nil)
 }
 
 func parseCalendarDate(raw string) (*time.Time, error) {
@@ -86,4 +105,11 @@ func pickQuery(c *gin.Context, preferred string, fallback string) string {
 		return value
 	}
 	return c.Query(fallback)
+}
+
+func pickOrEmpty(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
 }

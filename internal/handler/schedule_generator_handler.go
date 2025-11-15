@@ -13,6 +13,15 @@ import (
 	"github.com/noah-isme/sma-adp-api/pkg/response"
 )
 
+const (
+	maxSubjectLoads = 128
+)
+
+type schedulePreviewResponse struct {
+	Mode     string                        `json:"mode"`
+	Proposal *dto.GenerateScheduleResponse `json:"proposal"`
+}
+
 type scheduleGenerator interface {
 	Generate(ctx context.Context, req dto.GenerateScheduleRequest) (*dto.GenerateScheduleResponse, error)
 	Save(ctx context.Context, req dto.SaveScheduleRequest) (string, error)
@@ -33,7 +42,8 @@ func NewScheduleGeneratorHandler(svc *service.ScheduleGeneratorService) *Schedul
 
 // Generate godoc
 // @Summary Generate conflict-free schedule proposal (legacy endpoint)
-// @Tags Scheduler
+// @Description Legacy path kept for backward compatibility. Prefer /schedules/generator for new integrations.
+// @Tags Academics
 // @Accept json
 // @Produce json
 // @Param payload body dto.GenerateScheduleRequest true "Generate schedule payload"
@@ -44,8 +54,9 @@ func (h *ScheduleGeneratorHandler) Generate(c *gin.Context) {
 }
 
 // GenerateAlias godoc
-// @Summary Generate schedule proposal (UI alias)
-// @Tags Scheduler
+// @Summary Generate schedule proposal (canonical alias)
+// @Description Preferred endpoint for UI preview mode. Responses include mode metadata to distinguish preview vs. persisted schedules.
+// @Tags Academics
 // @Accept json
 // @Produce json
 // @Param payload body dto.GenerateScheduleRequest true "Generate schedule payload"
@@ -134,10 +145,25 @@ func (h *ScheduleGeneratorHandler) handleGenerate(c *gin.Context) {
 		response.Error(c, appErrors.Wrap(err, appErrors.ErrValidation.Code, http.StatusBadRequest, "invalid generate payload"))
 		return
 	}
+	if err := validateGenerateAliasRequest(req); err != nil {
+		response.Error(c, err)
+		return
+	}
 	result, err := h.service.Generate(c.Request.Context(), req)
 	if err != nil {
 		response.Error(c, err)
 		return
 	}
-	response.JSON(c, http.StatusOK, result, nil)
+	payload := schedulePreviewResponse{
+		Mode:     "preview",
+		Proposal: result,
+	}
+	response.JSON(c, http.StatusOK, payload, nil)
+}
+
+func validateGenerateAliasRequest(req dto.GenerateScheduleRequest) error {
+	if len(req.SubjectLoads) > maxSubjectLoads {
+		return appErrors.Clone(appErrors.ErrValidation, "subjectLoads exceeds supported limit")
+	}
+	return nil
 }

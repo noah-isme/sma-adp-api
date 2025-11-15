@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/noah-isme/sma-adp-api/internal/dto"
+	internalmiddleware "github.com/noah-isme/sma-adp-api/internal/middleware"
 	"github.com/noah-isme/sma-adp-api/internal/models"
 )
 
@@ -43,7 +44,7 @@ func TestScheduleGeneratorAliasSuccess(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	mockSvc := &scheduleGeneratorMock{}
 	handler := &ScheduleGeneratorHandler{service: mockSvc}
-	payload := []byte(`{"termId":"2025","classId":"10A","timeSlotsPerDay":4,"days":[1,2],"subjectLoads":[{"subjectId":"math","teacherId":"t1","weeklyCount":4}]}`)
+	payload := validGeneratorPayload()
 	req, _ := http.NewRequest(http.MethodPost, "/schedules/generator", bytes.NewReader(payload))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
@@ -69,4 +70,40 @@ func TestScheduleGeneratorAliasValidation(t *testing.T) {
 	handler.GenerateAlias(c)
 
 	require.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestScheduleGeneratorAliasUnauthorized(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	handler := &ScheduleGeneratorHandler{service: &scheduleGeneratorMock{}}
+	router := gin.New()
+	router.POST("/schedules/generator", internalmiddleware.RBAC(string(models.RoleAdmin)), handler.GenerateAlias)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodPost, "/schedules/generator", bytes.NewReader(validGeneratorPayload()))
+	req.Header.Set("Content-Type", "application/json")
+
+	router.ServeHTTP(w, req)
+	require.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+func TestScheduleGeneratorAliasForbidden(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	handler := &ScheduleGeneratorHandler{service: &scheduleGeneratorMock{}}
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		c.Set(internalmiddleware.ContextUserKey, &models.JWTClaims{UserID: "teacher-1", Role: models.RoleTeacher})
+		c.Next()
+	})
+	router.POST("/schedules/generator", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), handler.GenerateAlias)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodPost, "/schedules/generator", bytes.NewReader(validGeneratorPayload()))
+	req.Header.Set("Content-Type", "application/json")
+
+	router.ServeHTTP(w, req)
+	require.Equal(t, http.StatusForbidden, w.Code)
+}
+
+func validGeneratorPayload() []byte {
+	return []byte(`{"termId":"2025","classId":"10A","timeSlotsPerDay":4,"days":[1,2],"subjectLoads":[{"subjectId":"math","teacherId":"t1","weeklyCount":4}]}`)
 }

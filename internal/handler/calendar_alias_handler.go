@@ -45,25 +45,22 @@ func (h *CalendarAliasHandler) List(c *gin.Context) {
 	}
 
 	req := dto.CalendarAliasRequest{
-		TermID:  c.Query("termId"),
-		ClassID: c.Query("classId"),
+		TermID:  pickQuery(c, "term_id", "termId"),
+		ClassID: pickQuery(c, "class_id", "classId"),
 	}
-	if raw := c.Query("startDate"); raw != "" {
-		parsed, err := time.Parse("2006-01-02", raw)
-		if err != nil {
-			response.Error(c, appErrors.Clone(appErrors.ErrValidation, "invalid startDate, expected YYYY-MM-DD"))
-			return
-		}
-		req.StartDate = &parsed
+
+	start, err := parseCalendarDate(pickQuery(c, "start_date", "startDate"))
+	if err != nil {
+		response.Error(c, err)
+		return
 	}
-	if raw := c.Query("endDate"); raw != "" {
-		parsed, err := time.Parse("2006-01-02", raw)
-		if err != nil {
-			response.Error(c, appErrors.Clone(appErrors.ErrValidation, "invalid endDate, expected YYYY-MM-DD"))
-			return
-		}
-		req.EndDate = &parsed
+	end, err := parseCalendarDate(pickQuery(c, "end_date", "endDate"))
+	if err != nil {
+		response.Error(c, err)
+		return
 	}
+	req.StartDate = start
+	req.EndDate = end
 
 	events, err := h.service.List(c.Request.Context(), req, claims)
 	if err != nil {
@@ -71,4 +68,22 @@ func (h *CalendarAliasHandler) List(c *gin.Context) {
 		return
 	}
 	response.JSON(c, http.StatusOK, events, nil)
+}
+
+func parseCalendarDate(raw string) (*time.Time, error) {
+	if raw == "" {
+		return nil, nil
+	}
+	parsed, err := time.Parse("2006-01-02", raw)
+	if err != nil {
+		return nil, appErrors.Clone(appErrors.ErrValidation, "invalid date, expected YYYY-MM-DD")
+	}
+	return &parsed, nil
+}
+
+func pickQuery(c *gin.Context, preferred string, fallback string) string {
+	if value := c.Query(preferred); value != "" {
+		return value
+	}
+	return c.Query(fallback)
 }

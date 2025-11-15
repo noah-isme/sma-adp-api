@@ -1,19 +1,29 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/noah-isme/sma-adp-api/internal/dto"
+	"github.com/noah-isme/sma-adp-api/internal/models"
 	"github.com/noah-isme/sma-adp-api/internal/service"
 	appErrors "github.com/noah-isme/sma-adp-api/pkg/errors"
 	"github.com/noah-isme/sma-adp-api/pkg/response"
 )
 
+type scheduleGenerator interface {
+	Generate(ctx context.Context, req dto.GenerateScheduleRequest) (*dto.GenerateScheduleResponse, error)
+	Save(ctx context.Context, req dto.SaveScheduleRequest) (string, error)
+	List(ctx context.Context, query dto.SemesterScheduleQuery) ([]models.SemesterSchedule, error)
+	GetSlots(ctx context.Context, id string) ([]models.SemesterScheduleSlot, error)
+	Delete(ctx context.Context, id string) error
+}
+
 // ScheduleGeneratorHandler exposes scheduler endpoints.
 type ScheduleGeneratorHandler struct {
-	service *service.ScheduleGeneratorService
+	service scheduleGenerator
 }
 
 // NewScheduleGeneratorHandler constructs the handler.
@@ -22,7 +32,7 @@ func NewScheduleGeneratorHandler(svc *service.ScheduleGeneratorService) *Schedul
 }
 
 // Generate godoc
-// @Summary Generate conflict-free schedule proposal
+// @Summary Generate conflict-free schedule proposal (legacy endpoint)
 // @Tags Scheduler
 // @Accept json
 // @Produce json
@@ -30,17 +40,19 @@ func NewScheduleGeneratorHandler(svc *service.ScheduleGeneratorService) *Schedul
 // @Success 200 {object} response.Envelope
 // @Router /schedule/generate [post]
 func (h *ScheduleGeneratorHandler) Generate(c *gin.Context) {
-	var req dto.GenerateScheduleRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.Error(c, appErrors.Wrap(err, appErrors.ErrValidation.Code, http.StatusBadRequest, "invalid generate payload"))
-		return
-	}
-	result, err := h.service.Generate(c.Request.Context(), req)
-	if err != nil {
-		response.Error(c, err)
-		return
-	}
-	response.JSON(c, http.StatusOK, result, nil)
+	h.handleGenerate(c)
+}
+
+// GenerateAlias godoc
+// @Summary Generate schedule proposal (UI alias)
+// @Tags Scheduler
+// @Accept json
+// @Produce json
+// @Param payload body dto.GenerateScheduleRequest true "Generate schedule payload"
+// @Success 200 {object} response.Envelope
+// @Router /schedules/generator [post]
+func (h *ScheduleGeneratorHandler) GenerateAlias(c *gin.Context) {
+	h.handleGenerate(c)
 }
 
 // Save godoc
@@ -114,4 +126,18 @@ func (h *ScheduleGeneratorHandler) Delete(c *gin.Context) {
 		return
 	}
 	response.NoContent(c)
+}
+
+func (h *ScheduleGeneratorHandler) handleGenerate(c *gin.Context) {
+	var req dto.GenerateScheduleRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, appErrors.Wrap(err, appErrors.ErrValidation.Code, http.StatusBadRequest, "invalid generate payload"))
+		return
+	}
+	result, err := h.service.Generate(c.Request.Context(), req)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+	response.JSON(c, http.StatusOK, result, nil)
 }

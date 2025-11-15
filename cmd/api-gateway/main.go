@@ -135,6 +135,10 @@ func main() {
 	)
 	preferenceSvc := service.NewTeacherPreferenceService(teacherRepo, preferenceRepo, nil, logr)
 	teacherHandler := internalhandler.NewTeacherHandler(teacherSvc, assignmentSvc, preferenceSvc)
+	var schedulePreferenceHandler *internalhandler.SchedulePreferenceAliasHandler
+	if preferenceSvc != nil {
+		schedulePreferenceHandler = internalhandler.NewSchedulePreferenceHandler(preferenceSvc)
+	}
 
 	var homeroomHandler *internalhandler.HomeroomHandler
 	if cfg.Homerooms.Enabled {
@@ -377,10 +381,17 @@ func main() {
 	if schedulerHandler != nil {
 		schedulerGroup := secured.Group("")
 		schedulerGroup.POST("/schedule/generate", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), schedulerHandler.Generate)
+		schedulerGroup.POST("/schedules/generator", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), schedulerHandler.GenerateAlias)
 		schedulerGroup.POST("/schedule/save", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), schedulerHandler.Save)
 		schedulerGroup.GET("/semester-schedule", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), schedulerHandler.List)
 		schedulerGroup.GET("/semester-schedule/:id/slots", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), schedulerHandler.Slots)
 		schedulerGroup.DELETE("/semester-schedule/:id", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), schedulerHandler.Delete)
+	}
+
+	if schedulePreferenceHandler != nil {
+		schedulesGroup := secured.Group("/schedules")
+		schedulesGroup.GET("/preferences", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), schedulePreferenceHandler.Get)
+		schedulesGroup.POST("/preferences", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), schedulePreferenceHandler.Upsert)
 	}
 
 	if reportHandler != nil {

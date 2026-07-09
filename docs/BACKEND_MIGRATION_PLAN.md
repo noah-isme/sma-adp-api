@@ -4,7 +4,7 @@
 
 **Document Version**: 1.0  
 **Created**: 24 Oktober 2025  
-**Status**: Planning Phase
+**Status**: Implementation In Progress - Core Gateway Exposure
 
 ---
 
@@ -499,7 +499,7 @@ docker-logs: ## Show docker logs
 	docker-compose logs -f
 
 swag: ## Generate swagger documentation
-	swag init -g cmd/api-gateway/main.go -o api/swagger
+	swag init -g cmd/api-gateway/main.go -o api/swagger --parseDependency --parseInternal
 
 lint: ## Run linter
 	golangci-lint run
@@ -826,15 +826,15 @@ Final validation of complete migration, safe decommission of NestJS backend, pro
 
 ## 📚 Next Steps
 
-### Current Status
+### Current Status Source
 
-- ✅ Phase 0: Infrastructure setup documented
-- ✅ Phase 1: Authentication & User Management documented ([Details](./PHASE_1_AUTH_USER_MANAGEMENT.md))
-- ✅ Phase 2: Academic Management documented ([Details](./PHASE_2_ACADEMIC_MANAGEMENT.md))
-- ✅ Phase 3: Student Management & Assessment documented ([Details](./PHASE_3_STUDENT_ASSESSMENT.md))
-- ✅ Phase 4: Attendance & Communication documented ([Details](./PHASE_4_ATTENDANCE_COMMUNICATION.md))
-- ✅ Phase 5: Analytics & Optimization documented ([Details](./PHASE_5_ANALYTICS_OPTIMIZATION.md))
-- ✅ Phase 6: Legacy Decommission documented ([Details](./PHASE_6_LEGACY_DECOMMISSION.md))
+Status implementasi harian tidak lagi dipelihara di dokumen strategi ini. Gunakan [Project Status](./PROJECT_STATUS.md) sebagai sumber utama untuk:
+
+- progres per fase,
+- endpoint yang sudah exposed di gateway,
+- modul yang masih feature-flagged,
+- blocker aktif,
+- command verifikasi terakhir.
 
 ### Documentation Summary
 
@@ -857,11 +857,11 @@ Final validation of complete migration, safe decommission of NestJS backend, pro
 
 ### Immediate Actions
 
-1. ✅ Review all phase documentation
-2. Team review & feedback collection
-3. Finalize technology stack decisions
-4. Set up development environment
-5. Begin Phase 1 implementation
+1. Cek [Project Status](./PROJECT_STATUS.md) sebelum mengambil task baru.
+2. Ikuti [Development Workflow](./DEVELOPMENT_WORKFLOW.md) sebelum mengubah route, handler, service, repository, migration, atau Swagger.
+3. Regenerate Swagger dan update [FE-BE Mapping](./FE_BE_MAPPING.md) jika public endpoint berubah.
+4. Jalankan test, vet, build, contract test, dan shadow compare sesuai checklist.
+5. Complete cutover readiness checklist hanya setelah parity dan smoke tests pass.
 
 ### Risk Mitigation
 
@@ -907,8 +907,9 @@ Final validation of complete migration, safe decommission of NestJS backend, pro
 ### Architecture & Planning
 
 - [Backend Migration Plan](./BACKEND_MIGRATION_PLAN.md) (This document)
-- [System Architecture](./sis-backend-architecture.md)
-- [System Overview](./sis-system-overview.md)
+- [Project Status](./PROJECT_STATUS.md)
+- [Development Workflow](./DEVELOPMENT_WORKFLOW.md)
+- [Frontend ↔ Backend Mapping](./FE_BE_MAPPING.md)
 
 ### Phase Documentation
 
@@ -921,20 +922,20 @@ Final validation of complete migration, safe decommission of NestJS backend, pro
 
 ### Operations
 
-- [Railway Deployment Guide](./RAILWAY_DEPLOYMENT_GUIDE.md)
-- [Worker Deployment Guide](./RAILWAY_WORKER_DEPLOYMENT_GUIDE.md)
+- [Cutover & Rollback Runbook](./operations.md)
+- [Legacy Decommission Checklist](./decommission.md)
 
 ### Development
 
-- [Frontend Plan](./sis-frontend-plan.md)
-- [End-to-End Scenarios](./end-to-end-scenarios.md)
-- [Changelog](./CHANGELOG.md)
+- [Project Status](./PROJECT_STATUS.md)
+- [Development Workflow](./DEVELOPMENT_WORKFLOW.md)
+- [Frontend ↔ Backend Mapping](./FE_BE_MAPPING.md)
 
 ---
 
-**Document Version**: 2.0  
-**Last Updated**: October 24, 2024  
-**Status**: Complete - All 6 phases documented  
-**Next Review**: Before Phase 1 implementation kickoff 2. Begin Phase 0 implementation (infrastructure setup) 3. Prepare Phase 3 documentation (Student & Assessment) 4. Setup development environment per Phase 0 guidelines
+**Document Version**: 2.0
+**Last Updated**: July 10, 2026
+**Status**: Strategy document - operational status moved to PROJECT_STATUS.md
+**Next Review**: After contract tests, shadow-compare parity report, and cutover readiness review
 
 ---

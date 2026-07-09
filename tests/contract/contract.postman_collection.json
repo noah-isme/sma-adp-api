@@ -1,85 +1,646 @@
 {
   "info": {
     "name": "SMA ADP Cutover Contract",
+    "description": "Smoke contract untuk cutover backend Go. Target default menjalankan Public Gateway dan Core Protected Smoke saja. Protected request memakai variable accessToken; token tidak disimpan di repo.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "version": {
       "major": 1,
-      "minor": 0,
+      "minor": 1,
       "patch": 0
     }
   },
   "item": [
     {
-      "name": "Health",
-      "request": {
-        "method": "GET",
-        "header": [
-          { "key": "Accept", "value": "application/json" }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/health",
-          "host": ["{{baseUrl}}"],
-          "path": ["health"]
+      "name": "Public Gateway",
+      "description": "Endpoint root gateway, tidak berada di bawah API prefix.",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{gatewayUrl}}/health",
+              "host": ["{{gatewayUrl}}"],
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "Ready",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{gatewayUrl}}/ready",
+              "host": ["{{gatewayUrl}}"],
+              "path": ["ready"]
+            }
+          }
+        },
+        {
+          "name": "Cutover Ping Go",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{gatewayUrl}}/internal/ping-go",
+              "host": ["{{gatewayUrl}}"],
+              "path": ["internal", "ping-go"]
+            }
+          }
         }
-      }
+      ]
     },
     {
-      "name": "Ready",
-      "request": {
-        "method": "GET",
-        "header": [
-          { "key": "Accept", "value": "application/json" }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/ready",
-          "host": ["{{baseUrl}}"],
-          "path": ["ready"]
+      "name": "Cutover Readiness Smoke",
+      "description": "Endpoint cutover yang membutuhkan integrasi legacy. Tidak dijalankan oleh target make contract-test default.",
+      "item": [
+        {
+          "name": "Cutover Ping Legacy",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{gatewayUrl}}/internal/ping-legacy",
+              "host": ["{{gatewayUrl}}"],
+              "path": ["internal", "ping-legacy"]
+            }
+          }
         }
-      }
+      ]
     },
     {
-      "name": "Cutover Ping Go",
-      "request": {
-        "method": "GET",
-        "header": [
-          { "key": "Accept", "value": "application/json" }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/internal/ping-go",
-          "host": ["{{baseUrl}}"],
-          "path": ["internal", "ping-go"]
+      "name": "Core Protected Smoke",
+      "description": "Read-only smoke untuk endpoint always-on. Jalankan dengan token ADMIN atau SUPERADMIN agar semua route list dapat diakses.",
+      "item": [
+        {
+          "name": "Auth Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Users List",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"]
+            }
+          }
+        },
+        {
+          "name": "Terms List",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/terms",
+              "host": ["{{baseUrl}}"],
+              "path": ["terms"]
+            }
+          }
+        },
+        {
+          "name": "Subjects List",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/subjects",
+              "host": ["{{baseUrl}}"],
+              "path": ["subjects"]
+            }
+          }
+        },
+        {
+          "name": "Classes List",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/classes",
+              "host": ["{{baseUrl}}"],
+              "path": ["classes"]
+            }
+          }
+        },
+        {
+          "name": "Schedules List",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/schedules",
+              "host": ["{{baseUrl}}"],
+              "path": ["schedules"]
+            }
+          }
+        },
+        {
+          "name": "Students List",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["students"]
+            }
+          }
+        },
+        {
+          "name": "Enrollments List",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/enrollments",
+              "host": ["{{baseUrl}}"],
+              "path": ["enrollments"]
+            }
+          }
+        },
+        {
+          "name": "Grade Components List",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/grade-components",
+              "host": ["{{baseUrl}}"],
+              "path": ["grade-components"]
+            }
+          }
+        },
+        {
+          "name": "Grade Configs List",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/grade-configs",
+              "host": ["{{baseUrl}}"],
+              "path": ["grade-configs"]
+            }
+          }
+        },
+        {
+          "name": "Grades List",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/grades",
+              "host": ["{{baseUrl}}"],
+              "path": ["grades"]
+            }
+          }
+        },
+        {
+          "name": "Announcements List",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/announcements",
+              "host": ["{{baseUrl}}"],
+              "path": ["announcements"]
+            }
+          }
+        },
+        {
+          "name": "Behavior Notes List",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/behavior-notes",
+              "host": ["{{baseUrl}}"],
+              "path": ["behavior-notes"]
+            }
+          }
+        },
+        {
+          "name": "Calendar Events List",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/calendar-events",
+              "host": ["{{baseUrl}}"],
+              "path": ["calendar-events"]
+            }
+          }
+        },
+        {
+          "name": "Teachers List",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/teachers",
+              "host": ["{{baseUrl}}"],
+              "path": ["teachers"]
+            }
+          }
         }
-      }
+      ]
     },
     {
-      "name": "Cutover Ping Legacy",
-      "request": {
-        "method": "GET",
-        "header": [
-          { "key": "Accept", "value": "application/json" }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/internal/ping-legacy",
-          "host": ["{{baseUrl}}"],
-          "path": ["internal", "ping-legacy"]
+      "name": "Seeded Core Smoke",
+      "description": "Read-only request yang membutuhkan seed ID. Tidak dijalankan oleh target make contract-test default.",
+      "item": [
+        {
+          "name": "Class Subjects By Class",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/classes/{{classId}}/subjects",
+              "host": ["{{baseUrl}}"],
+              "path": ["classes", "{{classId}}", "subjects"]
+            }
+          }
+        },
+        {
+          "name": "Class Schedules By Class",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/classes/{{classId}}/schedules",
+              "host": ["{{baseUrl}}"],
+              "path": ["classes", "{{classId}}", "schedules"]
+            }
+          }
+        },
+        {
+          "name": "Student Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/students/{{studentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["students", "{{studentId}}"]
+            }
+          }
+        },
+        {
+          "name": "Student Behavior Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/students/{{studentId}}/behavior-summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["students", "{{studentId}}", "behavior-summary"]
+            }
+          }
+        },
+        {
+          "name": "Grade Config Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/grade-configs/{{gradeConfigId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["grade-configs", "{{gradeConfigId}}"]
+            }
+          }
+        },
+        {
+          "name": "Student Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reports/students/{{studentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports", "students", "{{studentId}}"]
+            }
+          }
+        },
+        {
+          "name": "Class Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reports/classes/{{classId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports", "classes", "{{classId}}"]
+            }
+          }
+        },
+        {
+          "name": "Teacher Assignments",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/teachers/{{teacherId}}/assignments",
+              "host": ["{{baseUrl}}"],
+              "path": ["teachers", "{{teacherId}}", "assignments"]
+            }
+          }
+        },
+        {
+          "name": "Teacher Preferences",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/teachers/{{teacherId}}/preferences",
+              "host": ["{{baseUrl}}"],
+              "path": ["teachers", "{{teacherId}}", "preferences"]
+            }
+          }
+        },
+        {
+          "name": "Teacher Schedules",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/teachers/{{teacherId}}/schedules",
+              "host": ["{{baseUrl}}"],
+              "path": ["teachers", "{{teacherId}}", "schedules"]
+            }
+          }
         }
-      }
+      ]
+    },
+    {
+      "name": "Gated Feature Smoke",
+      "description": "Endpoint feature-flagged. Jalankan manual hanya saat flag terkait aktif: ENABLE_DASHBOARD, ENABLE_REPORTS, ENABLE_SCHEDULER, ENABLE_ANALYTICS, ENABLE_MUTATIONS, ENABLE_ARCHIVES, ENABLE_HOMEROOMS, ENABLE_CALENDAR_ALIAS, ENABLE_ATTENDANCE_ALIAS, ENABLE_CONFIGURATION_API.",
+      "item": [
+        {
+          "name": "Dashboard Admin",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard"]
+            }
+          }
+        },
+        {
+          "name": "Dashboard Academics",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/academics",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "academics"]
+            }
+          }
+        },
+        {
+          "name": "Calendar Alias",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/calendar",
+              "host": ["{{baseUrl}}"],
+              "path": ["calendar"]
+            }
+          }
+        },
+        {
+          "name": "Attendance Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/attendance",
+              "host": ["{{baseUrl}}"],
+              "path": ["attendance"]
+            }
+          }
+        },
+        {
+          "name": "Attendance Daily",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/attendance/daily",
+              "host": ["{{baseUrl}}"],
+              "path": ["attendance", "daily"]
+            }
+          }
+        },
+        {
+          "name": "Configuration List",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/configuration",
+              "host": ["{{baseUrl}}"],
+              "path": ["configuration"]
+            }
+          }
+        },
+        {
+          "name": "Homerooms List",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/homerooms",
+              "host": ["{{baseUrl}}"],
+              "path": ["homerooms"]
+            }
+          }
+        },
+        {
+          "name": "Mutations List",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/mutations",
+              "host": ["{{baseUrl}}"],
+              "path": ["mutations"]
+            }
+          }
+        },
+        {
+          "name": "Archives List",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/archives",
+              "host": ["{{baseUrl}}"],
+              "path": ["archives"]
+            }
+          }
+        },
+        {
+          "name": "Report Job Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reports/status/{{reportJobId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports", "status", "{{reportJobId}}"]
+            }
+          }
+        }
+      ]
     }
   ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{accessToken}}", "type": "string" }
+    ]
+  },
   "event": [
     {
       "listen": "prerequest",
       "script": {
         "exec": [
-          "if (!pm.collectionVariables.get('baseUrl')) {",
-          "  pm.collectionVariables.set('baseUrl', pm.variables.get('baseUrl') || 'http://localhost:8080');",
-          "}"
+          "const baseUrl = pm.variables.get('baseUrl') || pm.collectionVariables.get('baseUrl') || 'http://localhost:8080/api/v1';",
+          "pm.collectionVariables.set('baseUrl', baseUrl.replace(/\\/$/, ''));",
+          "if (!pm.collectionVariables.get('gatewayUrl')) {",
+          "  pm.collectionVariables.set('gatewayUrl', baseUrl.replace(/\\/api\\/v1\\/?$/, '').replace(/\\/$/, ''));",
+          "}",
+          "const token = pm.variables.get('accessToken') || pm.collectionVariables.get('accessToken') || '';",
+          "pm.collectionVariables.set('accessToken', token);"
+        ],
+        "type": "text/javascript"
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "exec": [
+          "pm.test('status is successful', function () {",
+          "  pm.expect(pm.response.code).to.be.within(200, 299);",
+          "});",
+          "pm.test('body is JSON when present', function () {",
+          "  if (pm.response.text()) {",
+          "    pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+          "  }",
+          "});"
         ],
         "type": "text/javascript"
       }
     }
   ],
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:8080" }
+    { "key": "baseUrl", "value": "http://localhost:8080/api/v1" },
+    { "key": "gatewayUrl", "value": "http://localhost:8080" },
+    { "key": "accessToken", "value": "" },
+    { "key": "termId", "value": "" },
+    { "key": "classId", "value": "" },
+    { "key": "studentId", "value": "" },
+    { "key": "teacherId", "value": "" },
+    { "key": "subjectId", "value": "" },
+    { "key": "scheduleId", "value": "" },
+    { "key": "gradeConfigId", "value": "" },
+    { "key": "reportJobId", "value": "" }
   ]
 }

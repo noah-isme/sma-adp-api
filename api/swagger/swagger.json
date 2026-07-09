@@ -1,0 +1,5616 @@
+{
+    "schemes": [
+        "http"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "Bootstrap server for Golang migration (Phase 0)",
+        "title": "SMA ADP API",
+        "contact": {},
+        "version": "0.1.0"
+    },
+    "basePath": "/",
+    "paths": {
+        "/announcements": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Announcements"
+                ],
+                "summary": "List announcements",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Comma-separated audience roles",
+                        "name": "audience",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Comma-separated class IDs",
+                        "name": "classIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Include pinned announcements",
+                        "name": "includePinned",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Announcements"
+                ],
+                "summary": "Create announcement",
+                "parameters": [
+                    {
+                        "description": "Announcement payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateAnnouncementRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/announcements/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Announcements"
+                ],
+                "summary": "Get announcement",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Announcement ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Announcements"
+                ],
+                "summary": "Update announcement",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Announcement ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Announcement payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpdateAnnouncementRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Announcements"
+                ],
+                "summary": "Delete announcement",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Announcement ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/archives": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Archives"
+                ],
+                "summary": "List archives",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Scope filter",
+                        "name": "scope",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Category filter",
+                        "name": "category",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Term reference",
+                        "name": "termId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Class reference",
+                        "name": "classId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Archives"
+                ],
+                "summary": "Upload archive document",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Title",
+                        "name": "title",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Category",
+                        "name": "category",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Scope",
+                        "name": "scope",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Term reference",
+                        "name": "refTermId",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Class reference",
+                        "name": "refClassId",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Student reference",
+                        "name": "refStudentId",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Document",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/archives/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Archives"
+                ],
+                "summary": "Get archive metadata",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Archive ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Archives"
+                ],
+                "summary": "Soft delete an archive entry",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Archive ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/archives/{id}/download": {
+            "get": {
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "Archives"
+                ],
+                "summary": "Download archive document via signed token",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Archive ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Signed token",
+                        "name": "token",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    }
+                }
+            }
+        },
+        "/attendance": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Attendance"
+                ],
+                "summary": "Attendance summary alias endpoint",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Term ID",
+                        "name": "termId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Class ID",
+                        "name": "classId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Student ID",
+                        "name": "studentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "From date (YYYY-MM-DD)",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "To date (YYYY-MM-DD)",
+                        "name": "to",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/attendance/daily": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Attendance"
+                ],
+                "summary": "Daily attendance alias endpoint",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Term ID",
+                        "name": "termId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Class ID",
+                        "name": "classId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Student ID",
+                        "name": "studentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Attendance status (H/S/I/A)",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "From date (YYYY-MM-DD)",
+                        "name": "dateFrom",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "To date (YYYY-MM-DD)",
+                        "name": "dateTo",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort by field",
+                        "name": "sortBy",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort order (asc/desc)",
+                        "name": "sortOrder",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/change-password": {
+            "post": {
+                "description": "Change password for current user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Change password",
+                "parameters": [
+                    {
+                        "description": "Change password",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.ChangePasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/forgot-password": {
+            "post": {
+                "description": "Initiate forgot password flow",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Forgot password",
+                "parameters": [
+                    {
+                        "description": "Forgot password",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.ResetPasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "description": "Authenticate user by email and password",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Authenticate user",
+                "parameters": [
+                    {
+                        "description": "Login payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "description": "Revoke refresh token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Logout current session",
+                "parameters": [
+                    {
+                        "description": "Refresh token",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/me": {
+            "get": {
+                "description": "Returns the authenticated user's info",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Get current user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/refresh": {
+            "post": {
+                "description": "Exchange refresh token for new access token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Refresh access token",
+                "parameters": [
+                    {
+                        "description": "Refresh payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.RefreshTokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/reset-password": {
+            "post": {
+                "description": "Reset password with token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Reset password",
+                "parameters": [
+                    {
+                        "description": "Reset password",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.ConfirmResetPasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/behavior-notes": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Behavior"
+                ],
+                "summary": "List behavior notes",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Student ID",
+                        "name": "studentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "From date (YYYY-MM-DD)",
+                        "name": "dateFrom",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "To date (YYYY-MM-DD)",
+                        "name": "dateTo",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Comma-separated note types (+,-,0)",
+                        "name": "noteTypes",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Behavior"
+                ],
+                "summary": "Create behavior note",
+                "parameters": [
+                    {
+                        "description": "Behavior payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateBehaviorRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/behavior-notes/{id}": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Behavior"
+                ],
+                "summary": "Update behavior note",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Behavior note ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Behavior payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpdateBehaviorRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Behavior"
+                ],
+                "summary": "Delete behavior note",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Behavior note ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/calendar": {
+            "get": {
+                "description": "Preferred FE endpoint that returns curated calendar events scoped by term/class.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Academics"
+                ],
+                "summary": "Calendar alias endpoint (canonical)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "2024_1",
+                        "description": "Term ID",
+                        "name": "term_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "10A",
+                        "description": "Class ID",
+                        "name": "class_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "2024-01-01",
+                        "description": "Start date (YYYY-MM-DD)",
+                        "name": "start_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "2024-01-31",
+                        "description": "End date (YYYY-MM-DD)",
+                        "name": "end_date",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.CalendarAliasResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/calendar-events": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Calendar"
+                ],
+                "summary": "List calendar events",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Start date (YYYY-MM-DD)",
+                        "name": "startDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "End date (YYYY-MM-DD)",
+                        "name": "endDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Comma-separated audience filters",
+                        "name": "audience",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Comma-separated class IDs",
+                        "name": "classIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Calendar"
+                ],
+                "summary": "Create calendar event",
+                "parameters": [
+                    {
+                        "description": "Calendar event payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateCalendarEventRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/calendar-events/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Calendar"
+                ],
+                "summary": "Get calendar event",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Calendar event ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Calendar"
+                ],
+                "summary": "Update calendar event",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Calendar event ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Calendar event payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpdateCalendarEventRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Calendar"
+                ],
+                "summary": "Delete calendar event",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Calendar event ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/classes": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Classes"
+                ],
+                "summary": "List classes",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by grade",
+                        "name": "grade",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by track",
+                        "name": "track",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search keyword",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Classes"
+                ],
+                "summary": "Create class",
+                "parameters": [
+                    {
+                        "description": "Class payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateClassRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/classes/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Classes"
+                ],
+                "summary": "Get class detail",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Class ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Classes"
+                ],
+                "summary": "Update class",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Class ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Class payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpdateClassRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Classes"
+                ],
+                "summary": "Delete class",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Class ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/classes/{id}/schedules": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Schedules"
+                ],
+                "summary": "List schedules by class",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Class ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/classes/{id}/subjects": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Class-Subjects"
+                ],
+                "summary": "List class subjects",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Class ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Class-Subjects"
+                ],
+                "summary": "Assign subjects to class",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Class ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Assignments payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.AssignSubjectsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/configuration": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Configuration"
+                ],
+                "summary": "List configurations",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/configuration/bulk": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Configuration"
+                ],
+                "summary": "Bulk update configurations",
+                "parameters": [
+                    {
+                        "description": "Bulk configuration payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.BulkUpdateConfigurationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/configuration/{key}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Configuration"
+                ],
+                "summary": "Get configuration by key",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Configuration key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Configuration"
+                ],
+                "summary": "Update configuration",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Configuration key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Configuration payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.UpdateConfigurationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/dashboard": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Admin dashboard summary",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Term ID",
+                        "name": "termId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/dashboard/academics": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Teacher academics dashboard",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Term ID",
+                        "name": "termId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Date (YYYY-MM-DD). Defaults to today",
+                        "name": "date",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/enrollments": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Enrollments"
+                ],
+                "summary": "List enrollments",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by student",
+                        "name": "studentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by class",
+                        "name": "classId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by term",
+                        "name": "termId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by status",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Enrollments"
+                ],
+                "summary": "Enroll student",
+                "parameters": [
+                    {
+                        "description": "Enrollment payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.EnrollStudentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/enrollments/{id}": {
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Enrollments"
+                ],
+                "summary": "Unenroll student",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Enrollment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/enrollments/{id}/transfer": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Enrollments"
+                ],
+                "summary": "Transfer enrollment to another class",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Enrollment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Transfer payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.TransferEnrollmentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/export/{token}": {
+            "get": {
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Download generated report via signed token",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Signed token",
+                        "name": "token",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    }
+                }
+            }
+        },
+        "/grade-components": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Grade Components"
+                ],
+                "summary": "List grade components",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search by code or name",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Grade Components"
+                ],
+                "summary": "Create grade component",
+                "parameters": [
+                    {
+                        "description": "Component payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateGradeComponentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/grade-configs": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Grade Configs"
+                ],
+                "summary": "List grade configurations",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by class",
+                        "name": "classId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by subject",
+                        "name": "subjectId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by term",
+                        "name": "termId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Grade Configs"
+                ],
+                "summary": "Create grade configuration",
+                "parameters": [
+                    {
+                        "description": "Config payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateGradeConfigRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/grade-configs/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Grade Configs"
+                ],
+                "summary": "Get grade configuration",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Config ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Grade Configs"
+                ],
+                "summary": "Update grade configuration",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Config ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Config payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpdateGradeConfigRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/grade-configs/{id}/finalize": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Grade Configs"
+                ],
+                "summary": "Finalize grade configuration",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Config ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/grades": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Grades"
+                ],
+                "summary": "List grade entries",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by enrollment",
+                        "name": "enrollmentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by subject",
+                        "name": "subjectId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by component",
+                        "name": "componentId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Grades"
+                ],
+                "summary": "Upsert grade entry",
+                "parameters": [
+                    {
+                        "description": "Grade payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpsertGradeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/grades/bulk": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Grades"
+                ],
+                "summary": "Bulk upsert grades",
+                "parameters": [
+                    {
+                        "description": "Bulk payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.BulkGradesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/grades/finalize": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Grades"
+                ],
+                "summary": "Finalize final grades",
+                "parameters": [
+                    {
+                        "description": "Finalize payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.FinalizeGradesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/grades/recalculate": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Grades"
+                ],
+                "summary": "Recalculate final grades",
+                "parameters": [
+                    {
+                        "description": "Scope payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.FinalGradeFilter"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/homerooms": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Homerooms"
+                ],
+                "summary": "List homeroom assignments",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Term ID (defaults to current active)",
+                        "name": "termId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Class ID filter",
+                        "name": "classId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Homerooms"
+                ],
+                "summary": "Set or replace a homeroom teacher",
+                "parameters": [
+                    {
+                        "description": "Homeroom payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.SetHomeroomRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/homerooms/{classId}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Homerooms"
+                ],
+                "summary": "Get homeroom info for a class",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Class ID",
+                        "name": "classId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Term ID (defaults to active)",
+                        "name": "termId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/mutations": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Mutations"
+                ],
+                "summary": "List mutation requests",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Comma separated statuses",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Entity name",
+                        "name": "entity",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Mutation type",
+                        "name": "type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Mutations"
+                ],
+                "summary": "Submit a mutation request",
+                "parameters": [
+                    {
+                        "description": "Mutation payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.CreateMutationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/mutations/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Mutations"
+                ],
+                "summary": "Get mutation detail",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Mutation ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/mutations/{id}/review": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Mutations"
+                ],
+                "summary": "Review a mutation request",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Mutation ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Review decision",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.ReviewMutationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/reports/classes/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Class grade report",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Class ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Subject ID",
+                        "name": "subjectId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Term ID",
+                        "name": "termId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/reports/generate": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Queue a new report job",
+                "parameters": [
+                    {
+                        "description": "Report request",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.ReportRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/reports/status/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Get report job status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Job ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/reports/students/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Student report card",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Student ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Term ID",
+                        "name": "termId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/schedule/generate": {
+            "post": {
+                "description": "Legacy path kept for backward compatibility. Prefer /schedules/generator for new integrations.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Academics"
+                ],
+                "summary": "Generate conflict-free schedule proposal (legacy endpoint)",
+                "parameters": [
+                    {
+                        "description": "Generate schedule payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.GenerateScheduleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/schedule/save": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Scheduler"
+                ],
+                "summary": "Save schedule proposal to semester schedules",
+                "parameters": [
+                    {
+                        "description": "Save schedule payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.SaveScheduleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/schedules": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Schedules"
+                ],
+                "summary": "List schedules",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by term",
+                        "name": "termId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by class",
+                        "name": "classId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by teacher",
+                        "name": "teacherId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by day",
+                        "name": "dayOfWeek",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by time slot",
+                        "name": "timeSlot",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by room",
+                        "name": "room",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Schedules"
+                ],
+                "summary": "Create schedule",
+                "parameters": [
+                    {
+                        "description": "Schedule payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateScheduleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/schedules/bulk": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Schedules"
+                ],
+                "summary": "Bulk create schedules",
+                "parameters": [
+                    {
+                        "description": "Bulk payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.BulkCreateSchedulesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/schedules/generator": {
+            "post": {
+                "description": "Preferred endpoint for UI preview mode. Responses include mode metadata to distinguish preview vs. persisted schedules.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Academics"
+                ],
+                "summary": "Generate schedule proposal (canonical alias)",
+                "parameters": [
+                    {
+                        "description": "Generate schedule payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.GenerateScheduleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/schedules/preferences": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Academics"
+                ],
+                "summary": "Get teacher schedule preferences (alias)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "teacher_123",
+                        "description": "Teacher ID",
+                        "name": "teacher_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Academics"
+                ],
+                "summary": "Upsert teacher schedule preferences (alias)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "teacher_123",
+                        "description": "Teacher ID",
+                        "name": "teacher_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Preference payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpsertTeacherPreferenceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/schedules/{id}": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Schedules"
+                ],
+                "summary": "Update schedule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Schedule ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Schedule payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpdateScheduleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Schedules"
+                ],
+                "summary": "Delete schedule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Schedule ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/semester-schedule": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Scheduler"
+                ],
+                "summary": "List semester schedules for class-term",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Term ID",
+                        "name": "termId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Class ID",
+                        "name": "classId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/semester-schedule/{id}": {
+            "delete": {
+                "tags": [
+                    "Scheduler"
+                ],
+                "summary": "Delete draft semester schedule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Semester schedule ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/semester-schedule/{id}/slots": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Scheduler"
+                ],
+                "summary": "Get slots for a semester schedule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Semester schedule ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/students": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Students"
+                ],
+                "summary": "List students",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search by name or NIS",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by class",
+                        "name": "classId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by active state",
+                        "name": "active",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Students"
+                ],
+                "summary": "Create student",
+                "parameters": [
+                    {
+                        "description": "Student payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateStudentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/students/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Students"
+                ],
+                "summary": "Get student detail",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Student ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Students"
+                ],
+                "summary": "Update student",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Student ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Student payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpdateStudentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Students"
+                ],
+                "summary": "Deactivate student",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Student ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/students/{id}/behavior-summary": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Behavior"
+                ],
+                "summary": "Get student behavior summary",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Student ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/subjects": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Subjects"
+                ],
+                "summary": "List subjects",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by track",
+                        "name": "track",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by group",
+                        "name": "group",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search keyword",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Subjects"
+                ],
+                "summary": "Create subject",
+                "parameters": [
+                    {
+                        "description": "Subject payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateSubjectRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/subjects/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Subjects"
+                ],
+                "summary": "Get subject by id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Subject ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Subjects"
+                ],
+                "summary": "Update subject",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Subject ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Subject payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpdateSubjectRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Subjects"
+                ],
+                "summary": "Delete subject",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Subject ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/teachers": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Teachers"
+                ],
+                "summary": "List teachers",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search by name/email/NIP",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by active status",
+                        "name": "active",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort field (full_name,email,created_at)",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort order (asc/desc)",
+                        "name": "order",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Teachers"
+                ],
+                "summary": "Create teacher",
+                "parameters": [
+                    {
+                        "description": "Teacher payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateTeacherRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/teachers/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Teachers"
+                ],
+                "summary": "Get teacher detail",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Teacher ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Teachers"
+                ],
+                "summary": "Update teacher",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Teacher ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Teacher payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpdateTeacherRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Teachers"
+                ],
+                "summary": "Deactivate teacher",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Teacher ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/teachers/{id}/assignments": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Teacher Assignments"
+                ],
+                "summary": "List teacher assignments",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Teacher ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Teacher Assignments"
+                ],
+                "summary": "Create teacher assignment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Teacher ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Assignment payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateTeacherAssignmentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/teachers/{id}/assignments/{aid}": {
+            "delete": {
+                "tags": [
+                    "Teacher Assignments"
+                ],
+                "summary": "Delete teacher assignment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Teacher ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Assignment ID",
+                        "name": "aid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/teachers/{id}/preferences": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Teacher Preferences"
+                ],
+                "summary": "Get teacher preferences",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Teacher ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Teacher Preferences"
+                ],
+                "summary": "Upsert teacher preferences",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Teacher ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Preference payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpsertTeacherPreferenceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/teachers/{id}/schedules": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Schedules"
+                ],
+                "summary": "List schedules by teacher",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Teacher ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/terms": {
+            "get": {
+                "description": "List terms with filters",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Terms"
+                ],
+                "summary": "List terms",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by academic year",
+                        "name": "academicYear",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by type",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by active flag",
+                        "name": "isActive",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Terms"
+                ],
+                "summary": "Create term",
+                "parameters": [
+                    {
+                        "description": "Term payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateTermRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/terms/active": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Terms"
+                ],
+                "summary": "Get active term",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/terms/set-active": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Terms"
+                ],
+                "summary": "Set active term",
+                "parameters": [
+                    {
+                        "description": "Set active payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.SetActiveTermRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/terms/{id}": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Terms"
+                ],
+                "summary": "Update term",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Term ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Term payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpdateTermRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Terms"
+                ],
+                "summary": "Delete term",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Term ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/users": {
+            "get": {
+                "description": "List users with pagination and filtering",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "List users",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Role filter",
+                        "name": "role",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Active filter",
+                        "name": "active",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search term",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort by",
+                        "name": "sort_by",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort order",
+                        "name": "sort_order",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Create user",
+                "parameters": [
+                    {
+                        "description": "Create user payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{id}": {
+            "get": {
+                "description": "Get user detail",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update user details",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpdateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Soft delete user by marking inactive",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Delete user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "github_com_noah-isme_sma-adp-api_internal_dto.BulkUpdateConfigurationRequest": {
+            "type": "object",
+            "required": [
+                "items"
+            ],
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.UpdateConfigurationRequest"
+                    }
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_dto.CalendarAliasEvent": {
+            "type": "object",
+            "properties": {
+                "audience": {
+                    "type": "string"
+                },
+                "classId": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "endDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_dto.CalendarAliasRange": {
+            "type": "object",
+            "properties": {
+                "end_date": {
+                    "type": "string"
+                },
+                "start_date": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_dto.CalendarAliasResponse": {
+            "type": "object",
+            "properties": {
+                "class_id": {
+                    "type": "string"
+                },
+                "events": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.CalendarAliasEvent"
+                    }
+                },
+                "range": {
+                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.CalendarAliasRange"
+                },
+                "term_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_dto.CreateMutationRequest": {
+            "type": "object",
+            "properties": {
+                "entity": {
+                    "type": "string"
+                },
+                "entityId": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "requestedChanges": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "type": {
+                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.MutationType"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_dto.GenerateScheduleRequest": {
+            "type": "object",
+            "required": [
+                "classId",
+                "days",
+                "subjectLoads",
+                "termId",
+                "timeSlotsPerDay"
+            ],
+            "properties": {
+                "classId": {
+                    "type": "string"
+                },
+                "days": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "hardConstraints": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "meta": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "softConstraints": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "subjectLoads": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.SubjectLoadRequest"
+                    }
+                },
+                "termId": {
+                    "type": "string"
+                },
+                "timeSlotsPerDay": {
+                    "type": "integer",
+                    "maximum": 16,
+                    "minimum": 1
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_dto.ReportRequest": {
+            "type": "object",
+            "properties": {
+                "classId": {
+                    "type": "string"
+                },
+                "format": {
+                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.ReportFormat"
+                },
+                "termId": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.ReportType"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_dto.ReviewMutationRequest": {
+            "type": "object",
+            "properties": {
+                "note": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.MutationStatus"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_dto.SaveScheduleRequest": {
+            "type": "object",
+            "required": [
+                "proposalId"
+            ],
+            "properties": {
+                "commitToDaily": {
+                    "type": "boolean"
+                },
+                "proposalId": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_dto.SetHomeroomRequest": {
+            "type": "object",
+            "required": [
+                "classId",
+                "teacherId",
+                "termId"
+            ],
+            "properties": {
+                "classId": {
+                    "type": "string"
+                },
+                "teacherId": {
+                    "type": "string"
+                },
+                "termId": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_dto.SubjectLoadRequest": {
+            "type": "object",
+            "required": [
+                "subjectId",
+                "teacherId",
+                "weeklyCount"
+            ],
+            "properties": {
+                "difficulty": {
+                    "type": "integer",
+                    "maximum": 10,
+                    "minimum": 1
+                },
+                "preferredSlots": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "subjectId": {
+                    "type": "string"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "teacherId": {
+                    "type": "string"
+                },
+                "weeklyCount": {
+                    "type": "integer",
+                    "minimum": 1
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_dto.UpdateConfigurationRequest": {
+            "type": "object",
+            "required": [
+                "key",
+                "value"
+            ],
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.ChangePasswordRequest": {
+            "type": "object",
+            "required": [
+                "new_password",
+                "old_password"
+            ],
+            "properties": {
+                "new_password": {
+                    "type": "string",
+                    "minLength": 6
+                },
+                "old_password": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.ConfirmResetPasswordRequest": {
+            "type": "object",
+            "required": [
+                "new_password",
+                "token"
+            ],
+            "properties": {
+                "new_password": {
+                    "type": "string",
+                    "minLength": 6
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.FinalGradeFilter": {
+            "type": "object",
+            "properties": {
+                "classID": {
+                    "type": "string"
+                },
+                "subjectID": {
+                    "type": "string"
+                },
+                "termID": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.GradeCalculationScheme": {
+            "type": "string",
+            "enum": [
+                "WEIGHTED",
+                "AVERAGE"
+            ],
+            "x-enum-varnames": [
+                "GradeSchemeWeighted",
+                "GradeSchemeAverage"
+            ]
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.LoginRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.MutationStatus": {
+            "type": "string",
+            "enum": [
+                "PENDING",
+                "APPROVED",
+                "REJECTED"
+            ],
+            "x-enum-varnames": [
+                "MutationStatusPending",
+                "MutationStatusApproved",
+                "MutationStatusRejected"
+            ]
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.MutationType": {
+            "type": "string",
+            "enum": [
+                "STUDENT_DATA",
+                "GRADE_CORRECTION",
+                "ATTENDANCE_CORRECTION",
+                "CLASS_CHANGE",
+                "OTHER"
+            ],
+            "x-enum-varnames": [
+                "MutationTypeStudentData",
+                "MutationTypeGradeCorrection",
+                "MutationTypeAttendanceFix",
+                "MutationTypeClassChange",
+                "MutationTypeOther"
+            ]
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.Pagination": {
+            "type": "object",
+            "properties": {
+                "page": {
+                    "type": "integer"
+                },
+                "page_size": {
+                    "type": "integer"
+                },
+                "total_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.RefreshTokenRequest": {
+            "type": "object",
+            "required": [
+                "refresh_token"
+            ],
+            "properties": {
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.ReportFormat": {
+            "type": "string",
+            "enum": [
+                "csv",
+                "pdf"
+            ],
+            "x-enum-varnames": [
+                "ReportFormatCSV",
+                "ReportFormatPDF"
+            ]
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.ReportType": {
+            "type": "string",
+            "enum": [
+                "attendance",
+                "grades",
+                "behavior",
+                "summary"
+            ],
+            "x-enum-varnames": [
+                "ReportTypeAttendance",
+                "ReportTypeGrades",
+                "ReportTypeBehavior",
+                "ReportTypeSummary"
+            ]
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.ResetPasswordRequest": {
+            "type": "object",
+            "required": [
+                "email"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.TeacherUnavailableSlot": {
+            "type": "object",
+            "properties": {
+                "day_of_week": {
+                    "type": "string"
+                },
+                "time_range": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.TermType": {
+            "type": "string",
+            "enum": [
+                "SEMESTER",
+                "TRIMESTER",
+                "QUARTER"
+            ],
+            "x-enum-varnames": [
+                "TermTypeSemester",
+                "TermTypeTrimester",
+                "TermTypeQuarter"
+            ]
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.UserRole": {
+            "type": "string",
+            "enum": [
+                "SUPERADMIN",
+                "ADMIN",
+                "TEACHER",
+                "STUDENT"
+            ],
+            "x-enum-varnames": [
+                "RoleSuperAdmin",
+                "RoleAdmin",
+                "RoleTeacher",
+                "RoleStudent"
+            ]
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.AssignSubjectPayload": {
+            "type": "object",
+            "required": [
+                "subject_id"
+            ],
+            "properties": {
+                "subject_id": {
+                    "type": "string"
+                },
+                "teacher_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.AssignSubjectsRequest": {
+            "type": "object",
+            "properties": {
+                "subjects": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.AssignSubjectPayload"
+                    }
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.BulkCreateSchedulesRequest": {
+            "type": "object",
+            "required": [
+                "items"
+            ],
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateScheduleRequest"
+                    }
+                },
+                "partial_on_error": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.BulkGradeItem": {
+            "type": "object",
+            "required": [
+                "enrollment_id",
+                "grade_value"
+            ],
+            "properties": {
+                "component_code": {
+                    "type": "string"
+                },
+                "component_id": {
+                    "type": "string"
+                },
+                "enrollment_id": {
+                    "type": "string"
+                },
+                "grade_value": {
+                    "type": "number"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.BulkGradesRequest": {
+            "type": "object",
+            "required": [
+                "class_id",
+                "items",
+                "subject_id",
+                "term_id"
+            ],
+            "properties": {
+                "class_id": {
+                    "type": "string"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.BulkGradeItem"
+                    }
+                },
+                "mode": {
+                    "type": "string",
+                    "enum": [
+                        "atomic",
+                        "partialOnError"
+                    ]
+                },
+                "subject_id": {
+                    "type": "string"
+                },
+                "term_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.CreateAnnouncementRequest": {
+            "type": "object",
+            "required": [
+                "audience",
+                "content",
+                "created_by",
+                "priority",
+                "published_at",
+                "title"
+            ],
+            "properties": {
+                "audience": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "is_pinned": {
+                    "type": "boolean"
+                },
+                "priority": {
+                    "type": "string"
+                },
+                "published_at": {
+                    "type": "string"
+                },
+                "target_class_id": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.CreateBehaviorRequest": {
+            "type": "object",
+            "required": [
+                "created_by",
+                "date",
+                "description",
+                "note_type",
+                "student_id"
+            ],
+            "properties": {
+                "created_by": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "note_type": {
+                    "type": "string"
+                },
+                "points": {
+                    "type": "integer"
+                },
+                "student_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.CreateCalendarEventRequest": {
+            "type": "object",
+            "required": [
+                "audience",
+                "created_by",
+                "description",
+                "end_date",
+                "event_type",
+                "start_date",
+                "title"
+            ],
+            "properties": {
+                "audience": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "end_time": {
+                    "type": "string"
+                },
+                "event_type": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "start_time": {
+                    "type": "string"
+                },
+                "target_class_id": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.CreateClassRequest": {
+            "type": "object",
+            "required": [
+                "grade",
+                "name",
+                "track"
+            ],
+            "properties": {
+                "grade": {
+                    "type": "string"
+                },
+                "homeroom_teacher_id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "track": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.CreateGradeComponentRequest": {
+            "type": "object",
+            "required": [
+                "code",
+                "name"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.CreateGradeConfigRequest": {
+            "type": "object",
+            "required": [
+                "calculation_scheme",
+                "class_id",
+                "components",
+                "subject_id",
+                "term_id"
+            ],
+            "properties": {
+                "calculation_scheme": {
+                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.GradeCalculationScheme"
+                },
+                "class_id": {
+                    "type": "string"
+                },
+                "components": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.GradeConfigComponentRequest"
+                    }
+                },
+                "subject_id": {
+                    "type": "string"
+                },
+                "term_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.CreateScheduleRequest": {
+            "type": "object",
+            "required": [
+                "class_id",
+                "day_of_week",
+                "room",
+                "subject_id",
+                "teacher_id",
+                "term_id",
+                "time_slot"
+            ],
+            "properties": {
+                "class_id": {
+                    "type": "string"
+                },
+                "day_of_week": {
+                    "type": "string"
+                },
+                "room": {
+                    "type": "string"
+                },
+                "subject_id": {
+                    "type": "string"
+                },
+                "teacher_id": {
+                    "type": "string"
+                },
+                "term_id": {
+                    "type": "string"
+                },
+                "time_slot": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.CreateStudentRequest": {
+            "type": "object",
+            "required": [
+                "birth_date",
+                "full_name",
+                "gender",
+                "nis"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "birth_date": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "string"
+                },
+                "nis": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.CreateSubjectRequest": {
+            "type": "object",
+            "required": [
+                "code",
+                "name",
+                "subject_group",
+                "track"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "subject_group": {
+                    "type": "string"
+                },
+                "track": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.CreateTeacherAssignmentRequest": {
+            "type": "object",
+            "required": [
+                "class_id",
+                "subject_id",
+                "term_id"
+            ],
+            "properties": {
+                "class_id": {
+                    "type": "string"
+                },
+                "subject_id": {
+                    "type": "string"
+                },
+                "term_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.CreateTeacherRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "full_name"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "expertise": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "nip": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "phone": {
+                    "type": "string",
+                    "maxLength": 50
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.CreateTermRequest": {
+            "type": "object",
+            "required": [
+                "academic_year",
+                "end_date",
+                "name",
+                "start_date",
+                "type"
+            ],
+            "properties": {
+                "academic_year": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.TermType"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.CreateUserRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "full_name",
+                "password",
+                "role"
+            ],
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 6
+                },
+                "role": {
+                    "enum": [
+                        "SUPERADMIN",
+                        "ADMIN",
+                        "TEACHER",
+                        "STUDENT"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.UserRole"
+                        }
+                    ]
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.EnrollStudentRequest": {
+            "type": "object",
+            "required": [
+                "class_id",
+                "student_id",
+                "term_id"
+            ],
+            "properties": {
+                "class_id": {
+                    "type": "string"
+                },
+                "student_id": {
+                    "type": "string"
+                },
+                "term_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.FinalizeGradesRequest": {
+            "type": "object",
+            "required": [
+                "class_id",
+                "subject_id",
+                "term_id"
+            ],
+            "properties": {
+                "class_id": {
+                    "type": "string"
+                },
+                "subject_id": {
+                    "type": "string"
+                },
+                "term_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.GradeConfigComponentRequest": {
+            "type": "object",
+            "required": [
+                "component_id"
+            ],
+            "properties": {
+                "component_id": {
+                    "type": "string"
+                },
+                "weight": {
+                    "type": "number"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.SetActiveTermRequest": {
+            "type": "object",
+            "required": [
+                "id"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.TransferEnrollmentRequest": {
+            "type": "object",
+            "required": [
+                "target_class_id"
+            ],
+            "properties": {
+                "target_class_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.UpdateAnnouncementRequest": {
+            "type": "object",
+            "required": [
+                "audience",
+                "content",
+                "priority",
+                "published_at",
+                "title"
+            ],
+            "properties": {
+                "audience": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "is_pinned": {
+                    "type": "boolean"
+                },
+                "priority": {
+                    "type": "string"
+                },
+                "published_at": {
+                    "type": "string"
+                },
+                "target_class_id": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.UpdateBehaviorRequest": {
+            "type": "object",
+            "required": [
+                "date",
+                "description",
+                "note_type",
+                "student_id"
+            ],
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "note_type": {
+                    "type": "string"
+                },
+                "points": {
+                    "type": "integer"
+                },
+                "student_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.UpdateCalendarEventRequest": {
+            "type": "object",
+            "required": [
+                "audience",
+                "description",
+                "end_date",
+                "event_type",
+                "start_date",
+                "title"
+            ],
+            "properties": {
+                "audience": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "end_time": {
+                    "type": "string"
+                },
+                "event_type": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "start_time": {
+                    "type": "string"
+                },
+                "target_class_id": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.UpdateClassRequest": {
+            "type": "object",
+            "required": [
+                "grade",
+                "name",
+                "track"
+            ],
+            "properties": {
+                "grade": {
+                    "type": "string"
+                },
+                "homeroom_teacher_id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "track": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.UpdateGradeConfigRequest": {
+            "type": "object",
+            "required": [
+                "calculation_scheme",
+                "components"
+            ],
+            "properties": {
+                "calculation_scheme": {
+                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.GradeCalculationScheme"
+                },
+                "components": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.GradeConfigComponentRequest"
+                    }
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.UpdateScheduleRequest": {
+            "type": "object",
+            "required": [
+                "class_id",
+                "day_of_week",
+                "room",
+                "subject_id",
+                "teacher_id",
+                "term_id",
+                "time_slot"
+            ],
+            "properties": {
+                "class_id": {
+                    "type": "string"
+                },
+                "day_of_week": {
+                    "type": "string"
+                },
+                "room": {
+                    "type": "string"
+                },
+                "subject_id": {
+                    "type": "string"
+                },
+                "teacher_id": {
+                    "type": "string"
+                },
+                "term_id": {
+                    "type": "string"
+                },
+                "time_slot": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.UpdateStudentRequest": {
+            "type": "object",
+            "required": [
+                "birth_date",
+                "full_name",
+                "gender",
+                "nis"
+            ],
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "address": {
+                    "type": "string"
+                },
+                "birth_date": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "string"
+                },
+                "nis": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.UpdateSubjectRequest": {
+            "type": "object",
+            "required": [
+                "code",
+                "name",
+                "subject_group",
+                "track"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "subject_group": {
+                    "type": "string"
+                },
+                "track": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.UpdateTeacherRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "full_name"
+            ],
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "expertise": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "nip": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "phone": {
+                    "type": "string",
+                    "maxLength": 50
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.UpdateTermRequest": {
+            "type": "object",
+            "required": [
+                "academic_year",
+                "end_date",
+                "name",
+                "start_date",
+                "type"
+            ],
+            "properties": {
+                "academic_year": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.TermType"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.UpdateUserRequest": {
+            "type": "object",
+            "required": [
+                "full_name",
+                "role"
+            ],
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "role": {
+                    "enum": [
+                        "SUPERADMIN",
+                        "ADMIN",
+                        "TEACHER",
+                        "STUDENT"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.UserRole"
+                        }
+                    ]
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.UpsertGradeRequest": {
+            "type": "object",
+            "required": [
+                "enrollment_id",
+                "grade_value",
+                "subject_id"
+            ],
+            "properties": {
+                "component_code": {
+                    "type": "string"
+                },
+                "component_id": {
+                    "type": "string"
+                },
+                "enrollment_id": {
+                    "type": "string"
+                },
+                "grade_value": {
+                    "type": "number"
+                },
+                "subject_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.UpsertTeacherPreferenceRequest": {
+            "type": "object",
+            "properties": {
+                "max_load_per_day": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "max_load_per_week": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "unavailable": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.TeacherUnavailableSlot"
+                    }
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_pkg_errors.Error": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_pkg_response.Envelope": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "error": {
+                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_errors.Error"
+                },
+                "meta": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "pagination": {
+                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.Pagination"
+                }
+            }
+        }
+    }
+}

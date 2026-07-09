@@ -1,0 +1,3704 @@
+basePath: /
+definitions:
+  github_com_noah-isme_sma-adp-api_internal_dto.BulkUpdateConfigurationRequest:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.UpdateConfigurationRequest'
+        minItems: 1
+        type: array
+    required:
+    - items
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_dto.CalendarAliasEvent:
+    properties:
+      audience:
+        type: string
+      classId:
+        type: string
+      description:
+        type: string
+      endDate:
+        type: string
+      id:
+        type: string
+      startDate:
+        type: string
+      title:
+        type: string
+      type:
+        type: string
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_dto.CalendarAliasRange:
+    properties:
+      end_date:
+        type: string
+      start_date:
+        type: string
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_dto.CalendarAliasResponse:
+    properties:
+      class_id:
+        type: string
+      events:
+        items:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.CalendarAliasEvent'
+        type: array
+      range:
+        $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.CalendarAliasRange'
+      term_id:
+        type: string
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_dto.CreateMutationRequest:
+    properties:
+      entity:
+        type: string
+      entityId:
+        type: string
+      reason:
+        type: string
+      requestedChanges:
+        items:
+          type: integer
+        type: array
+      type:
+        $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.MutationType'
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_dto.GenerateScheduleRequest:
+    properties:
+      classId:
+        type: string
+      days:
+        items:
+          type: integer
+        minItems: 1
+        type: array
+      hardConstraints:
+        items:
+          type: string
+        type: array
+      meta:
+        additionalProperties: {}
+        type: object
+      softConstraints:
+        items:
+          type: string
+        type: array
+      subjectLoads:
+        items:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.SubjectLoadRequest'
+        minItems: 1
+        type: array
+      termId:
+        type: string
+      timeSlotsPerDay:
+        maximum: 16
+        minimum: 1
+        type: integer
+    required:
+    - classId
+    - days
+    - subjectLoads
+    - termId
+    - timeSlotsPerDay
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_dto.ReportRequest:
+    properties:
+      classId:
+        type: string
+      format:
+        $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.ReportFormat'
+      termId:
+        type: string
+      type:
+        $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.ReportType'
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_dto.ReviewMutationRequest:
+    properties:
+      note:
+        type: string
+      status:
+        $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.MutationStatus'
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_dto.SaveScheduleRequest:
+    properties:
+      commitToDaily:
+        type: boolean
+      proposalId:
+        type: string
+    required:
+    - proposalId
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_dto.SetHomeroomRequest:
+    properties:
+      classId:
+        type: string
+      teacherId:
+        type: string
+      termId:
+        type: string
+    required:
+    - classId
+    - teacherId
+    - termId
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_dto.SubjectLoadRequest:
+    properties:
+      difficulty:
+        maximum: 10
+        minimum: 1
+        type: integer
+      preferredSlots:
+        items:
+          type: integer
+        type: array
+      subjectId:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+      teacherId:
+        type: string
+      weeklyCount:
+        minimum: 1
+        type: integer
+    required:
+    - subjectId
+    - teacherId
+    - weeklyCount
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_dto.UpdateConfigurationRequest:
+    properties:
+      key:
+        type: string
+      value:
+        type: string
+    required:
+    - key
+    - value
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.ChangePasswordRequest:
+    properties:
+      new_password:
+        minLength: 6
+        type: string
+      old_password:
+        type: string
+    required:
+    - new_password
+    - old_password
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.ConfirmResetPasswordRequest:
+    properties:
+      new_password:
+        minLength: 6
+        type: string
+      token:
+        type: string
+    required:
+    - new_password
+    - token
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.FinalGradeFilter:
+    properties:
+      classID:
+        type: string
+      subjectID:
+        type: string
+      termID:
+        type: string
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.GradeCalculationScheme:
+    enum:
+    - WEIGHTED
+    - AVERAGE
+    type: string
+    x-enum-varnames:
+    - GradeSchemeWeighted
+    - GradeSchemeAverage
+  github_com_noah-isme_sma-adp-api_internal_models.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.MutationStatus:
+    enum:
+    - PENDING
+    - APPROVED
+    - REJECTED
+    type: string
+    x-enum-varnames:
+    - MutationStatusPending
+    - MutationStatusApproved
+    - MutationStatusRejected
+  github_com_noah-isme_sma-adp-api_internal_models.MutationType:
+    enum:
+    - STUDENT_DATA
+    - GRADE_CORRECTION
+    - ATTENDANCE_CORRECTION
+    - CLASS_CHANGE
+    - OTHER
+    type: string
+    x-enum-varnames:
+    - MutationTypeStudentData
+    - MutationTypeGradeCorrection
+    - MutationTypeAttendanceFix
+    - MutationTypeClassChange
+    - MutationTypeOther
+  github_com_noah-isme_sma-adp-api_internal_models.Pagination:
+    properties:
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total_count:
+        type: integer
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.ReportFormat:
+    enum:
+    - csv
+    - pdf
+    type: string
+    x-enum-varnames:
+    - ReportFormatCSV
+    - ReportFormatPDF
+  github_com_noah-isme_sma-adp-api_internal_models.ReportType:
+    enum:
+    - attendance
+    - grades
+    - behavior
+    - summary
+    type: string
+    x-enum-varnames:
+    - ReportTypeAttendance
+    - ReportTypeGrades
+    - ReportTypeBehavior
+    - ReportTypeSummary
+  github_com_noah-isme_sma-adp-api_internal_models.ResetPasswordRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.TeacherUnavailableSlot:
+    properties:
+      day_of_week:
+        type: string
+      time_range:
+        type: string
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.TermType:
+    enum:
+    - SEMESTER
+    - TRIMESTER
+    - QUARTER
+    type: string
+    x-enum-varnames:
+    - TermTypeSemester
+    - TermTypeTrimester
+    - TermTypeQuarter
+  github_com_noah-isme_sma-adp-api_internal_models.UserRole:
+    enum:
+    - SUPERADMIN
+    - ADMIN
+    - TEACHER
+    - STUDENT
+    type: string
+    x-enum-varnames:
+    - RoleSuperAdmin
+    - RoleAdmin
+    - RoleTeacher
+    - RoleStudent
+  github_com_noah-isme_sma-adp-api_internal_service.AssignSubjectPayload:
+    properties:
+      subject_id:
+        type: string
+      teacher_id:
+        type: string
+    required:
+    - subject_id
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.AssignSubjectsRequest:
+    properties:
+      subjects:
+        items:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.AssignSubjectPayload'
+        type: array
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.BulkCreateSchedulesRequest:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateScheduleRequest'
+        minItems: 1
+        type: array
+      partial_on_error:
+        type: boolean
+    required:
+    - items
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.BulkGradeItem:
+    properties:
+      component_code:
+        type: string
+      component_id:
+        type: string
+      enrollment_id:
+        type: string
+      grade_value:
+        type: number
+    required:
+    - enrollment_id
+    - grade_value
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.BulkGradesRequest:
+    properties:
+      class_id:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.BulkGradeItem'
+        type: array
+      mode:
+        enum:
+        - atomic
+        - partialOnError
+        type: string
+      subject_id:
+        type: string
+      term_id:
+        type: string
+    required:
+    - class_id
+    - items
+    - subject_id
+    - term_id
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.CreateAnnouncementRequest:
+    properties:
+      audience:
+        type: string
+      content:
+        type: string
+      created_by:
+        type: string
+      expires_at:
+        type: string
+      is_pinned:
+        type: boolean
+      priority:
+        type: string
+      published_at:
+        type: string
+      target_class_id:
+        type: string
+      title:
+        type: string
+    required:
+    - audience
+    - content
+    - created_by
+    - priority
+    - published_at
+    - title
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.CreateBehaviorRequest:
+    properties:
+      created_by:
+        type: string
+      date:
+        type: string
+      description:
+        type: string
+      note_type:
+        type: string
+      points:
+        type: integer
+      student_id:
+        type: string
+    required:
+    - created_by
+    - date
+    - description
+    - note_type
+    - student_id
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.CreateCalendarEventRequest:
+    properties:
+      audience:
+        type: string
+      created_by:
+        type: string
+      description:
+        type: string
+      end_date:
+        type: string
+      end_time:
+        type: string
+      event_type:
+        type: string
+      location:
+        type: string
+      start_date:
+        type: string
+      start_time:
+        type: string
+      target_class_id:
+        type: string
+      title:
+        type: string
+    required:
+    - audience
+    - created_by
+    - description
+    - end_date
+    - event_type
+    - start_date
+    - title
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.CreateClassRequest:
+    properties:
+      grade:
+        type: string
+      homeroom_teacher_id:
+        type: string
+      name:
+        type: string
+      track:
+        type: string
+    required:
+    - grade
+    - name
+    - track
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.CreateGradeComponentRequest:
+    properties:
+      code:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+    required:
+    - code
+    - name
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.CreateGradeConfigRequest:
+    properties:
+      calculation_scheme:
+        $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.GradeCalculationScheme'
+      class_id:
+        type: string
+      components:
+        items:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.GradeConfigComponentRequest'
+        type: array
+      subject_id:
+        type: string
+      term_id:
+        type: string
+    required:
+    - calculation_scheme
+    - class_id
+    - components
+    - subject_id
+    - term_id
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.CreateScheduleRequest:
+    properties:
+      class_id:
+        type: string
+      day_of_week:
+        type: string
+      room:
+        type: string
+      subject_id:
+        type: string
+      teacher_id:
+        type: string
+      term_id:
+        type: string
+      time_slot:
+        type: string
+    required:
+    - class_id
+    - day_of_week
+    - room
+    - subject_id
+    - teacher_id
+    - term_id
+    - time_slot
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.CreateStudentRequest:
+    properties:
+      address:
+        type: string
+      birth_date:
+        type: string
+      full_name:
+        type: string
+      gender:
+        type: string
+      nis:
+        type: string
+      phone:
+        type: string
+    required:
+    - birth_date
+    - full_name
+    - gender
+    - nis
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.CreateSubjectRequest:
+    properties:
+      code:
+        type: string
+      name:
+        type: string
+      subject_group:
+        type: string
+      track:
+        type: string
+    required:
+    - code
+    - name
+    - subject_group
+    - track
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.CreateTeacherAssignmentRequest:
+    properties:
+      class_id:
+        type: string
+      subject_id:
+        type: string
+      term_id:
+        type: string
+    required:
+    - class_id
+    - subject_id
+    - term_id
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.CreateTeacherRequest:
+    properties:
+      email:
+        type: string
+      expertise:
+        maxLength: 500
+        type: string
+      full_name:
+        type: string
+      nip:
+        maxLength: 50
+        type: string
+      phone:
+        maxLength: 50
+        type: string
+    required:
+    - email
+    - full_name
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.CreateTermRequest:
+    properties:
+      academic_year:
+        type: string
+      end_date:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      start_date:
+        type: string
+      type:
+        $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.TermType'
+    required:
+    - academic_year
+    - end_date
+    - name
+    - start_date
+    - type
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.CreateUserRequest:
+    properties:
+      active:
+        type: boolean
+      email:
+        type: string
+      full_name:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.UserRole'
+        enum:
+        - SUPERADMIN
+        - ADMIN
+        - TEACHER
+        - STUDENT
+    required:
+    - email
+    - full_name
+    - password
+    - role
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.EnrollStudentRequest:
+    properties:
+      class_id:
+        type: string
+      student_id:
+        type: string
+      term_id:
+        type: string
+    required:
+    - class_id
+    - student_id
+    - term_id
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.FinalizeGradesRequest:
+    properties:
+      class_id:
+        type: string
+      subject_id:
+        type: string
+      term_id:
+        type: string
+    required:
+    - class_id
+    - subject_id
+    - term_id
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.GradeConfigComponentRequest:
+    properties:
+      component_id:
+        type: string
+      weight:
+        type: number
+    required:
+    - component_id
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.SetActiveTermRequest:
+    properties:
+      id:
+        type: string
+    required:
+    - id
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.TransferEnrollmentRequest:
+    properties:
+      target_class_id:
+        type: string
+    required:
+    - target_class_id
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.UpdateAnnouncementRequest:
+    properties:
+      audience:
+        type: string
+      content:
+        type: string
+      expires_at:
+        type: string
+      is_pinned:
+        type: boolean
+      priority:
+        type: string
+      published_at:
+        type: string
+      target_class_id:
+        type: string
+      title:
+        type: string
+    required:
+    - audience
+    - content
+    - priority
+    - published_at
+    - title
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.UpdateBehaviorRequest:
+    properties:
+      date:
+        type: string
+      description:
+        type: string
+      note_type:
+        type: string
+      points:
+        type: integer
+      student_id:
+        type: string
+    required:
+    - date
+    - description
+    - note_type
+    - student_id
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.UpdateCalendarEventRequest:
+    properties:
+      audience:
+        type: string
+      description:
+        type: string
+      end_date:
+        type: string
+      end_time:
+        type: string
+      event_type:
+        type: string
+      location:
+        type: string
+      start_date:
+        type: string
+      start_time:
+        type: string
+      target_class_id:
+        type: string
+      title:
+        type: string
+    required:
+    - audience
+    - description
+    - end_date
+    - event_type
+    - start_date
+    - title
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.UpdateClassRequest:
+    properties:
+      grade:
+        type: string
+      homeroom_teacher_id:
+        type: string
+      name:
+        type: string
+      track:
+        type: string
+    required:
+    - grade
+    - name
+    - track
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.UpdateGradeConfigRequest:
+    properties:
+      calculation_scheme:
+        $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.GradeCalculationScheme'
+      components:
+        items:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.GradeConfigComponentRequest'
+        type: array
+    required:
+    - calculation_scheme
+    - components
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.UpdateScheduleRequest:
+    properties:
+      class_id:
+        type: string
+      day_of_week:
+        type: string
+      room:
+        type: string
+      subject_id:
+        type: string
+      teacher_id:
+        type: string
+      term_id:
+        type: string
+      time_slot:
+        type: string
+    required:
+    - class_id
+    - day_of_week
+    - room
+    - subject_id
+    - teacher_id
+    - term_id
+    - time_slot
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.UpdateStudentRequest:
+    properties:
+      active:
+        type: boolean
+      address:
+        type: string
+      birth_date:
+        type: string
+      full_name:
+        type: string
+      gender:
+        type: string
+      nis:
+        type: string
+      phone:
+        type: string
+    required:
+    - birth_date
+    - full_name
+    - gender
+    - nis
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.UpdateSubjectRequest:
+    properties:
+      code:
+        type: string
+      name:
+        type: string
+      subject_group:
+        type: string
+      track:
+        type: string
+    required:
+    - code
+    - name
+    - subject_group
+    - track
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.UpdateTeacherRequest:
+    properties:
+      active:
+        type: boolean
+      email:
+        type: string
+      expertise:
+        maxLength: 500
+        type: string
+      full_name:
+        type: string
+      nip:
+        maxLength: 50
+        type: string
+      phone:
+        maxLength: 50
+        type: string
+    required:
+    - email
+    - full_name
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.UpdateTermRequest:
+    properties:
+      academic_year:
+        type: string
+      end_date:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      start_date:
+        type: string
+      type:
+        $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.TermType'
+    required:
+    - academic_year
+    - end_date
+    - name
+    - start_date
+    - type
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.UpdateUserRequest:
+    properties:
+      active:
+        type: boolean
+      full_name:
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.UserRole'
+        enum:
+        - SUPERADMIN
+        - ADMIN
+        - TEACHER
+        - STUDENT
+    required:
+    - full_name
+    - role
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.UpsertGradeRequest:
+    properties:
+      component_code:
+        type: string
+      component_id:
+        type: string
+      enrollment_id:
+        type: string
+      grade_value:
+        type: number
+      subject_id:
+        type: string
+    required:
+    - enrollment_id
+    - grade_value
+    - subject_id
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.UpsertTeacherPreferenceRequest:
+    properties:
+      max_load_per_day:
+        minimum: 0
+        type: integer
+      max_load_per_week:
+        minimum: 0
+        type: integer
+      unavailable:
+        items:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.TeacherUnavailableSlot'
+        type: array
+    type: object
+  github_com_noah-isme_sma-adp-api_pkg_errors.Error:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+  github_com_noah-isme_sma-adp-api_pkg_response.Envelope:
+    properties:
+      data: {}
+      error:
+        $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_errors.Error'
+      meta:
+        additionalProperties: true
+        type: object
+      pagination:
+        $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.Pagination'
+    type: object
+info:
+  contact: {}
+  description: Bootstrap server for Golang migration (Phase 0)
+  title: SMA ADP API
+  version: 0.1.0
+paths:
+  /announcements:
+    get:
+      parameters:
+      - description: Comma-separated audience roles
+        in: query
+        name: audience
+        type: string
+      - description: Comma-separated class IDs
+        in: query
+        name: classIds
+        type: string
+      - description: Include pinned announcements
+        in: query
+        name: includePinned
+        type: boolean
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List announcements
+      tags:
+      - Announcements
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Announcement payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateAnnouncementRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Create announcement
+      tags:
+      - Announcements
+  /announcements/{id}:
+    delete:
+      parameters:
+      - description: Announcement ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      summary: Delete announcement
+      tags:
+      - Announcements
+    get:
+      parameters:
+      - description: Announcement ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get announcement
+      tags:
+      - Announcements
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Announcement ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Announcement payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpdateAnnouncementRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Update announcement
+      tags:
+      - Announcements
+  /archives:
+    get:
+      parameters:
+      - description: Scope filter
+        in: query
+        name: scope
+        type: string
+      - description: Category filter
+        in: query
+        name: category
+        type: string
+      - description: Term reference
+        in: query
+        name: termId
+        type: string
+      - description: Class reference
+        in: query
+        name: classId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List archives
+      tags:
+      - Archives
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Title
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: Category
+        in: formData
+        name: category
+        required: true
+        type: string
+      - description: Scope
+        in: formData
+        name: scope
+        required: true
+        type: string
+      - description: Term reference
+        in: formData
+        name: refTermId
+        type: string
+      - description: Class reference
+        in: formData
+        name: refClassId
+        type: string
+      - description: Student reference
+        in: formData
+        name: refStudentId
+        type: string
+      - description: Document
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Upload archive document
+      tags:
+      - Archives
+  /archives/{id}:
+    delete:
+      parameters:
+      - description: Archive ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      summary: Soft delete an archive entry
+      tags:
+      - Archives
+    get:
+      parameters:
+      - description: Archive ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get archive metadata
+      tags:
+      - Archives
+  /archives/{id}/download:
+    get:
+      parameters:
+      - description: Archive ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Signed token
+        in: query
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+      summary: Download archive document via signed token
+      tags:
+      - Archives
+  /attendance:
+    get:
+      parameters:
+      - description: Term ID
+        in: query
+        name: termId
+        required: true
+        type: string
+      - description: Class ID
+        in: query
+        name: classId
+        type: string
+      - description: Student ID
+        in: query
+        name: studentId
+        type: string
+      - description: From date (YYYY-MM-DD)
+        in: query
+        name: from
+        type: string
+      - description: To date (YYYY-MM-DD)
+        in: query
+        name: to
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Attendance summary alias endpoint
+      tags:
+      - Attendance
+  /attendance/daily:
+    get:
+      parameters:
+      - description: Term ID
+        in: query
+        name: termId
+        required: true
+        type: string
+      - description: Class ID
+        in: query
+        name: classId
+        type: string
+      - description: Student ID
+        in: query
+        name: studentId
+        type: string
+      - description: Attendance status (H/S/I/A)
+        in: query
+        name: status
+        type: string
+      - description: From date (YYYY-MM-DD)
+        in: query
+        name: dateFrom
+        type: string
+      - description: To date (YYYY-MM-DD)
+        in: query
+        name: dateTo
+        type: string
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: limit
+        type: integer
+      - description: Sort by field
+        in: query
+        name: sortBy
+        type: string
+      - description: Sort order (asc/desc)
+        in: query
+        name: sortOrder
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Daily attendance alias endpoint
+      tags:
+      - Attendance
+  /auth/change-password:
+    post:
+      consumes:
+      - application/json
+      description: Change password for current user
+      parameters:
+      - description: Change password
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Change password
+      tags:
+      - Authentication
+  /auth/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Initiate forgot password flow
+      parameters:
+      - description: Forgot password
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Forgot password
+      tags:
+      - Authentication
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user by email and password
+      parameters:
+      - description: Login payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Authenticate user
+      tags:
+      - Authentication
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Revoke refresh token
+      parameters:
+      - description: Refresh token
+        in: body
+        name: payload
+        required: true
+        schema:
+          additionalProperties:
+            type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Logout current session
+      tags:
+      - Authentication
+  /auth/me:
+    get:
+      description: Returns the authenticated user's info
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get current user
+      tags:
+      - Authentication
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Exchange refresh token for new access token
+      parameters:
+      - description: Refresh payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Refresh access token
+      tags:
+      - Authentication
+  /auth/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: Reset password with token
+      parameters:
+      - description: Reset password
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.ConfirmResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Reset password
+      tags:
+      - Authentication
+  /behavior-notes:
+    get:
+      parameters:
+      - description: Student ID
+        in: query
+        name: studentId
+        type: string
+      - description: From date (YYYY-MM-DD)
+        in: query
+        name: dateFrom
+        type: string
+      - description: To date (YYYY-MM-DD)
+        in: query
+        name: dateTo
+        type: string
+      - description: Comma-separated note types (+,-,0)
+        in: query
+        name: noteTypes
+        type: string
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List behavior notes
+      tags:
+      - Behavior
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Behavior payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateBehaviorRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Create behavior note
+      tags:
+      - Behavior
+  /behavior-notes/{id}:
+    delete:
+      parameters:
+      - description: Behavior note ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      summary: Delete behavior note
+      tags:
+      - Behavior
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Behavior note ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Behavior payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpdateBehaviorRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Update behavior note
+      tags:
+      - Behavior
+  /calendar:
+    get:
+      description: Preferred FE endpoint that returns curated calendar events scoped
+        by term/class.
+      parameters:
+      - description: Term ID
+        example: "2024_1"
+        in: query
+        name: term_id
+        type: string
+      - description: Class ID
+        example: 10A
+        in: query
+        name: class_id
+        type: string
+      - description: Start date (YYYY-MM-DD)
+        example: "2024-01-01"
+        in: query
+        name: start_date
+        type: string
+      - description: End date (YYYY-MM-DD)
+        example: "2024-01-31"
+        in: query
+        name: end_date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.CalendarAliasResponse'
+              type: object
+      summary: Calendar alias endpoint (canonical)
+      tags:
+      - Academics
+  /calendar-events:
+    get:
+      parameters:
+      - description: Start date (YYYY-MM-DD)
+        in: query
+        name: startDate
+        type: string
+      - description: End date (YYYY-MM-DD)
+        in: query
+        name: endDate
+        type: string
+      - description: Comma-separated audience filters
+        in: query
+        name: audience
+        type: string
+      - description: Comma-separated class IDs
+        in: query
+        name: classIds
+        type: string
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List calendar events
+      tags:
+      - Calendar
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Calendar event payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateCalendarEventRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Create calendar event
+      tags:
+      - Calendar
+  /calendar-events/{id}:
+    delete:
+      parameters:
+      - description: Calendar event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      summary: Delete calendar event
+      tags:
+      - Calendar
+    get:
+      parameters:
+      - description: Calendar event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get calendar event
+      tags:
+      - Calendar
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Calendar event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Calendar event payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpdateCalendarEventRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Update calendar event
+      tags:
+      - Calendar
+  /classes:
+    get:
+      parameters:
+      - description: Filter by grade
+        in: query
+        name: grade
+        type: string
+      - description: Filter by track
+        in: query
+        name: track
+        type: string
+      - description: Search keyword
+        in: query
+        name: search
+        type: string
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List classes
+      tags:
+      - Classes
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Class payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateClassRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Create class
+      tags:
+      - Classes
+  /classes/{id}:
+    delete:
+      parameters:
+      - description: Class ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      summary: Delete class
+      tags:
+      - Classes
+    get:
+      parameters:
+      - description: Class ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get class detail
+      tags:
+      - Classes
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Class ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Class payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpdateClassRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Update class
+      tags:
+      - Classes
+  /classes/{id}/schedules:
+    get:
+      parameters:
+      - description: Class ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List schedules by class
+      tags:
+      - Schedules
+  /classes/{id}/subjects:
+    get:
+      parameters:
+      - description: Class ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List class subjects
+      tags:
+      - Class-Subjects
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Class ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Assignments payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.AssignSubjectsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Assign subjects to class
+      tags:
+      - Class-Subjects
+  /configuration:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List configurations
+      tags:
+      - Configuration
+  /configuration/{key}:
+    get:
+      parameters:
+      - description: Configuration key
+        in: path
+        name: key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get configuration by key
+      tags:
+      - Configuration
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Configuration key
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: Configuration payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.UpdateConfigurationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Update configuration
+      tags:
+      - Configuration
+  /configuration/bulk:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bulk configuration payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.BulkUpdateConfigurationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Bulk update configurations
+      tags:
+      - Configuration
+  /dashboard:
+    get:
+      parameters:
+      - description: Term ID
+        in: query
+        name: termId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Admin dashboard summary
+      tags:
+      - Dashboard
+  /dashboard/academics:
+    get:
+      parameters:
+      - description: Term ID
+        in: query
+        name: termId
+        required: true
+        type: string
+      - description: Date (YYYY-MM-DD). Defaults to today
+        in: query
+        name: date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Teacher academics dashboard
+      tags:
+      - Dashboard
+  /enrollments:
+    get:
+      parameters:
+      - description: Filter by student
+        in: query
+        name: studentId
+        type: string
+      - description: Filter by class
+        in: query
+        name: classId
+        type: string
+      - description: Filter by term
+        in: query
+        name: termId
+        type: string
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List enrollments
+      tags:
+      - Enrollments
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Enrollment payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.EnrollStudentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Enroll student
+      tags:
+      - Enrollments
+  /enrollments/{id}:
+    delete:
+      parameters:
+      - description: Enrollment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Unenroll student
+      tags:
+      - Enrollments
+  /enrollments/{id}/transfer:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Enrollment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Transfer payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.TransferEnrollmentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Transfer enrollment to another class
+      tags:
+      - Enrollments
+  /export/{token}:
+    get:
+      parameters:
+      - description: Signed token
+        in: path
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+      summary: Download generated report via signed token
+      tags:
+      - Reports
+  /grade-components:
+    get:
+      parameters:
+      - description: Search by code or name
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List grade components
+      tags:
+      - Grade Components
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Component payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateGradeComponentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Create grade component
+      tags:
+      - Grade Components
+  /grade-configs:
+    get:
+      parameters:
+      - description: Filter by class
+        in: query
+        name: classId
+        type: string
+      - description: Filter by subject
+        in: query
+        name: subjectId
+        type: string
+      - description: Filter by term
+        in: query
+        name: termId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List grade configurations
+      tags:
+      - Grade Configs
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Config payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateGradeConfigRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Create grade configuration
+      tags:
+      - Grade Configs
+  /grade-configs/{id}:
+    get:
+      parameters:
+      - description: Config ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get grade configuration
+      tags:
+      - Grade Configs
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Config ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Config payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpdateGradeConfigRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Update grade configuration
+      tags:
+      - Grade Configs
+  /grade-configs/{id}/finalize:
+    post:
+      parameters:
+      - description: Config ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Finalize grade configuration
+      tags:
+      - Grade Configs
+  /grades:
+    get:
+      parameters:
+      - description: Filter by enrollment
+        in: query
+        name: enrollmentId
+        type: string
+      - description: Filter by subject
+        in: query
+        name: subjectId
+        type: string
+      - description: Filter by component
+        in: query
+        name: componentId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List grade entries
+      tags:
+      - Grades
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Grade payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpsertGradeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Upsert grade entry
+      tags:
+      - Grades
+  /grades/bulk:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bulk payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.BulkGradesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Bulk upsert grades
+      tags:
+      - Grades
+  /grades/finalize:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Finalize payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.FinalizeGradesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Finalize final grades
+      tags:
+      - Grades
+  /grades/recalculate:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Scope payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.FinalGradeFilter'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Recalculate final grades
+      tags:
+      - Grades
+  /homerooms:
+    get:
+      parameters:
+      - description: Term ID (defaults to current active)
+        in: query
+        name: termId
+        type: string
+      - description: Class ID filter
+        in: query
+        name: classId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List homeroom assignments
+      tags:
+      - Homerooms
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Homeroom payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.SetHomeroomRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Set or replace a homeroom teacher
+      tags:
+      - Homerooms
+  /homerooms/{classId}:
+    get:
+      parameters:
+      - description: Class ID
+        in: path
+        name: classId
+        required: true
+        type: string
+      - description: Term ID (defaults to active)
+        in: query
+        name: termId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get homeroom info for a class
+      tags:
+      - Homerooms
+  /mutations:
+    get:
+      parameters:
+      - description: Comma separated statuses
+        in: query
+        name: status
+        type: string
+      - description: Entity name
+        in: query
+        name: entity
+        type: string
+      - description: Mutation type
+        in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List mutation requests
+      tags:
+      - Mutations
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Mutation payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.CreateMutationRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Submit a mutation request
+      tags:
+      - Mutations
+  /mutations/{id}:
+    get:
+      parameters:
+      - description: Mutation ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get mutation detail
+      tags:
+      - Mutations
+  /mutations/{id}/review:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Mutation ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Review decision
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.ReviewMutationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Review a mutation request
+      tags:
+      - Mutations
+  /reports/classes/{id}:
+    get:
+      parameters:
+      - description: Class ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Subject ID
+        in: query
+        name: subjectId
+        required: true
+        type: string
+      - description: Term ID
+        in: query
+        name: termId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Class grade report
+      tags:
+      - Reports
+  /reports/generate:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Report request
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.ReportRequest'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Queue a new report job
+      tags:
+      - Reports
+  /reports/status/{id}:
+    get:
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get report job status
+      tags:
+      - Reports
+  /reports/students/{id}:
+    get:
+      parameters:
+      - description: Student ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Term ID
+        in: query
+        name: termId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Student report card
+      tags:
+      - Reports
+  /schedule/generate:
+    post:
+      consumes:
+      - application/json
+      description: Legacy path kept for backward compatibility. Prefer /schedules/generator
+        for new integrations.
+      parameters:
+      - description: Generate schedule payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.GenerateScheduleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Generate conflict-free schedule proposal (legacy endpoint)
+      tags:
+      - Academics
+  /schedule/save:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Save schedule payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.SaveScheduleRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Save schedule proposal to semester schedules
+      tags:
+      - Scheduler
+  /schedules:
+    get:
+      parameters:
+      - description: Filter by term
+        in: query
+        name: termId
+        type: string
+      - description: Filter by class
+        in: query
+        name: classId
+        type: string
+      - description: Filter by teacher
+        in: query
+        name: teacherId
+        type: string
+      - description: Filter by day
+        in: query
+        name: dayOfWeek
+        type: string
+      - description: Filter by time slot
+        in: query
+        name: timeSlot
+        type: string
+      - description: Filter by room
+        in: query
+        name: room
+        type: string
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List schedules
+      tags:
+      - Schedules
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Schedule payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateScheduleRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Create schedule
+      tags:
+      - Schedules
+  /schedules/{id}:
+    delete:
+      parameters:
+      - description: Schedule ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      summary: Delete schedule
+      tags:
+      - Schedules
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Schedule ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Schedule payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpdateScheduleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Update schedule
+      tags:
+      - Schedules
+  /schedules/bulk:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bulk payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.BulkCreateSchedulesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Bulk create schedules
+      tags:
+      - Schedules
+  /schedules/generator:
+    post:
+      consumes:
+      - application/json
+      description: Preferred endpoint for UI preview mode. Responses include mode
+        metadata to distinguish preview vs. persisted schedules.
+      parameters:
+      - description: Generate schedule payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.GenerateScheduleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Generate schedule proposal (canonical alias)
+      tags:
+      - Academics
+  /schedules/preferences:
+    get:
+      parameters:
+      - description: Teacher ID
+        example: teacher_123
+        in: query
+        name: teacher_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get teacher schedule preferences (alias)
+      tags:
+      - Academics
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Teacher ID
+        example: teacher_123
+        in: query
+        name: teacher_id
+        required: true
+        type: string
+      - description: Preference payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpsertTeacherPreferenceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Upsert teacher schedule preferences (alias)
+      tags:
+      - Academics
+  /semester-schedule:
+    get:
+      parameters:
+      - description: Term ID
+        in: query
+        name: termId
+        required: true
+        type: string
+      - description: Class ID
+        in: query
+        name: classId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List semester schedules for class-term
+      tags:
+      - Scheduler
+  /semester-schedule/{id}:
+    delete:
+      parameters:
+      - description: Semester schedule ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      summary: Delete draft semester schedule
+      tags:
+      - Scheduler
+  /semester-schedule/{id}/slots:
+    get:
+      parameters:
+      - description: Semester schedule ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get slots for a semester schedule
+      tags:
+      - Scheduler
+  /students:
+    get:
+      parameters:
+      - description: Search by name or NIS
+        in: query
+        name: search
+        type: string
+      - description: Filter by class
+        in: query
+        name: classId
+        type: string
+      - description: Filter by active state
+        in: query
+        name: active
+        type: boolean
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List students
+      tags:
+      - Students
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Student payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateStudentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Create student
+      tags:
+      - Students
+  /students/{id}:
+    delete:
+      parameters:
+      - description: Student ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      summary: Deactivate student
+      tags:
+      - Students
+    get:
+      parameters:
+      - description: Student ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get student detail
+      tags:
+      - Students
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Student ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Student payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpdateStudentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Update student
+      tags:
+      - Students
+  /students/{id}/behavior-summary:
+    get:
+      parameters:
+      - description: Student ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get student behavior summary
+      tags:
+      - Behavior
+  /subjects:
+    get:
+      parameters:
+      - description: Filter by track
+        in: query
+        name: track
+        type: string
+      - description: Filter by group
+        in: query
+        name: group
+        type: string
+      - description: Search keyword
+        in: query
+        name: search
+        type: string
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List subjects
+      tags:
+      - Subjects
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Subject payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateSubjectRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Create subject
+      tags:
+      - Subjects
+  /subjects/{id}:
+    delete:
+      parameters:
+      - description: Subject ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      summary: Delete subject
+      tags:
+      - Subjects
+    get:
+      parameters:
+      - description: Subject ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get subject by id
+      tags:
+      - Subjects
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Subject ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Subject payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpdateSubjectRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Update subject
+      tags:
+      - Subjects
+  /teachers:
+    get:
+      parameters:
+      - description: Search by name/email/NIP
+        in: query
+        name: search
+        type: string
+      - description: Filter by active status
+        in: query
+        name: active
+        type: boolean
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: limit
+        type: integer
+      - description: Sort field (full_name,email,created_at)
+        in: query
+        name: sort
+        type: string
+      - description: Sort order (asc/desc)
+        in: query
+        name: order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List teachers
+      tags:
+      - Teachers
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Teacher payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateTeacherRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Create teacher
+      tags:
+      - Teachers
+  /teachers/{id}:
+    delete:
+      parameters:
+      - description: Teacher ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      summary: Deactivate teacher
+      tags:
+      - Teachers
+    get:
+      parameters:
+      - description: Teacher ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get teacher detail
+      tags:
+      - Teachers
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Teacher ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Teacher payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpdateTeacherRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Update teacher
+      tags:
+      - Teachers
+  /teachers/{id}/assignments:
+    get:
+      parameters:
+      - description: Teacher ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List teacher assignments
+      tags:
+      - Teacher Assignments
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Teacher ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Assignment payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateTeacherAssignmentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Create teacher assignment
+      tags:
+      - Teacher Assignments
+  /teachers/{id}/assignments/{aid}:
+    delete:
+      parameters:
+      - description: Teacher ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Assignment ID
+        in: path
+        name: aid
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      summary: Delete teacher assignment
+      tags:
+      - Teacher Assignments
+  /teachers/{id}/preferences:
+    get:
+      parameters:
+      - description: Teacher ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get teacher preferences
+      tags:
+      - Teacher Preferences
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Teacher ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Preference payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpsertTeacherPreferenceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Upsert teacher preferences
+      tags:
+      - Teacher Preferences
+  /teachers/{id}/schedules:
+    get:
+      parameters:
+      - description: Teacher ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List schedules by teacher
+      tags:
+      - Schedules
+  /terms:
+    get:
+      description: List terms with filters
+      parameters:
+      - description: Filter by academic year
+        in: query
+        name: academicYear
+        type: string
+      - description: Filter by type
+        in: query
+        name: type
+        type: string
+      - description: Filter by active flag
+        in: query
+        name: isActive
+        type: boolean
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List terms
+      tags:
+      - Terms
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Term payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateTermRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Create term
+      tags:
+      - Terms
+  /terms/{id}:
+    delete:
+      parameters:
+      - description: Term ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      summary: Delete term
+      tags:
+      - Terms
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Term ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Term payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpdateTermRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Update term
+      tags:
+      - Terms
+  /terms/active:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get active term
+      tags:
+      - Terms
+  /terms/set-active:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Set active payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.SetActiveTermRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Set active term
+      tags:
+      - Terms
+  /users:
+    get:
+      description: List users with pagination and filtering
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      - description: Role filter
+        in: query
+        name: role
+        type: string
+      - description: Active filter
+        in: query
+        name: active
+        type: boolean
+      - description: Search term
+        in: query
+        name: search
+        type: string
+      - description: Sort by
+        in: query
+        name: sort_by
+        type: string
+      - description: Sort order
+        in: query
+        name: sort_order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List users
+      tags:
+      - Users
+    post:
+      consumes:
+      - application/json
+      description: Create a new user
+      parameters:
+      - description: Create user payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Create user
+      tags:
+      - Users
+  /users/{id}:
+    delete:
+      description: Soft delete user by marking inactive
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Delete user
+      tags:
+      - Users
+    get:
+      description: Get user detail
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get user
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      description: Update user details
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Update user
+      tags:
+      - Users
+schemes:
+- http
+swagger: "2.0"

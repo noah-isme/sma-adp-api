@@ -103,11 +103,13 @@ func main() {
 	authRoutes.POST("/reset-password", authHandler.ResetPassword)
 	protectedAuth := authRoutes.Group("")
 	protectedAuth.Use(internalmiddleware.JWT(authSvc))
+	protectedAuth.GET("/me", authHandler.Me)
 	protectedAuth.POST("/logout", authHandler.Logout)
 	protectedAuth.POST("/change-password", authHandler.ChangePassword)
 
 	teacherRepo := repository.NewTeacherRepository(db)
 	classRepo := repository.NewClassRepository(db)
+	classSubjectRepo := repository.NewClassSubjectRepository(db)
 	subjectRepo := repository.NewSubjectRepository(db)
 	termRepo := repository.NewTermRepository(db)
 	scheduleRepo := repository.NewScheduleRepository(db)
@@ -116,12 +118,45 @@ func main() {
 	preferenceRepo := repository.NewTeacherPreferenceRepository(db)
 	calendarRepo := repository.NewCalendarRepository(db)
 	enrollmentRepo := repository.NewEnrollmentRepository(db)
+	studentRepo := repository.NewStudentRepository(db)
+	gradeRepo := repository.NewGradeRepository(db)
+	gradeFinalRepo := repository.NewGradeFinalRepository(db)
+	gradeConfigRepo := repository.NewGradeConfigRepository(db)
+	gradeComponentRepo := repository.NewGradeComponentRepository(db)
+	announcementRepo := repository.NewAnnouncementRepository(db)
+	behaviorRepo := repository.NewBehaviorRepository(db)
 	semesterScheduleRepo := repository.NewSemesterScheduleRepository(db)
 	semesterSlotRepo := repository.NewSemesterScheduleSlotRepository(db)
 	configurationRepo := repository.NewConfigurationRepository(db)
 
+	userSvc := service.NewUserService(authRepo, nil, logr)
+	userHandler := internalhandler.NewUserHandler(userSvc)
+	termSvc := service.NewTermService(termRepo, nil, logr)
+	termHandler := internalhandler.NewTermHandler(termSvc)
+	subjectSvc := service.NewSubjectService(subjectRepo, nil, logr)
+	subjectHandler := internalhandler.NewSubjectHandler(subjectSvc)
+	classSvc := service.NewClassService(classRepo, subjectRepo, classSubjectRepo, nil, logr)
+	classHandler := internalhandler.NewClassHandler(classSvc)
+	classSubjectHandler := internalhandler.NewClassSubjectHandler(classSvc)
+	scheduleSvc := service.NewScheduleService(scheduleRepo, nil, logr)
+	scheduleHandler := internalhandler.NewScheduleHandler(scheduleSvc)
+	studentSvc := service.NewStudentService(studentRepo, nil, logr)
+	studentHandler := internalhandler.NewStudentHandler(studentSvc)
+	enrollmentSvc := service.NewEnrollmentService(enrollmentRepo, studentRepo, classRepo, termRepo, nil, logr)
+	enrollmentHandler := internalhandler.NewEnrollmentHandler(enrollmentSvc)
+	gradeComponentSvc := service.NewGradeComponentService(gradeComponentRepo, nil, logr)
+	gradeComponentHandler := internalhandler.NewGradeComponentHandler(gradeComponentSvc)
+	gradeConfigSvc := service.NewGradeConfigService(gradeConfigRepo, gradeComponentRepo, nil, logr)
+	gradeConfigHandler := internalhandler.NewGradeConfigHandler(gradeConfigSvc)
+	gradeSvc := service.NewGradeService(gradeRepo, gradeFinalRepo, enrollmentRepo, gradeConfigRepo, gradeComponentRepo, nil, logr)
+	gradeHandler := internalhandler.NewGradeHandler(gradeSvc)
+	announcementSvc := service.NewAnnouncementService(announcementRepo, nil, logr)
+	announcementHandler := internalhandler.NewAnnouncementHandler(announcementSvc)
+	behaviorSvc := service.NewBehaviorService(behaviorRepo, nil, logr)
+	behaviorHandler := internalhandler.NewBehaviorHandler(behaviorSvc)
 	teacherSvc := service.NewTeacherService(teacherRepo, nil, logr)
 	calendarSvc := service.NewCalendarService(calendarRepo, nil, logr)
+	calendarHandler := internalhandler.NewCalendarHandler(calendarSvc)
 	assignmentSvc := service.NewTeacherAssignmentService(
 		teacherRepo,
 		classRepo,
@@ -256,7 +291,7 @@ func main() {
 		attendanceAliasHandler = internalhandler.NewAttendanceAliasHandler(attendanceAliasSvc)
 	}
 
-	var reportHandler *internalhandler.ReportHandler
+	reportHandler := internalhandler.NewReportHandler(nil, gradeSvc)
 	if cfg.Reports.Enabled {
 		if analyticsRepo == nil {
 			analyticsRepo = repository.NewAnalyticsRepository(db)
@@ -295,13 +330,12 @@ func main() {
 		})
 		reportSvc.RecoverPendingJobs(queueCtx)
 		reportSvc.StartCleanup(queueCtx)
-		reportHandler = internalhandler.NewReportHandler(reportSvc, nil)
+		reportHandler = internalhandler.NewReportHandler(reportSvc, gradeSvc)
 	}
 
 	var mutationHandler *internalhandler.MutationHandler
 	if cfg.Mutations.Enabled {
 		mutationRepo := repository.NewMutationRepository(db)
-		studentRepo := repository.NewStudentRepository(db)
 		mutationSvc := service.NewMutationService(mutationRepo, authRepo, logr, service.WithMutationAppliers(map[string]service.MutationApplier{
 			"student": service.NewStudentMutationApplier(studentRepo, logr),
 		}))
@@ -339,6 +373,101 @@ func main() {
 	secured := api.Group("")
 	secured.Use(internalmiddleware.JWT(authSvc))
 
+	usersGroup := secured.Group("/users")
+	usersGroup.GET("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), userHandler.List)
+	usersGroup.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), userHandler.Create)
+	usersGroup.GET("/:id", internalmiddleware.RBAC("SELF", string(models.RoleAdmin), string(models.RoleSuperAdmin)), userHandler.Get)
+	usersGroup.PUT("/:id", internalmiddleware.RBAC("SELF", string(models.RoleAdmin), string(models.RoleSuperAdmin)), userHandler.Update)
+	usersGroup.DELETE("/:id", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), userHandler.Delete)
+
+	termsGroup := secured.Group("/terms")
+	termsGroup.GET("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), termHandler.List)
+	termsGroup.GET("/active", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), termHandler.GetActive)
+	termsGroup.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), termHandler.Create)
+	termsGroup.PUT("/:id", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), termHandler.Update)
+	termsGroup.POST("/set-active", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), termHandler.SetActive)
+	termsGroup.DELETE("/:id", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), termHandler.Delete)
+
+	subjectsGroup := secured.Group("/subjects")
+	subjectsGroup.GET("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), subjectHandler.List)
+	subjectsGroup.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), subjectHandler.Create)
+	subjectsGroup.GET("/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), subjectHandler.Get)
+	subjectsGroup.PUT("/:id", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), subjectHandler.Update)
+	subjectsGroup.DELETE("/:id", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), subjectHandler.Delete)
+
+	classesGroup := secured.Group("/classes")
+	classesGroup.GET("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), classHandler.List)
+	classesGroup.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), classHandler.Create)
+	classesGroup.GET("/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), classHandler.Get)
+	classesGroup.PUT("/:id", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), classHandler.Update)
+	classesGroup.DELETE("/:id", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), classHandler.Delete)
+	classesGroup.GET("/:id/subjects", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), classSubjectHandler.List)
+	classesGroup.POST("/:id/subjects", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), classSubjectHandler.Assign)
+	classesGroup.GET("/:id/schedules", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), scheduleHandler.ListByClass)
+
+	schedulesGroup := secured.Group("/schedules")
+	schedulesGroup.GET("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), scheduleHandler.List)
+	schedulesGroup.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), scheduleHandler.Create)
+	schedulesGroup.POST("/bulk", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), scheduleHandler.BulkCreate)
+	schedulesGroup.PUT("/:id", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), scheduleHandler.Update)
+	schedulesGroup.DELETE("/:id", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), scheduleHandler.Delete)
+
+	studentsGroup := secured.Group("/students")
+	studentsGroup.GET("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), studentHandler.List)
+	studentsGroup.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), studentHandler.Create)
+	studentsGroup.GET("/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), studentHandler.Get)
+	studentsGroup.PUT("/:id", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), studentHandler.Update)
+	studentsGroup.DELETE("/:id", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), studentHandler.Delete)
+	studentsGroup.GET("/:id/behavior-summary", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), behaviorHandler.Summary)
+
+	enrollmentsGroup := secured.Group("/enrollments")
+	enrollmentsGroup.GET("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), enrollmentHandler.List)
+	enrollmentsGroup.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), enrollmentHandler.Create)
+	enrollmentsGroup.PUT("/:id/transfer", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), enrollmentHandler.Transfer)
+	enrollmentsGroup.DELETE("/:id", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), enrollmentHandler.Delete)
+
+	gradeComponentsGroup := secured.Group("/grade-components")
+	gradeComponentsGroup.GET("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), gradeComponentHandler.List)
+	gradeComponentsGroup.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), gradeComponentHandler.Create)
+
+	gradeConfigsGroup := secured.Group("/grade-configs")
+	gradeConfigsGroup.GET("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), gradeConfigHandler.List)
+	gradeConfigsGroup.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), gradeConfigHandler.Create)
+	gradeConfigsGroup.GET("/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), gradeConfigHandler.Get)
+	gradeConfigsGroup.PUT("/:id", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), gradeConfigHandler.Update)
+	gradeConfigsGroup.POST("/:id/finalize", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), gradeConfigHandler.Finalize)
+
+	gradesGroup := secured.Group("/grades")
+	gradesGroup.GET("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), gradeHandler.List)
+	gradesGroup.POST("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), gradeHandler.Upsert)
+	gradesGroup.POST("/bulk", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), gradeHandler.Bulk)
+	gradesGroup.POST("/recalculate", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), gradeHandler.Recalculate)
+	gradesGroup.POST("/finalize", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), gradeHandler.Finalize)
+
+	announcementsGroup := secured.Group("/announcements")
+	announcementsGroup.GET("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), announcementHandler.List)
+	announcementsGroup.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), announcementHandler.Create)
+	announcementsGroup.GET("/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), announcementHandler.Get)
+	announcementsGroup.PUT("/:id", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), announcementHandler.Update)
+	announcementsGroup.DELETE("/:id", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), announcementHandler.Delete)
+
+	behaviorGroup := secured.Group("/behavior-notes")
+	behaviorGroup.GET("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), behaviorHandler.List)
+	behaviorGroup.POST("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), behaviorHandler.Create)
+	behaviorGroup.PUT("/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), behaviorHandler.Update)
+	behaviorGroup.DELETE("/:id", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), behaviorHandler.Delete)
+
+	calendarEventsGroup := secured.Group("/calendar-events")
+	calendarEventsGroup.GET("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), calendarHandler.List)
+	calendarEventsGroup.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), calendarHandler.Create)
+	calendarEventsGroup.GET("/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), calendarHandler.Get)
+	calendarEventsGroup.PUT("/:id", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), calendarHandler.Update)
+	calendarEventsGroup.DELETE("/:id", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), calendarHandler.Delete)
+
+	reportJSONGroup := secured.Group("/reports")
+	reportJSONGroup.GET("/students/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), reportHandler.StudentReport)
+	reportJSONGroup.GET("/classes/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), reportHandler.ClassReport)
+
 	teachersGroup := secured.Group("/teachers")
 	teachersGroup.GET("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.List)
 	teachersGroup.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.Create)
@@ -350,6 +479,7 @@ func main() {
 	teachersGroup.DELETE("/:id/assignments/:aid", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.DeleteAssignment)
 	teachersGroup.GET("/:id/preferences", internalmiddleware.RBAC("SELF", string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.GetPreferences)
 	teachersGroup.PUT("/:id/preferences", internalmiddleware.RBAC("SELF", string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.UpsertPreferences)
+	teachersGroup.GET("/:id/schedules", internalmiddleware.RBAC("SELF", string(models.RoleAdmin), string(models.RoleSuperAdmin)), scheduleHandler.ListByTeacher)
 
 	if calendarAliasHandler != nil {
 		secured.GET("/calendar", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), calendarAliasHandler.List)
@@ -367,8 +497,13 @@ func main() {
 		configGroup.Use(internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)))
 		configGroup.GET("", configurationHandler.List)
 		configGroup.GET("/:key", configurationHandler.Get)
-		configGroup.PUT("/:key", configurationHandler.Update)
-		configGroup.PUT("/bulk", configurationHandler.BulkUpdate)
+		configGroup.PUT("/:key", func(c *gin.Context) {
+			if c.Param("key") == "bulk" {
+				configurationHandler.BulkUpdate(c)
+				return
+			}
+			configurationHandler.Update(c)
+		})
 	}
 
 	if homeroomHandler != nil {
@@ -389,15 +524,13 @@ func main() {
 	}
 
 	if schedulePreferenceHandler != nil {
-		schedulesGroup := secured.Group("/schedules")
 		schedulesGroup.GET("/preferences", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), schedulePreferenceHandler.Get)
 		schedulesGroup.POST("/preferences", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), schedulePreferenceHandler.Upsert)
 	}
 
-	if reportHandler != nil {
-		reportsGroup := secured.Group("/reports")
-		reportsGroup.POST("/generate", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), reportHandler.GenerateReport)
-		reportsGroup.GET("/status/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), reportHandler.ReportStatus)
+	if cfg.Reports.Enabled {
+		reportJSONGroup.POST("/generate", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), reportHandler.GenerateReport)
+		reportJSONGroup.GET("/status/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), reportHandler.ReportStatus)
 		secured.GET("/export/:token", reportHandler.DownloadReport)
 	}
 
@@ -420,8 +553,6 @@ func main() {
 
 	if cfg.Dashboard.Enabled {
 		dashboardCache := service.NewCacheService(cacheRepo, metricsSvc, cfg.Dashboard.CacheTTL, logr, cacheRepo != nil)
-		announcementSvc := service.NewAnnouncementService(repository.NewAnnouncementRepository(db), nil, logr)
-		scheduleSvc := service.NewScheduleService(scheduleRepo, nil, logr)
 		dashboardSvc := service.NewDashboardService(service.DashboardServiceParams{
 			Analytics:     analyticsSvc,
 			AnalyticsRepo: analyticsRepo,

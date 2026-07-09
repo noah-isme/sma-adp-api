@@ -4,4 +4,6 @@ coverage.html
 .env
 api/swagger/*
 !api/swagger/README.md
-!api/swagger/swagger.go
+!api/swagger/docs.go
+!api/swagger/swagger.json
+!api/swagger/swagger.yaml

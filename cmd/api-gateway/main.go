@@ -87,7 +87,8 @@ func main() {
 	api := r.Group(cfg.APIPrefix)
 
 	authRepo := repository.NewUserRepository(db)
-	authSvc := service.NewAuthService(authRepo, nil, logr, service.AuthConfig{
+	teacherRepo := repository.NewTeacherRepository(db)
+	authSvc := service.NewAuthService(authRepo, teacherRepo, nil, logr, service.AuthConfig{
 		AccessTokenSecret:  cfg.JWT.Secret,
 		AccessTokenExpiry:  cfg.JWT.Expiration,
 		RefreshTokenExpiry: cfg.JWT.RefreshExpiration,
@@ -107,7 +108,6 @@ func main() {
 	protectedAuth.POST("/logout", authHandler.Logout)
 	protectedAuth.POST("/change-password", authHandler.ChangePassword)
 
-	teacherRepo := repository.NewTeacherRepository(db)
 	classRepo := repository.NewClassRepository(db)
 	classSubjectRepo := repository.NewClassSubjectRepository(db)
 	subjectRepo := repository.NewSubjectRepository(db)
@@ -564,7 +564,7 @@ func main() {
 			Logger:        logr,
 			Config:        service.DashboardServiceConfig{CacheTTL: cfg.Dashboard.CacheTTL},
 		})
-		dashboardHandler := internalhandler.NewDashboardHandler(dashboardSvc)
+		dashboardHandler := internalhandler.NewDashboardHandler(dashboardSvc, teacherRepo)
 
 		dashboardGroup := secured.Group("")
 		dashboardGroup.Use(internalmiddleware.WithResponseMeta())

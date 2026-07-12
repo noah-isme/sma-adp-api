@@ -174,15 +174,17 @@ Dokumen ini merupakan panduan lengkap migrasi backend Admin Panel SMA dari arsit
 
 Migration akan dibagi menjadi **6 Phase** dengan durasi total estimasi **16-20 minggu**:
 
-| Phase       | Focus Area                 | Duration  | Status      |
-| ----------- | -------------------------- | --------- | ----------- |
-| **Phase 0** | Setup & Infrastructure     | 2 weeks   | 📋 Planning |
-| **Phase 1** | Auth & Core APIs           | 3 weeks   | ⏳ Pending  |
-| **Phase 2** | Academic Management        | 3 weeks   | ⏳ Pending  |
-| **Phase 3** | Student & Assessment       | 3 weeks   | ⏳ Pending  |
-| **Phase 4** | Attendance & Communication | 3 weeks   | ⏳ Pending  |
-| **Phase 5** | Analytics & Optimization   | 2-3 weeks | ⏳ Pending  |
-| **Phase 6** | Legacy Decommission        | 1-2 weeks | ⏳ Pending  |
+| Phase       | Focus Area                 | Duration  | Status                    |
+| ----------- | -------------------------- | --------- | ------------------------- |
+| **Phase 0** | Setup & Infrastructure     | 2 weeks   | ✅ Implemented            |
+| **Phase 1** | Auth & Core APIs           | 3 weeks   | ✅ Implemented + Exposed  |
+| **Phase 2** | Academic Management        | 3 weeks   | ✅ Implemented + Exposed  |
+| **Phase 3** | Student & Assessment       | 3 weeks   | ✅ Implemented + Exposed  |
+| **Phase 4** | Attendance & Communication | 3 weeks   | ⚠️ Partially Exposed      |
+| **Phase 5** | Analytics & Optimization   | 2-3 weeks | 🔶 Implemented (flagged)  |
+| **Phase 6** | Legacy Decommission        | 1-2 weeks | 🔶 Support Implemented    |
+
+> **Catatan**: Status aktual harian ada di [`PROJECT_STATUS.md`](./PROJECT_STATUS.md). Tabel di atas adalah snapshot per 11 Juli 2026. Fase 0–3 sudah implemented dan exposed di gateway. Fase 4 sebagian exposed (attendance/calendar alias masih feature-flagged). Fase 5 implemented di balik feature flag, menunggu contract test dan shadow compare. Fase 6: tooling cutover/decommission sudah ada, cutover produksi belum dijalankan.
 
 ---
 

@@ -101,7 +101,11 @@ func (s *HomeroomService) List(ctx context.Context, filter dto.HomeroomFilter, c
 			return nil, err
 		}
 		if claims.Role == models.RoleTeacher {
-			allowed, err := s.assignments.HasClassAccess(ctx, claims.UserID, filter.ClassID, termID)
+			teacherID := claims.TeacherID
+			if teacherID == "" {
+				teacherID = claims.UserID
+			}
+			allowed, err := s.assignments.HasClassAccess(ctx, teacherID, filter.ClassID, termID)
 			if err != nil {
 				return nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to verify class access")
 			}
@@ -119,7 +123,11 @@ func (s *HomeroomService) List(ctx context.Context, filter dto.HomeroomFilter, c
 		}
 		return items, nil
 	case models.RoleTeacher:
-		items, err := s.repo.ListForTeacher(ctx, claims.UserID, filter)
+		teacherID := claims.TeacherID
+		if teacherID == "" {
+			teacherID = claims.UserID
+		}
+		items, err := s.repo.ListForTeacher(ctx, teacherID, filter)
 		if err != nil {
 			return nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to list homerooms")
 		}
@@ -146,7 +154,11 @@ func (s *HomeroomService) Get(ctx context.Context, classID, termID string, claim
 	}
 
 	if claims.Role == models.RoleTeacher {
-		allowed, err := s.assignments.HasClassAccess(ctx, claims.UserID, classID, resolvedTermID)
+		teacherID := claims.TeacherID
+		if teacherID == "" {
+			teacherID = claims.UserID
+		}
+		allowed, err := s.assignments.HasClassAccess(ctx, teacherID, classID, resolvedTermID)
 		if err != nil {
 			return nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to verify class access")
 		}

@@ -20,14 +20,19 @@ type dashboardService interface {
 	Teacher(ctx context.Context, teacherID, termID string, date time.Time) (*dto.TeacherDashboardResponse, bool, error)
 }
 
+type teacherResolver interface {
+	FindByUserID(ctx context.Context, userID string) (*models.Teacher, error)
+}
+
 // DashboardHandler wires dashboard service to HTTP endpoints.
 type DashboardHandler struct {
-	service dashboardService
+	service        dashboardService
+	teacherResolver teacherResolver
 }
 
 // NewDashboardHandler constructs the handler.
-func NewDashboardHandler(service dashboardService) *DashboardHandler {
-	return &DashboardHandler{service: service}
+func NewDashboardHandler(service dashboardService, tr teacherResolver) *DashboardHandler {
+	return &DashboardHandler{service: service, teacherResolver: tr}
 }
 
 // Admin godoc
@@ -103,7 +108,26 @@ func (h *DashboardHandler) Teacher(c *gin.Context) {
 		date = parsed
 	}
 	start := time.Now()
-	summary, cacheHit, err := h.service.Teacher(c.Request.Context(), claims.UserID, termID, date)
+
+	teacherID := strings.TrimSpace(c.Query("teacherId"))
+	if claims.Role == models.RoleTeacher {
+		if claims.TeacherID != "" {
+			teacherID = claims.TeacherID
+		} else if h.teacherResolver != nil {
+			teacher, err := h.teacherResolver.FindByUserID(c.Request.Context(), claims.UserID)
+			if err != nil {
+				response.Error(c, appErrors.Clone(appErrors.ErrNotFound, "teacher not found for current user"))
+				return
+			}
+			teacherID = teacher.ID
+		}
+	}
+	if teacherID == "" {
+		response.Error(c, appErrors.Clone(appErrors.ErrValidation, "teacherId is required"))
+		return
+	}
+
+	summary, cacheHit, err := h.service.Teacher(c.Request.Context(), teacherID, termID, date)
 	if err != nil {
 		response.Error(c, err)
 		return

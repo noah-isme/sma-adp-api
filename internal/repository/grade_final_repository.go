@@ -137,7 +137,7 @@ func (r *GradeFinalRepository) ClassReportRows(ctx context.Context, classID, sub
 
 // ClassDistribution aggregates metrics for a class.
 func (r *GradeFinalRepository) ClassDistribution(ctx context.Context, classID, subjectID, termID string) (*models.ClassGradeDistribution, error) {
-	const query = `SELECT gf.subject_id, e.term_id AS term_id,
+	const query = `SELECT $3::varchar AS subject_id, $2::varchar AS term_id,
         MIN(gf.final_grade) AS min, MAX(gf.final_grade) AS max, AVG(gf.final_grade) AS average
         FROM grade_finals gf
         JOIN enrollments e ON e.id = gf.enrollment_id

@@ -17,45 +17,73 @@
         {
           "name": "Health",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{gatewayUrl}}/health",
-              "host": ["{{gatewayUrl}}"],
-              "path": ["health"]
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
             }
           }
         },
         {
           "name": "Ready",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{gatewayUrl}}/ready",
-              "host": ["{{gatewayUrl}}"],
-              "path": ["ready"]
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "ready"
+              ]
             }
           }
         },
         {
           "name": "Cutover Ping Go",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{gatewayUrl}}/internal/ping-go",
-              "host": ["{{gatewayUrl}}"],
-              "path": ["internal", "ping-go"]
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "internal",
+                "ping-go"
+              ]
             }
           }
         }
@@ -68,15 +96,25 @@
         {
           "name": "Cutover Ping Legacy",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{gatewayUrl}}/internal/ping-legacy",
-              "host": ["{{gatewayUrl}}"],
-              "path": ["internal", "ping-legacy"]
+              "host": [
+                "{{gatewayUrl}}"
+              ],
+              "path": [
+                "internal",
+                "ping-legacy"
+              ]
             }
           }
         }
@@ -91,12 +129,20 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "me"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
             }
           }
         },
@@ -105,12 +151,19 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/users",
-              "host": ["{{baseUrl}}"],
-              "path": ["users"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users"
+              ]
             }
           }
         },
@@ -119,12 +172,19 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/terms",
-              "host": ["{{baseUrl}}"],
-              "path": ["terms"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "terms"
+              ]
             }
           }
         },
@@ -133,12 +193,19 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/subjects",
-              "host": ["{{baseUrl}}"],
-              "path": ["subjects"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "subjects"
+              ]
             }
           }
         },
@@ -147,12 +214,19 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/classes",
-              "host": ["{{baseUrl}}"],
-              "path": ["classes"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "classes"
+              ]
             }
           }
         },
@@ -161,12 +235,19 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/schedules",
-              "host": ["{{baseUrl}}"],
-              "path": ["schedules"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "schedules"
+              ]
             }
           }
         },
@@ -175,12 +256,19 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/students",
-              "host": ["{{baseUrl}}"],
-              "path": ["students"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "students"
+              ]
             }
           }
         },
@@ -189,12 +277,19 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/enrollments",
-              "host": ["{{baseUrl}}"],
-              "path": ["enrollments"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "enrollments"
+              ]
             }
           }
         },
@@ -203,12 +298,19 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/grade-components",
-              "host": ["{{baseUrl}}"],
-              "path": ["grade-components"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "grade-components"
+              ]
             }
           }
         },
@@ -217,12 +319,19 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/grade-configs",
-              "host": ["{{baseUrl}}"],
-              "path": ["grade-configs"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "grade-configs"
+              ]
             }
           }
         },
@@ -231,12 +340,19 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/grades",
-              "host": ["{{baseUrl}}"],
-              "path": ["grades"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "grades"
+              ]
             }
           }
         },
@@ -245,12 +361,19 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/announcements",
-              "host": ["{{baseUrl}}"],
-              "path": ["announcements"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "announcements"
+              ]
             }
           }
         },
@@ -259,12 +382,19 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/behavior-notes",
-              "host": ["{{baseUrl}}"],
-              "path": ["behavior-notes"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "behavior-notes"
+              ]
             }
           }
         },
@@ -273,12 +403,19 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/calendar-events",
-              "host": ["{{baseUrl}}"],
-              "path": ["calendar-events"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "calendar-events"
+              ]
             }
           }
         },
@@ -287,12 +424,19 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/teachers",
-              "host": ["{{baseUrl}}"],
-              "path": ["teachers"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "teachers"
+              ]
             }
           }
         }
@@ -307,12 +451,21 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/classes/{{classId}}/subjects",
-              "host": ["{{baseUrl}}"],
-              "path": ["classes", "{{classId}}", "subjects"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "classes",
+                "{{classId}}",
+                "subjects"
+              ]
             }
           }
         },
@@ -321,12 +474,21 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/classes/{{classId}}/schedules",
-              "host": ["{{baseUrl}}"],
-              "path": ["classes", "{{classId}}", "schedules"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "classes",
+                "{{classId}}",
+                "schedules"
+              ]
             }
           }
         },
@@ -335,12 +497,20 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/students/{{studentId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["students", "{{studentId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "students",
+                "{{studentId}}"
+              ]
             }
           }
         },
@@ -349,12 +519,21 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/students/{{studentId}}/behavior-summary",
-              "host": ["{{baseUrl}}"],
-              "path": ["students", "{{studentId}}", "behavior-summary"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "students",
+                "{{studentId}}",
+                "behavior-summary"
+              ]
             }
           }
         },
@@ -363,12 +542,20 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/grade-configs/{{gradeConfigId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["grade-configs", "{{gradeConfigId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "grade-configs",
+                "{{gradeConfigId}}"
+              ]
             }
           }
         },
@@ -377,12 +564,28 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
-              "raw": "{{baseUrl}}/reports/students/{{studentId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["reports", "students", "{{studentId}}"]
+              "raw": "{{baseUrl}}/reports/students/{{studentId}}?termId={{termId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                "students",
+                "{{studentId}}"
+              ],
+              "query": [
+                {
+                  "key": "termId",
+                  "value": "{{termId}}",
+                  "disabled": false
+                }
+              ]
             }
           }
         },
@@ -391,12 +594,33 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
-              "raw": "{{baseUrl}}/reports/classes/{{classId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["reports", "classes", "{{classId}}"]
+              "raw": "{{baseUrl}}/reports/classes/{{classId}}?subjectId={{subjectId}}&termId={{termId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                "classes",
+                "{{classId}}"
+              ],
+              "query": [
+                {
+                  "key": "subjectId",
+                  "value": "{{subjectId}}",
+                  "disabled": false
+                },
+                {
+                  "key": "termId",
+                  "value": "{{termId}}",
+                  "disabled": false
+                }
+              ]
             }
           }
         },
@@ -405,12 +629,21 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/teachers/{{teacherId}}/assignments",
-              "host": ["{{baseUrl}}"],
-              "path": ["teachers", "{{teacherId}}", "assignments"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "teachers",
+                "{{teacherId}}",
+                "assignments"
+              ]
             }
           }
         },
@@ -419,12 +652,21 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/teachers/{{teacherId}}/preferences",
-              "host": ["{{baseUrl}}"],
-              "path": ["teachers", "{{teacherId}}", "preferences"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "teachers",
+                "{{teacherId}}",
+                "preferences"
+              ]
             }
           }
         },
@@ -433,12 +675,21 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/teachers/{{teacherId}}/schedules",
-              "host": ["{{baseUrl}}"],
-              "path": ["teachers", "{{teacherId}}", "schedules"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "teachers",
+                "{{teacherId}}",
+                "schedules"
+              ]
             }
           }
         }
@@ -453,12 +704,26 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
-              "raw": "{{baseUrl}}/dashboard",
-              "host": ["{{baseUrl}}"],
-              "path": ["dashboard"]
+              "raw": "{{baseUrl}}/dashboard?termId={{termId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dashboard"
+              ],
+              "query": [
+                {
+                  "key": "termId",
+                  "value": "{{termId}}",
+                  "disabled": false
+                }
+              ]
             }
           }
         },
@@ -467,12 +732,32 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
-              "raw": "{{baseUrl}}/dashboard/academics",
-              "host": ["{{baseUrl}}"],
-              "path": ["dashboard", "academics"]
+              "raw": "{{baseUrl}}/dashboard/academics?termId={{termId}}&teacherId={{teacherId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dashboard",
+                "academics"
+              ],
+              "query": [
+                {
+                  "key": "termId",
+                  "value": "{{termId}}",
+                  "disabled": false
+                },
+                {
+                  "key": "teacherId",
+                  "value": "{{teacherId}}",
+                  "disabled": false
+                }
+              ]
             }
           }
         },
@@ -481,12 +766,19 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/calendar",
-              "host": ["{{baseUrl}}"],
-              "path": ["calendar"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "calendar"
+              ]
             }
           }
         },
@@ -495,12 +787,26 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
-              "raw": "{{baseUrl}}/attendance",
-              "host": ["{{baseUrl}}"],
-              "path": ["attendance"]
+              "raw": "{{baseUrl}}/attendance?termId={{termId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "attendance"
+              ],
+              "query": [
+                {
+                  "key": "termId",
+                  "value": "{{termId}}",
+                  "disabled": false
+                }
+              ]
             }
           }
         },
@@ -509,12 +815,27 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
-              "raw": "{{baseUrl}}/attendance/daily",
-              "host": ["{{baseUrl}}"],
-              "path": ["attendance", "daily"]
+              "raw": "{{baseUrl}}/attendance/daily?termId={{termId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "attendance",
+                "daily"
+              ],
+              "query": [
+                {
+                  "key": "termId",
+                  "value": "{{termId}}",
+                  "disabled": false
+                }
+              ]
             }
           }
         },
@@ -523,12 +844,19 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/configuration",
-              "host": ["{{baseUrl}}"],
-              "path": ["configuration"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "configuration"
+              ]
             }
           }
         },
@@ -537,12 +865,19 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/homerooms",
-              "host": ["{{baseUrl}}"],
-              "path": ["homerooms"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "homerooms"
+              ]
             }
           }
         },
@@ -551,12 +886,19 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/mutations",
-              "host": ["{{baseUrl}}"],
-              "path": ["mutations"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mutations"
+              ]
             }
           }
         },
@@ -565,12 +907,19 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/archives",
-              "host": ["{{baseUrl}}"],
-              "path": ["archives"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "archives"
+              ]
             }
           }
         },
@@ -579,12 +928,21 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Accept", "value": "application/json" }
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/reports/status/{{reportJobId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["reports", "status", "{{reportJobId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                "status",
+                "{{reportJobId}}"
+              ]
             }
           }
         }
@@ -594,7 +952,11 @@
   "auth": {
     "type": "bearer",
     "bearer": [
-      { "key": "token", "value": "{{accessToken}}", "type": "string" }
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
     ]
   },
   "event": [
@@ -631,16 +993,49 @@
     }
   ],
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:8080/api/v1" },
-    { "key": "gatewayUrl", "value": "http://localhost:8080" },
-    { "key": "accessToken", "value": "" },
-    { "key": "termId", "value": "" },
-    { "key": "classId", "value": "" },
-    { "key": "studentId", "value": "" },
-    { "key": "teacherId", "value": "" },
-    { "key": "subjectId", "value": "" },
-    { "key": "scheduleId", "value": "" },
-    { "key": "gradeConfigId", "value": "" },
-    { "key": "reportJobId", "value": "" }
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api/v1"
+    },
+    {
+      "key": "gatewayUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "termId",
+      "value": ""
+    },
+    {
+      "key": "classId",
+      "value": ""
+    },
+    {
+      "key": "studentId",
+      "value": ""
+    },
+    {
+      "key": "teacherId",
+      "value": ""
+    },
+    {
+      "key": "subjectId",
+      "value": ""
+    },
+    {
+      "key": "scheduleId",
+      "value": ""
+    },
+    {
+      "key": "gradeConfigId",
+      "value": ""
+    },
+    {
+      "key": "reportJobId",
+      "value": ""
+    }
   ]
 }

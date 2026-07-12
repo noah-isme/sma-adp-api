@@ -6,7 +6,7 @@ SELECT
     SUM(CASE WHEN da.status = 'A' THEN 1 ELSE 0 END) AS absent_count,
     CASE WHEN COUNT(*) = 0 THEN 0 ELSE (SUM(CASE WHEN da.status = 'H' THEN 1 ELSE 0 END)::DECIMAL / COUNT(*)) * 100 END AS percentage,
     MAX(da.updated_at) AS updated_at
-FROM daily_attendances da
+FROM daily_attendance da
 JOIN enrollments e ON e.id = da.enrollment_id
 GROUP BY e.term_id, e.class_id;
 

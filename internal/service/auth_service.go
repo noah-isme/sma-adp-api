@@ -31,6 +31,10 @@ type authUserRepository interface {
 	CreateAuditLog(ctx context.Context, log *models.AuditLog) error
 }
 
+type authTeacherLookup interface {
+	FindByUserID(ctx context.Context, userID string) (*models.Teacher, error)
+}
+
 // AuthConfig defines configuration for authentication flows.
 type AuthConfig struct {
 	AccessTokenSecret  string
@@ -43,21 +47,22 @@ type AuthConfig struct {
 
 // AuthService provides authentication use cases.
 type AuthService struct {
-	repo      authUserRepository
-	validator *validator.Validate
-	logger    *zap.Logger
-	config    AuthConfig
+	repo          authUserRepository
+	teacherLookup authTeacherLookup
+	validator     *validator.Validate
+	logger        *zap.Logger
+	config        AuthConfig
 }
 
 // NewAuthService constructs an AuthService instance.
-func NewAuthService(repo authUserRepository, validate *validator.Validate, logger *zap.Logger, config AuthConfig) *AuthService {
+func NewAuthService(repo authUserRepository, teacherLookup authTeacherLookup, validate *validator.Validate, logger *zap.Logger, config AuthConfig) *AuthService {
 	if logger == nil {
 		logger = zap.NewNop()
 	}
 	if validate == nil {
 		validate = validator.New()
 	}
-	return &AuthService{repo: repo, validator: validate, logger: logger, config: config}
+	return &AuthService{repo: repo, teacherLookup: teacherLookup, validator: validate, logger: logger, config: config}
 }
 
 // Login authenticates a user and returns issued tokens.
@@ -88,7 +93,9 @@ func (s *AuthService) Login(ctx context.Context, req models.LoginRequest) (*mode
 		}
 	}
 
-	accessToken, _, err := s.generateAccessToken(user)
+	teacherID := s.resolveTeacherID(ctx, user)
+
+	accessToken, _, err := s.generateAccessToken(user, teacherID)
 	if err != nil {
 		return nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to create access token")
 	}
@@ -177,7 +184,9 @@ func (s *AuthService) RefreshToken(ctx context.Context, req models.RefreshTokenR
 		s.logger.Warn("failed to revoke used refresh token", zap.Error(err))
 	}
 
-	accessToken, _, err := s.generateAccessToken(user)
+	teacherID := s.resolveTeacherID(ctx, user)
+
+	accessToken, _, err := s.generateAccessToken(user, teacherID)
 	if err != nil {
 		return nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to generate access token")
 	}
@@ -337,14 +346,26 @@ func (s *AuthService) ResetPassword(ctx context.Context, req models.ConfirmReset
 	return nil
 }
 
-func (s *AuthService) generateAccessToken(user *models.User) (string, time.Time, error) {
+func (s *AuthService) resolveTeacherID(ctx context.Context, user *models.User) string {
+	if user.Role != models.RoleTeacher || s.teacherLookup == nil {
+		return ""
+	}
+	teacher, err := s.teacherLookup.FindByUserID(ctx, user.ID)
+	if err != nil || teacher == nil {
+		return ""
+	}
+	return teacher.ID
+}
+
+func (s *AuthService) generateAccessToken(user *models.User, teacherID string) (string, time.Time, error) {
 	issuedAt := time.Now().UTC()
 	expiresAt := issuedAt.Add(s.config.AccessTokenExpiry)
 	claims := &models.JWTClaims{
-		UserID:   user.ID,
-		Role:     user.Role,
-		Email:    user.Email,
-		FullName: user.FullName,
+		UserID:    user.ID,
+		TeacherID: teacherID,
+		Role:      user.Role,
+		Email:     user.Email,
+		FullName:  user.FullName,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    s.config.Issuer,
 			Subject:   user.ID,

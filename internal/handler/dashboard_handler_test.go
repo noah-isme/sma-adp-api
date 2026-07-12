@@ -41,9 +41,18 @@ func (f *fakeDashboardSrv) Teacher(_ context.Context, teacherID, termID string, 
 	return f.teacherResp, f.teacherHit, f.teacherErr
 }
 
+type fakeTeacherResolver struct {
+	teacher *models.Teacher
+	err     error
+}
+
+func (f *fakeTeacherResolver) FindByUserID(_ context.Context, _ string) (*models.Teacher, error) {
+	return f.teacher, f.err
+}
+
 func TestDashboardHandlerAdminRequiresTerm(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	handler := NewDashboardHandler(&fakeDashboardSrv{})
+	handler := NewDashboardHandler(&fakeDashboardSrv{}, nil)
 
 	rec := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(rec)
@@ -59,7 +68,7 @@ func TestDashboardHandlerAdminSuccess(t *testing.T) {
 	handler := NewDashboardHandler(&fakeDashboardSrv{
 		adminResp: &dto.AdminDashboardResponse{TermID: "term-1"},
 		adminHit:  true,
-	})
+	}, nil)
 
 	rec := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(rec)
@@ -76,7 +85,7 @@ func TestDashboardHandlerAdminSuccess(t *testing.T) {
 
 func TestDashboardHandlerTeacherInvalidDate(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	handler := NewDashboardHandler(&fakeDashboardSrv{})
+	handler := NewDashboardHandler(&fakeDashboardSrv{}, nil)
 
 	rec := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(rec)
@@ -91,20 +100,23 @@ func TestDashboardHandlerTeacherInvalidDate(t *testing.T) {
 func TestDashboardHandlerTeacherSuccess(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	service := &fakeDashboardSrv{
-		teacherResp: &dto.TeacherDashboardResponse{TeacherID: "teacher-1"},
+		teacherResp: &dto.TeacherDashboardResponse{TeacherID: "tch-1"},
 		teacherHit:  false,
 	}
-	handler := NewDashboardHandler(service)
+	resolver := &fakeTeacherResolver{
+		teacher: &models.Teacher{ID: "tch-1"},
+	}
+	handler := NewDashboardHandler(service, resolver)
 
 	rec := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(rec)
 	c.Request = httptest.NewRequest(http.MethodGet, "/dashboard/academics?termId=term-1", nil)
-	c.Set(middleware.ContextUserKey, &models.JWTClaims{UserID: "teacher-1"})
+	c.Set(middleware.ContextUserKey, &models.JWTClaims{UserID: "usr-1", Role: models.RoleTeacher})
 
 	handler.Teacher(c)
 
 	assert.Equal(t, http.StatusOK, rec.Code)
-	assert.Equal(t, "teacher-1", service.lastTeacher.teacherID)
+	assert.Equal(t, "tch-1", service.lastTeacher.teacherID)
 	assert.Equal(t, "term-1", service.lastTeacher.termID)
 	assert.False(t, service.lastTeacher.date.IsZero())
 }

@@ -73,7 +73,7 @@ func (r *TeacherRepository) List(ctx context.Context, filter models.TeacherFilte
 	}
 	offset := (page - 1) * size
 
-	query := fmt.Sprintf("SELECT id, nip, email, full_name, phone, expertise, active, created_at, updated_at %s ORDER BY %s %s LIMIT %d OFFSET %d", base, column, order, size, offset)
+	query := fmt.Sprintf("SELECT id, user_id, nip, email, full_name, phone, expertise, active, created_at, updated_at %s ORDER BY %s %s LIMIT %d OFFSET %d", base, column, order, size, offset)
 	var teachers []models.Teacher
 	if err := r.db.SelectContext(ctx, &teachers, query, args...); err != nil {
 		return nil, 0, fmt.Errorf("list teachers: %w", err)
@@ -90,7 +90,7 @@ func (r *TeacherRepository) List(ctx context.Context, filter models.TeacherFilte
 
 // FindByID fetches a teacher by ID.
 func (r *TeacherRepository) FindByID(ctx context.Context, id string) (*models.Teacher, error) {
-	const query = `SELECT id, nip, email, full_name, phone, expertise, active, created_at, updated_at FROM teachers WHERE id = $1`
+	const query = `SELECT id, user_id, nip, email, full_name, phone, expertise, active, created_at, updated_at FROM teachers WHERE id = $1`
 	var teacher models.Teacher
 	if err := r.db.GetContext(ctx, &teacher, query, id); err != nil {
 		return nil, err
@@ -100,7 +100,7 @@ func (r *TeacherRepository) FindByID(ctx context.Context, id string) (*models.Te
 
 // FindByEmail fetches a teacher by email.
 func (r *TeacherRepository) FindByEmail(ctx context.Context, email string) (*models.Teacher, error) {
-	const query = `SELECT id, nip, email, full_name, phone, expertise, active, created_at, updated_at FROM teachers WHERE LOWER(email) = LOWER($1)`
+	const query = `SELECT id, user_id, nip, email, full_name, phone, expertise, active, created_at, updated_at FROM teachers WHERE LOWER(email) = LOWER($1)`
 	var teacher models.Teacher
 	if err := r.db.GetContext(ctx, &teacher, query, email); err != nil {
 		return nil, err
@@ -110,9 +110,19 @@ func (r *TeacherRepository) FindByEmail(ctx context.Context, email string) (*mod
 
 // FindByNIP fetches a teacher by NIP.
 func (r *TeacherRepository) FindByNIP(ctx context.Context, nip string) (*models.Teacher, error) {
-	const query = `SELECT id, nip, email, full_name, phone, expertise, active, created_at, updated_at FROM teachers WHERE nip = $1`
+	const query = `SELECT id, user_id, nip, email, full_name, phone, expertise, active, created_at, updated_at FROM teachers WHERE nip = $1`
 	var teacher models.Teacher
 	if err := r.db.GetContext(ctx, &teacher, query, nip); err != nil {
+		return nil, err
+	}
+	return &teacher, nil
+}
+
+// FindByUserID fetches a teacher by the linked user account ID.
+func (r *TeacherRepository) FindByUserID(ctx context.Context, userID string) (*models.Teacher, error) {
+	const query = `SELECT id, user_id, nip, email, full_name, phone, expertise, active, created_at, updated_at FROM teachers WHERE user_id = $1`
+	var teacher models.Teacher
+	if err := r.db.GetContext(ctx, &teacher, query, userID); err != nil {
 		return nil, err
 	}
 	return &teacher, nil
@@ -168,8 +178,8 @@ func (r *TeacherRepository) Create(ctx context.Context, teacher *models.Teacher)
 	}
 	teacher.UpdatedAt = now
 
-	const query = `INSERT INTO teachers (id, nip, email, full_name, phone, expertise, active, created_at, updated_at)
-		VALUES (:id, :nip, :email, :full_name, :phone, :expertise, :active, :created_at, :updated_at)`
+	const query = `INSERT INTO teachers (id, user_id, nip, email, full_name, phone, expertise, active, created_at, updated_at)
+		VALUES (:id, :user_id, :nip, :email, :full_name, :phone, :expertise, :active, :created_at, :updated_at)`
 	if _, err := r.db.NamedExecContext(ctx, query, teacher); err != nil {
 		return fmt.Errorf("create teacher: %w", err)
 	}
@@ -179,7 +189,7 @@ func (r *TeacherRepository) Create(ctx context.Context, teacher *models.Teacher)
 // Update modifies an existing teacher record.
 func (r *TeacherRepository) Update(ctx context.Context, teacher *models.Teacher) error {
 	teacher.UpdatedAt = time.Now().UTC()
-	const query = `UPDATE teachers SET nip = :nip, email = :email, full_name = :full_name, phone = :phone, expertise = :expertise, active = :active, updated_at = :updated_at WHERE id = :id`
+	const query = `UPDATE teachers SET user_id = :user_id, nip = :nip, email = :email, full_name = :full_name, phone = :phone, expertise = :expertise, active = :active, updated_at = :updated_at WHERE id = :id`
 	if _, err := r.db.NamedExecContext(ctx, query, teacher); err != nil {
 		return fmt.Errorf("update teacher: %w", err)
 	}

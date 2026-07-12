@@ -65,9 +65,10 @@ type UserInfo struct {
 
 // JWTClaims represents the JWT payload for access tokens.
 type JWTClaims struct {
-	UserID   string   `json:"user_id"`
-	Role     UserRole `json:"role"`
-	Email    string   `json:"email"`
-	FullName string   `json:"full_name"`
+	UserID    string   `json:"user_id"`
+	TeacherID string   `json:"teacher_id,omitempty"`
+	Role      UserRole `json:"role"`
+	Email     string   `json:"email"`
+	FullName  string   `json:"full_name"`
 	jwt.RegisteredClaims
 }

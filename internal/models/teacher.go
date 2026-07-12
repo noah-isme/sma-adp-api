@@ -5,6 +5,7 @@ import "time"
 // Teacher represents an instructor record.
 type Teacher struct {
 	ID        string    `db:"id" json:"id"`
+	UserID    *string   `db:"user_id" json:"user_id,omitempty"`
 	NIP       *string   `db:"nip" json:"nip,omitempty"`
 	Email     string    `db:"email" json:"email"`
 	FullName  string    `db:"full_name" json:"full_name"`

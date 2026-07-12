@@ -25,9 +25,9 @@ func TestTeacherRepositoryList(t *testing.T) {
 	defer cleanup()
 	repo := NewTeacherRepository(db)
 
-	rows := sqlmock.NewRows([]string{"id", "nip", "email", "full_name", "phone", "expertise", "active", "created_at", "updated_at"}).
-		AddRow("t1", nil, "a@example.com", "Teacher A", nil, nil, true, time.Now(), time.Now())
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, nip, email, full_name, phone, expertise, active, created_at, updated_at FROM teachers WHERE 1=1 ORDER BY created_at DESC LIMIT 20 OFFSET 0")).
+	rows := sqlmock.NewRows([]string{"id", "user_id", "nip", "email", "full_name", "phone", "expertise", "active", "created_at", "updated_at"}).
+		AddRow("t1", nil, nil, "a@example.com", "Teacher A", nil, nil, true, time.Now(), time.Now())
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, nip, email, full_name, phone, expertise, active, created_at, updated_at FROM teachers WHERE 1=1 ORDER BY created_at DESC LIMIT 20 OFFSET 0")).
 		WillReturnRows(rows)
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM teachers WHERE 1=1")).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
@@ -45,7 +45,7 @@ func TestTeacherRepositoryCreateAndDeactivate(t *testing.T) {
 	repo := NewTeacherRepository(db)
 
 	mock.ExpectExec("INSERT INTO teachers").
-		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), "a@example.com", "Teacher A", sqlmock.AnyArg(), sqlmock.AnyArg(), true, sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), "a@example.com", "Teacher A", sqlmock.AnyArg(), sqlmock.AnyArg(), true, sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	err := repo.Create(context.Background(), &models.Teacher{Email: "a@example.com", FullName: "Teacher A", Active: true})

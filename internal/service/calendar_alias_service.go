@@ -215,7 +215,11 @@ func (s *CalendarAliasService) resolveClassFilter(ctx context.Context, claims *m
 		return nil, nil
 	}
 
-	assignments, err := s.assignments.ListByTeacher(ctx, claims.UserID)
+	teacherID := claims.TeacherID
+	if teacherID == "" {
+		teacherID = claims.UserID
+	}
+	assignments, err := s.assignments.ListByTeacher(ctx, teacherID)
 	if err != nil {
 		return nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to resolve teacher assignments")
 	}

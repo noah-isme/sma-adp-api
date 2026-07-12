@@ -71,25 +71,136 @@ Feature-flagged:
 - `api/swagger/swagger.go` lama tidak dipakai lagi karena konflik dengan generated `docs.go`.
 - Contract collection diperluas dari health-only menjadi smoke contract berfolder: `Public Gateway`, `Cutover Readiness Smoke`, `Core Protected Smoke`, `Seeded Core Smoke`, dan `Gated Feature Smoke`.
 - Target `make contract-test` default hanya menjalankan `Public Gateway` dan `Core Protected Smoke`, serta membutuhkan `ACCESS_TOKEN` untuk protected endpoint.
-- Verifikasi terakhir setelah pembaruan collection/workflow sudah pass: `go test ./...`, `go vet ./...`, dan `go build -o /tmp/sma-api-gateway ./cmd/api-gateway`.
-- Contract runtime belum dijalankan karena membutuhkan server Go hidup dan `ACCESS_TOKEN` valid.
+- **Contract test pertama kali dijalankan dengan server Go hidup** (12 Jul 2026) menggunakan Docker Postgres, Redis, seed data (`scripts/seed.sql`), dan token SUPERADMIN/ADMIN/TEACHER.
+- **4 bug ditemukan dan diperbaiki** saat contract test dan RBAC smoke test:
+  - Bug 1: `grade_config_components` tabel tidak punya kolom `created_at` yang diharapkan model dan query `loadComponents`. Fix: migrasi `000013` menambah kolom `created_at` dengan `DEFAULT CURRENT_TIMESTAMP`.
+  - Bug 2: `ClassDistribution` query di `grade_final_repository.go` error SQL karena `SELECT gf.subject_id, e.term_id` tanpa `GROUP BY` saat menggunakan aggregate functions (MIN/MAX/AVG). Fix: gunakan input parameter sebagai konstanta di SELECT (`$3::varchar AS subject_id, $2::varchar AS term_id`), sehingga aggregate selalu return 1 row.
+  - Bug 3: `Dashboard Academics` 404 — handler mengirim `claims.UserID` sebagai `teacherID`, tapi tabel `teachers` pakai ID berbeda. Fix: migrasi `000014` menambah kolom `user_id` di `teachers`, `FindByUserID` method di repository, dan `TeacherID` field di JWT claims yang di-resolve saat login.
+  - Bug 4: `Calendar Alias` 500 untuk role TEACHER — root cause sama dengan Bug 3. Fix sistemik: `TeacherID` di JWT claims digunakan di `calendar_alias_service.go`, `attendance_alias_service.go`, dan `homeroom_service.go` dengan fallback ke `claims.UserID` untuk backward compat.
+- **Contract collection diperbaiki**: 6 request tidak mengirim query param yang required (reports, dashboard, attendance butuh `termId`; class report butuh `subjectId` + `termId`; dashboard academics butuh `teacherId`). Query params ditambahkan ke collection.
+- **RBAC smoke test selesai** untuk 3 role (SUPERADMIN, ADMIN, TEACHER). Semua RBAC denial yang teramati adalah expected behavior.
+- **Rollback drill tabletop selesai** — lihat `docs/decommission.md`.
+- **Shadow compare: BLOCKED** — legacy NestJS backend tidak tersedia di environment ini.
+- Hasil contract test SUPERADMIN/ADMIN: **37 dari 38 request return 200 OK, 75 dari 76 assertions pass** (1 failure: Report Job Status 404 — expected).
+- Hasil contract test TEACHER: **29 dari 38 request return 200 OK** (9 failures: semua expected RBAC denials atau validation errors).
+- Verifikasi terakhir: `go test ./...`, `go vet ./...`, dan `go build` semua pass.
+
+## Hasil Contract Test (12 Jul 2026)
+
+### SUPERADMIN / ADMIN Role
+
+| Folder | Request | Status | Catatan |
+| --- | --- | --- | --- |
+| Public Gateway | Health, Ready, Cutover Ping Go | 3/3 OK | Semua 200. |
+| Core Protected Smoke | Auth Me, Users, Terms, Subjects, Classes, Schedules, Students, Enrollments, Grade Components, Grade Configs, Grades, Announcements, Behavior Notes, Calendar Events, Teachers | 15/15 OK | Semua 200. |
+| Seeded Core Smoke | Class Subjects, Class Schedules, Student Detail, Student Behavior Summary, Grade Config Detail, Student Report, Class Report, Teacher Assignments, Teacher Preferences, Teacher Schedules | 10/10 OK | Semua 200. |
+| Gated Feature Smoke | Dashboard Admin, Dashboard Academics, Calendar Alias, Attendance Summary, Attendance Daily, Configuration List, Homerooms List, Mutations List, Archives List | 9/9 OK | Semua 200. |
+| Gated Feature Smoke | Report Job Status | 404 | Expected — non-existent job ID. |
+
+### TEACHER Role
+
+| Endpoint | Status | Catatan |
+| --- | --- | --- |
+| Public Gateway (3) | 200 | Health, Ready, Ping Go |
+| Auth Me | 200 | |
+| Users List | 403 | Expected RBAC — teacher can't manage users |
+| Terms, Subjects, Classes, Schedules, Students, Enrollments | 200 | Read access for teachers |
+| Grade Components, Grade Configs, Grades | 200 | Read access |
+| Announcements, Behavior Notes, Calendar Events | 200 | Read access |
+| Teachers List | 403 | Expected RBAC — admin-only |
+| Class Subjects, Class Schedules | 200 | |
+| Student Detail, Student Behavior Summary | 200 | |
+| Grade Config Detail | 200 | |
+| Student Report, Class Report | 200 | With termId/subjectId params |
+| Teacher Assignments, Preferences, Schedules | 403 | Expected RBAC — admin-only |
+| Dashboard Admin | 403 | Expected RBAC — admin/superadmin only |
+| **Dashboard Academics** | **200** | **Auto-resolved via JWT TeacherID** |
+| **Calendar Alias** | **200** | **Fixed — was 500 before TeacherID fix** |
+| Attendance Summary | 200 | With classId for teachers |
+| Attendance Daily | 400 | Expected — classId required for teachers |
+| Configuration List | 403 | Expected RBAC — admin-only |
+| Homerooms List | 200 | |
+| Mutations List | 200 | |
+| Archives List | 200 | |
 
 ## Pekerjaan Berikutnya
 
-1. Jalankan contract test dengan API Go yang hidup dan token admin/superadmin: `ACCESS_TOKEN=<token> make contract-test BASE_URL=http://localhost:8080/api/v1`.
-2. Jalankan folder `Seeded Core Smoke` setelah seed ID tersedia untuk `classId`, `studentId`, `teacherId`, dan `gradeConfigId`.
-3. Jalankan folder `Gated Feature Smoke` hanya setelah feature flag terkait aktif.
-4. Jalankan folder `Cutover Readiness Smoke` dan shadow compare setelah legacy hidup: `make shadow-compare GO_BASE_URL=http://localhost:8080 LEGACY_BASE_URL=http://localhost:3000`.
-5. Validasi smoke test RBAC untuk role `SUPERADMIN`, `ADMIN`, dan `TEACHER`.
-6. Baru setelah parity stabil, lanjutkan checklist cutover di `docs/operations.md` dan `docs/decommission.md`.
+1. ~~Jalankan contract test dengan API Go yang hidup~~ — **SELESAI** (12 Jul 2026).
+2. ~~Jalankan folder `Seeded Core Smoke` setelah seed ID tersedia~~ — **SELESAI**.
+3. ~~Jalankan folder `Gated Feature Smoke` setelah feature flag aktif~~ — **SELESAI**.
+4. ~~Perbaiki design issue Dashboard Academics~~ — **SELESAI** (migrasi 000014 + JWT TeacherID).
+5. ~~Validasi smoke test RBAC untuk role `SUPERADMIN`, `ADMIN`, dan `TEACHER`~~ — **SELESAI**.
+6. ~~Rollback drill tabletop~~ — **SELESAI** (lihat `docs/decommission.md`).
+7. **Shadow compare** — BLOCKED: legacy NestJS backend tidak tersedia. Perlu provisi legacy backend di dev/staging.
+8. Setelah shadow compare stabil, lanjutkan checklist cutover di `docs/operations.md` dan `docs/decommission.md`.
+
+## Saran Pengembangan Selanjutnya
+
+### Prioritas Tinggi — Unblock Cutover
+
+1. **Provisi legacy NestJS backend untuk shadow compare**
+   - Setup legacy backend di `:3000` dengan database yang sama atau seed data parity.
+   - Jalankan `make shadow-compare GO_BASE_URL=http://localhost:8080 LEGACY_BASE_URL=http://localhost:3000` minimal 7 hari berturut-turut.
+   - Target: delta ≤1% pada optional fields, 99% schema parity.
+
+2. **Automasi rollback dengan `make rollback` target**
+   - Gabungkan `make toggle-go value=false` + cache purge (`auth`, `grades`, `attendance` keys) dalam satu command.
+   - Tambahkan konfirmasi interaktif untuk mencegah eksekusi tidak sengaja.
+   - Target eksekusi: < 2 menit dari alert trigger ke traffic kembali ke legacy.
+
+3. **Tambahkan Prometheus alerting rules**
+   - `HighErrorRate`: error rate > 1% selama 15 menit.
+   - `LatencySLOViolation`: p99 > 600ms selama 15 menit.
+   - `CacheMissSpike`: cache hit ratio drop > 30% dalam 5 menit.
+   - `DBSlowQuery`: query duration p95 > 500ms.
+   - Wire alerts ke notification channel (Slack/PagerDuty).
+
+4. **Rollback drill produksi**
+   - Setelah shadow compare stabil, jalankan rollback drill di staging/produksi (bukan tabletop).
+   - Catat hasil di tabel `docs/decommission.md` Rollback Drill Log.
+
+### Prioritas Sedang — Hardening
+
+5. **Contract test sebagai CI gate**
+   - Integrasi contract test ke GitHub Actions workflow dengan service container Postgres + Redis.
+   - Auto-apply migrations + seed sebelum test.
+   - Gate PR merge pada contract test pass untuk 3 role (SUPERADMIN, ADMIN, TEACHER).
+
+6. **Test coverage untuk handler layer**
+   - `DashboardHandler`, `GradeConfigHandler`, `ReportHandler` saat ini tidak punya covering tests (per codegraph analysis).
+   - Tambah unit test untuk edge cases: missing param, invalid ID, unauthorized role, cache miss.
+
+7. **Fix contract collection assertion untuk Report Job Status**
+   - Endpoint `GET /reports/status/{id}` dengan non-existent ID correctly return 404.
+   - Update test assertion untuk accept 404 sebagai valid response (bukan hanya 200..299).
+
+8. **Seeder CLI tool**
+   - Buat `make seed` target yang auto-apply `scripts/seed.sql` setelah migrate.
+   - Tambah opsi `make seed-reset` untuk clean + reseed (berguna untuk dev dan CI).
+
+### Prioritas Rendah — Technical Debt
+
+9. **Konsolidasi teacher ID resolution**
+   - Saat ini `claims.TeacherID` dipakai dengan fallback `claims.UserID` di 4 service.
+   - Setelah semua token lama expire, hapus fallback path untuk mengurangi kompleksitas.
+   - Tambahkan metrics untuk track fallback usage.
+
+10. **Dokumentasi API endpoint yang membutuhkan query param**
+    - Swagger annotation untuk `reports/students/{id}`, `reports/classes/{id}`, `dashboard`, `attendance` belum mendokumentasikan required query params (`termId`, `subjectId`, `classId`, `teacherId`).
+    - Update `@Param` annotation dan regenerate swagger.
+
+11. **Homeroom service: teacher-scoped query optimization**
+    - `homeroom_service.go` melakukan 2x teacher ID resolution per request (filter + list).
+    - Cache `teacherID` di context atau pass sebagai parameter untuk avoid repeated resolution.
+
+12. **Database connection pool tuning**
+    - Validasi `DB_MAX_OPEN_CONNS=25` dan `DB_MAX_IDLE_CONNS=5` under load test.
+    - Tambahkan `ConnMaxLifetime` dan `ConnMaxIdleTime` ke config untuk prevent stale connections.
 
 ## Blocker Aktif
 
-- Contract test default membutuhkan server Go hidup, Docker/Newman, dan `ACCESS_TOKEN` valid. Token tidak boleh disimpan di repo.
-- Folder seeded contract membutuhkan data uji dan variable ID yang valid sebelum bisa dijadikan gate CI.
-- Folder gated contract membutuhkan feature flag aktif sesuai modul yang diuji.
-- Shadow compare membutuhkan server Go dan server legacy hidup.
-- Cutover produksi belum boleh ditandai selesai sampai contract test, shadow compare, dan rollback drill terdokumentasi.
+- **Shadow compare blocked**: Legacy NestJS backend tidak tersedia di environment ini. Perlu provisi legacy backend di `:3000` dengan seed data yang sama untuk `make shadow-compare` dapat dijalankan.
+- Cutover produksi belum boleh ditandai selesai sampai shadow compare dan rollback drill produksi terdokumentasi.
 - Dokumen fase lama masih berisi desain rinci dan estimasi awal; status aktual harian harus dirujuk ke dokumen ini.
 
 ## Command Verifikasi
@@ -118,6 +229,46 @@ Contract test default:
 
 ```bash
 ACCESS_TOKEN=<admin-or-superadmin-token> make contract-test BASE_URL=http://localhost:8080/api/v1
+```
+
+Contract test manual dengan seed data (semua folder kecuali Cutover Readiness):
+
+```bash
+# 1. Start Docker Postgres + Redis
+make docker-up
+
+# 2. Apply migrations dan seed
+migrate -path migrations -database "postgresql://postgres:postgres@localhost:5432/admin_panel_sma?sslmode=disable" up
+psql "postgresql://postgres:postgres@localhost:5432/admin_panel_sma?sslmode=disable" -f scripts/seed.sql
+
+# 3. Start Go API server
+make dev
+
+# 4. Login sebagai superadmin (password: admin123) untuk mendapatkan token
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"superadmin@sma.test","password":"admin123"}'
+
+# 5. Jalankan Newman dengan seed IDs dan feature flags aktif
+docker run --rm --network host \
+  -v "$(pwd)/tests/contract:/etc/newman" \
+  postman/newman:alpine \
+  run contract.postman_collection.json \
+  --env-var "baseUrl=http://localhost:8080/api/v1" \
+  --env-var "gatewayUrl=http://localhost:8080" \
+  --env-var "accessToken=<token-dari-step-4>" \
+  --env-var "termId=term-001" \
+  --env-var "classId=cls-001" \
+  --env-var "studentId=std-001" \
+  --env-var "teacherId=tch-001" \
+  --env-var "subjectId=subj-001" \
+  --env-var "scheduleId=sched-001" \
+  --env-var "gradeConfigId=gcfg-001" \
+  --env-var "reportJobId=job-nonexistent-001" \
+  --folder "Public Gateway" \
+  --folder "Core Protected Smoke" \
+  --folder "Seeded Core Smoke" \
+  --folder "Gated Feature Smoke"
 ```
 
 Manual folder seeded/gated dapat dijalankan langsung dengan Newman setelah variable ID dan feature flag siap. Jangan memasukkan token ke file collection atau dokumentasi repo.

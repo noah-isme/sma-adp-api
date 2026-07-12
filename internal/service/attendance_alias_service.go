@@ -86,7 +86,11 @@ func (s *AttendanceAliasService) ListDaily(ctx context.Context, req dto.Attendan
 		if req.ClassID == "" {
 			return nil, nil, appErrors.Clone(appErrors.ErrValidation, "classId is required for teachers")
 		}
-		if err := s.assertClassAccess(ctx, claims.UserID, req.ClassID, req.TermID); err != nil {
+		teacherID := claims.TeacherID
+		if teacherID == "" {
+			teacherID = claims.UserID
+		}
+		if err := s.assertClassAccess(ctx, teacherID, req.ClassID, req.TermID); err != nil {
 			return nil, nil, err
 		}
 	}
@@ -123,7 +127,11 @@ func (s *AttendanceAliasService) Summary(ctx context.Context, req dto.Attendance
 
 	var classFilterIDs []string
 	if claims.Role == models.RoleTeacher {
-		classSet, err := s.teacherClasses(ctx, claims.UserID, req.TermID)
+		teacherID := claims.TeacherID
+		if teacherID == "" {
+			teacherID = claims.UserID
+		}
+		classSet, err := s.teacherClasses(ctx, teacherID, req.TermID)
 		if err != nil {
 			return nil, false, err
 		}
@@ -136,14 +144,17 @@ func (s *AttendanceAliasService) Summary(ctx context.Context, req dto.Attendance
 				classFilterIDs = append(classFilterIDs, id)
 			}
 			if len(classFilterIDs) == 0 {
-				// Teacher without classes should receive empty payload.
 				return s.emptySummaryResponse(req), false, nil
 			}
 		}
 	}
 
 	if req.StudentID != "" && claims.Role == models.RoleTeacher {
-		if err := s.ensureTeacherCanSeeStudent(ctx, claims.UserID, req.StudentID, req.TermID); err != nil {
+		teacherID := claims.TeacherID
+		if teacherID == "" {
+			teacherID = claims.UserID
+		}
+		if err := s.ensureTeacherCanSeeStudent(ctx, teacherID, req.StudentID, req.TermID); err != nil {
 			return nil, false, err
 		}
 	}

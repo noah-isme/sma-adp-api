@@ -110,7 +110,7 @@ func (m *mockAuthRepo) CreateAuditLog(ctx context.Context, log *models.AuditLog)
 func TestAuthServiceLoginSuccess(t *testing.T) {
 	password, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
 	repo := &mockAuthRepo{userByEmail: &models.User{ID: "123", Email: "user@example.com", PasswordHash: string(password), Active: true, Role: models.RoleAdmin}}
-	svc := NewAuthService(repo, validator.New(), zap.NewNop(), AuthConfig{
+	svc := NewAuthService(repo, nil, validator.New(), zap.NewNop(), AuthConfig{
 		AccessTokenSecret:  "secret",
 		AccessTokenExpiry:  time.Hour,
 		RefreshTokenExpiry: time.Hour * 24,
@@ -127,7 +127,7 @@ func TestAuthServiceLoginSuccess(t *testing.T) {
 func TestAuthServiceLoginInactive(t *testing.T) {
 	password, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
 	repo := &mockAuthRepo{userByEmail: &models.User{ID: "123", Email: "user@example.com", PasswordHash: string(password), Active: false}}
-	svc := NewAuthService(repo, validator.New(), zap.NewNop(), AuthConfig{AccessTokenSecret: "secret", AccessTokenExpiry: time.Hour, RefreshTokenExpiry: time.Hour})
+	svc := NewAuthService(repo, nil, validator.New(), zap.NewNop(), AuthConfig{AccessTokenSecret: "secret", AccessTokenExpiry: time.Hour, RefreshTokenExpiry: time.Hour})
 
 	_, err := svc.Login(context.Background(), models.LoginRequest{Email: "user@example.com", Password: "password"})
 	require.Error(t, err)
@@ -143,7 +143,7 @@ func TestAuthServiceRefreshToken(t *testing.T) {
 	token := &models.RefreshToken{ID: "rt1", UserID: user.ID, Token: "token", ExpiresAt: time.Now().Add(time.Hour)}
 	repo.refreshTokens[token.Token] = token
 
-	svc := NewAuthService(repo, validator.New(), zap.NewNop(), AuthConfig{AccessTokenSecret: "secret", AccessTokenExpiry: time.Hour, RefreshTokenExpiry: time.Hour})
+	svc := NewAuthService(repo, nil, validator.New(), zap.NewNop(), AuthConfig{AccessTokenSecret: "secret", AccessTokenExpiry: time.Hour, RefreshTokenExpiry: time.Hour})
 
 	res, err := svc.RefreshToken(context.Background(), models.RefreshTokenRequest{RefreshToken: "token"})
 	require.NoError(t, err)
@@ -155,7 +155,7 @@ func TestAuthServiceRefreshToken(t *testing.T) {
 func TestAuthServiceChangePassword(t *testing.T) {
 	oldHash, _ := bcrypt.GenerateFromPassword([]byte("old"), bcrypt.DefaultCost)
 	repo := &mockAuthRepo{userByEmail: &models.User{ID: "u1", PasswordHash: string(oldHash), Active: true}}
-	svc := NewAuthService(repo, validator.New(), zap.NewNop(), AuthConfig{AccessTokenSecret: "secret", AccessTokenExpiry: time.Hour, RefreshTokenExpiry: time.Hour})
+	svc := NewAuthService(repo, nil, validator.New(), zap.NewNop(), AuthConfig{AccessTokenSecret: "secret", AccessTokenExpiry: time.Hour, RefreshTokenExpiry: time.Hour})
 
 	err := svc.ChangePassword(context.Background(), "u1", models.ChangePasswordRequest{OldPassword: "old", NewPassword: "newpassword"})
 	require.NoError(t, err)
@@ -164,9 +164,9 @@ func TestAuthServiceChangePassword(t *testing.T) {
 
 func TestValidateToken(t *testing.T) {
 	repo := &mockAuthRepo{}
-	svc := NewAuthService(repo, validator.New(), zap.NewNop(), AuthConfig{AccessTokenSecret: "secret", AccessTokenExpiry: time.Hour, RefreshTokenExpiry: time.Hour})
+	svc := NewAuthService(repo, nil, validator.New(), zap.NewNop(), AuthConfig{AccessTokenSecret: "secret", AccessTokenExpiry: time.Hour, RefreshTokenExpiry: time.Hour})
 	user := &models.User{ID: "u1", Email: "user@example.com", Role: models.RoleAdmin}
-	token, _, err := svc.generateAccessToken(user)
+	token, _, err := svc.generateAccessToken(user, "")
 	require.NoError(t, err)
 
 	claims, err := svc.ValidateToken(token)

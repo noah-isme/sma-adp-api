@@ -351,6 +351,18 @@ definitions:
     required:
     - items
     type: object
+  github_com_noah-isme_sma-adp-api_internal_service.BulkDailyAttendanceItem:
+    properties:
+      enrollment_id:
+        type: string
+      notes:
+        type: string
+      status:
+        type: string
+    required:
+    - enrollment_id
+    - status
+    type: object
   github_com_noah-isme_sma-adp-api_internal_service.BulkGradeItem:
     properties:
       component_code:
@@ -387,6 +399,53 @@ definitions:
     - items
     - subject_id
     - term_id
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.BulkMarkDailyAttendanceRequest:
+    properties:
+      date:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.BulkDailyAttendanceItem'
+        minItems: 1
+        type: array
+      mode:
+        type: string
+    required:
+    - date
+    - items
+    - mode
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.BulkMarkSubjectAttendanceRequest:
+    properties:
+      date:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.BulkSubjectAttendanceItem'
+        minItems: 1
+        type: array
+      mode:
+        type: string
+      schedule_id:
+        type: string
+    required:
+    - date
+    - items
+    - mode
+    - schedule_id
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.BulkSubjectAttendanceItem:
+    properties:
+      enrollment_id:
+        type: string
+      notes:
+        type: string
+      status:
+        type: string
+    required:
+    - enrollment_id
+    - status
     type: object
   github_com_noah-isme_sma-adp-api_internal_service.CreateAnnouncementRequest:
     properties:
@@ -691,6 +750,39 @@ definitions:
         type: number
     required:
     - component_id
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.MarkDailyAttendanceRequest:
+    properties:
+      date:
+        type: string
+      enrollment_id:
+        type: string
+      notes:
+        type: string
+      status:
+        type: string
+    required:
+    - date
+    - enrollment_id
+    - status
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.MarkSubjectAttendanceRequest:
+    properties:
+      date:
+        type: string
+      enrollment_id:
+        type: string
+      notes:
+        type: string
+      schedule_id:
+        type: string
+      status:
+        type: string
+    required:
+    - date
+    - enrollment_id
+    - schedule_id
+    - status
     type: object
   github_com_noah-isme_sma-adp-api_internal_service.SetActiveTermRequest:
     properties:
@@ -1315,6 +1407,89 @@ paths:
       summary: Daily attendance alias endpoint
       tags:
       - Attendance
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Attendance payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.MarkDailyAttendanceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Mark daily attendance for a student
+      tags:
+      - Attendance
+  /attendance/daily/bulk:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bulk attendance payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.BulkMarkDailyAttendanceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Bulk mark daily attendance
+      tags:
+      - Attendance
+  /attendance/subject:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Subject attendance payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.MarkSubjectAttendanceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Mark subject attendance for a student session
+      tags:
+      - Attendance
+  /attendance/subject/bulk:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bulk subject attendance payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.BulkMarkSubjectAttendanceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Bulk mark subject attendance
+      tags:
+      - Attendance
   /auth/change-password:
     post:
       consumes:
@@ -1755,6 +1930,51 @@ paths:
       summary: Update calendar event
       tags:
       - Calendar
+  /class-subjects:
+    get:
+      parameters:
+      - description: Filter by class ID
+        in: query
+        name: classId
+        type: string
+      - description: Filter by subject ID
+        in: query
+        name: subjectId
+        type: string
+      - description: Filter by teacher ID
+        in: query
+        name: teacherId
+        type: string
+      - description: Filter by term ID
+        in: query
+        name: termId
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: limit
+        type: integer
+      - description: Sort by field
+        in: query
+        name: sortBy
+        type: string
+      - description: Sort order (asc/desc)
+        in: query
+        name: sortOrder
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List all class-subject assignments
+      tags:
+      - Class-Subjects
   /classes:
     get:
       parameters:
@@ -3189,6 +3409,39 @@ paths:
       summary: Update subject
       tags:
       - Subjects
+  /teacher-preferences:
+    get:
+      parameters:
+      - description: Filter by teacher ID
+        in: query
+        name: teacherId
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: limit
+        type: integer
+      - description: Sort by field
+        in: query
+        name: sortBy
+        type: string
+      - description: Sort order (asc/desc)
+        in: query
+        name: sortOrder
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List all teacher preferences
+      tags:
+      - Teacher Preferences
   /teachers:
     get:
       parameters:
@@ -3379,7 +3632,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
-      summary: Get teacher preferences
+      summary: Get teacher preferences by ID
       tags:
       - Teacher Preferences
     put:

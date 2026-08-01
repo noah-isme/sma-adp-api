@@ -513,6 +513,136 @@
                         }
                     }
                 }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Attendance"
+                ],
+                "summary": "Mark daily attendance for a student",
+                "parameters": [
+                    {
+                        "description": "Attendance payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.MarkDailyAttendanceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/attendance/daily/bulk": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Attendance"
+                ],
+                "summary": "Bulk mark daily attendance",
+                "parameters": [
+                    {
+                        "description": "Bulk attendance payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.BulkMarkDailyAttendanceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/attendance/subject": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Attendance"
+                ],
+                "summary": "Mark subject attendance for a student session",
+                "parameters": [
+                    {
+                        "description": "Subject attendance payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.MarkSubjectAttendanceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/attendance/subject/bulk": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Attendance"
+                ],
+                "summary": "Bulk mark subject attendance",
+                "parameters": [
+                    {
+                        "description": "Bulk subject attendance payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.BulkMarkSubjectAttendanceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
             }
         },
         "/auth/change-password": {
@@ -1188,6 +1318,75 @@
                 "responses": {
                     "204": {
                         "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/class-subjects": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Class-Subjects"
+                ],
+                "summary": "List all class-subject assignments",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by class ID",
+                        "name": "classId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by subject ID",
+                        "name": "subjectId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by teacher ID",
+                        "name": "teacherId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by term ID",
+                        "name": "termId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort by field",
+                        "name": "sortBy",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort order (asc/desc)",
+                        "name": "sortOrder",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
                     }
                 }
             }
@@ -3406,6 +3605,57 @@
                 }
             }
         },
+        "/teacher-preferences": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Teacher Preferences"
+                ],
+                "summary": "List all teacher preferences",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by teacher ID",
+                        "name": "teacherId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort by field",
+                        "name": "sortBy",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort order (asc/desc)",
+                        "name": "sortOrder",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
         "/teachers": {
             "get": {
                 "produces": [
@@ -3683,7 +3933,7 @@
                 "tags": [
                     "Teacher Preferences"
                 ],
-                "summary": "Get teacher preferences",
+                "summary": "Get teacher preferences by ID",
                 "parameters": [
                     {
                         "type": "string",
@@ -4700,6 +4950,24 @@
                 }
             }
         },
+        "github_com_noah-isme_sma-adp-api_internal_service.BulkDailyAttendanceItem": {
+            "type": "object",
+            "required": [
+                "enrollment_id",
+                "status"
+            ],
+            "properties": {
+                "enrollment_id": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "github_com_noah-isme_sma-adp-api_internal_service.BulkGradeItem": {
             "type": "object",
             "required": [
@@ -4750,6 +5018,74 @@
                     "type": "string"
                 },
                 "term_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.BulkMarkDailyAttendanceRequest": {
+            "type": "object",
+            "required": [
+                "date",
+                "items",
+                "mode"
+            ],
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "items": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.BulkDailyAttendanceItem"
+                    }
+                },
+                "mode": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.BulkMarkSubjectAttendanceRequest": {
+            "type": "object",
+            "required": [
+                "date",
+                "items",
+                "mode",
+                "schedule_id"
+            ],
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "items": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.BulkSubjectAttendanceItem"
+                    }
+                },
+                "mode": {
+                    "type": "string"
+                },
+                "schedule_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.BulkSubjectAttendanceItem": {
+            "type": "object",
+            "required": [
+                "enrollment_id",
+                "status"
+            ],
+            "properties": {
+                "enrollment_id": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "status": {
                     "type": "string"
                 }
             }
@@ -5190,6 +5526,54 @@
                 },
                 "weight": {
                     "type": "number"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.MarkDailyAttendanceRequest": {
+            "type": "object",
+            "required": [
+                "date",
+                "enrollment_id",
+                "status"
+            ],
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "enrollment_id": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.MarkSubjectAttendanceRequest": {
+            "type": "object",
+            "required": [
+                "date",
+                "enrollment_id",
+                "schedule_id",
+                "status"
+            ],
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "enrollment_id": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "schedule_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
                 }
             }
         },

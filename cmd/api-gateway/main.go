@@ -291,6 +291,15 @@ func main() {
 		attendanceAliasHandler = internalhandler.NewAttendanceAliasHandler(attendanceAliasSvc)
 	}
 
+	// CRUD Attendance Handler (always available when AttendanceEnabled)
+	var attendanceHandler *internalhandler.AttendanceHandler
+	if cfg.Aliases.AttendanceEnabled && attendanceSvc != nil {
+		attendanceHandler = internalhandler.NewAttendanceHandler(attendanceSvc)
+	}
+
+	// Teacher Preferences Handler
+	teacherPreferenceHandler := internalhandler.NewTeacherPreferenceHandler(preferenceSvc)
+
 	reportHandler := internalhandler.NewReportHandler(nil, gradeSvc)
 	if cfg.Reports.Enabled {
 		if analyticsRepo == nil {
@@ -405,6 +414,11 @@ func main() {
 	classesGroup.POST("/:id/subjects", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), classSubjectHandler.Assign)
 	classesGroup.GET("/:id/schedules", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), scheduleHandler.ListByClass)
 
+	// Standalone class-subjects endpoint for frontend list views
+	classSubjectsGroup := secured.Group("/class-subjects")
+	classSubjectsGroup.Use(internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)))
+	classSubjectsGroup.GET("", classSubjectHandler.ListAll)
+
 	schedulesGroup := secured.Group("/schedules")
 	schedulesGroup.GET("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), scheduleHandler.List)
 	schedulesGroup.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), scheduleHandler.Create)
@@ -491,6 +505,21 @@ func main() {
 		attendanceGroup.GET("", attendanceAliasHandler.Summary)
 		attendanceGroup.GET("/daily", attendanceAliasHandler.Daily)
 	}
+
+	// CRUD Attendance endpoints
+	if attendanceHandler != nil {
+		attendanceCRUDGroup := secured.Group("/attendance")
+		attendanceCRUDGroup.Use(internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)))
+		attendanceCRUDGroup.POST("/daily", attendanceHandler.MarkDaily)
+		attendanceCRUDGroup.POST("/daily/bulk", attendanceHandler.BulkMarkDaily)
+		attendanceCRUDGroup.POST("/subject", attendanceHandler.MarkSubject)
+		attendanceCRUDGroup.POST("/subject/bulk", attendanceHandler.BulkMarkSubject)
+	}
+
+	// Standalone teacher-preferences endpoint
+	teacherPrefsGroup := secured.Group("/teacher-preferences")
+	teacherPrefsGroup.Use(internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)))
+	teacherPrefsGroup.GET("", teacherPreferenceHandler.ListAll)
 
 	if configurationHandler != nil {
 		configGroup := secured.Group("/configuration")

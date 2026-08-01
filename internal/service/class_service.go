@@ -27,6 +27,7 @@ type classRepository interface {
 
 type classSubjectRepo interface {
 	ListByClass(ctx context.Context, classID string) ([]models.ClassSubjectAssignment, error)
+	ListAll(ctx context.Context, filter models.ClassSubjectFilter) ([]models.ClassSubjectAssignment, int, error)
 	ReplaceAssignments(ctx context.Context, classID string, assignments []models.ClassSubject) error
 }
 
@@ -55,6 +56,18 @@ type AssignSubjectPayload struct {
 // AssignSubjectsRequest handles bulk assignment.
 type AssignSubjectsRequest struct {
 	Subjects []AssignSubjectPayload `json:"subjects" validate:"dive"`
+}
+
+// ClassSubjectListRequest defines filter criteria for listing all class-subject assignments.
+type ClassSubjectListRequest struct {
+	ClassID   string
+	SubjectID string
+	TeacherID string
+	TermID    string
+	Page      int
+	PageSize  int
+	SortBy    string
+	SortOrder string
 }
 
 // ClassService coordinates class operations.
@@ -256,4 +269,25 @@ func (s *ClassService) AssignSubjects(ctx context.Context, classID string, req A
 		return appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to assign class subjects")
 	}
 	return nil
+}
+
+// ListAll returns all class-subject assignments across all classes with pagination.
+func (s *ClassService) ListAll(ctx context.Context, filter models.ClassSubjectFilter) ([]models.ClassSubjectAssignment, *models.Pagination, error) {
+	assignments, total, err := s.mappingRepo.ListAll(ctx, filter)
+	if err != nil {
+		return nil, nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to list all class subjects")
+	}
+	page := filter.Page
+	if page < 1 {
+		page = 1
+	}
+	size := filter.PageSize
+	if size <= 0 {
+		size = 20
+	}
+	if size > 1000 {
+		size = 1000
+	}
+	pagination := &models.Pagination{Page: page, PageSize: size, TotalCount: total}
+	return assignments, pagination, nil
 }

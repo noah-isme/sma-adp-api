@@ -16,6 +16,7 @@ import (
 type teacherPreferenceRepo interface {
 	GetByTeacher(ctx context.Context, teacherID string) (*models.TeacherPreference, error)
 	Upsert(ctx context.Context, pref *models.TeacherPreference) error
+	ListAll(ctx context.Context, filter models.TeacherPreferenceFilter) ([]models.TeacherPreference, int, error)
 }
 
 // UpsertTeacherPreferenceRequest captures payload to store preferences.
@@ -114,4 +115,25 @@ func (s *TeacherPreferenceService) Upsert(ctx context.Context, teacherID string,
 		return nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to upsert teacher preferences")
 	}
 	return payload, nil
+}
+
+// ListAll returns all teacher preferences with pagination.
+func (s *TeacherPreferenceService) ListAll(ctx context.Context, filter models.TeacherPreferenceFilter) ([]models.TeacherPreference, *models.Pagination, error) {
+	prefs, total, err := s.repo.ListAll(ctx, filter)
+	if err != nil {
+		return nil, nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to list all teacher preferences")
+	}
+	page := filter.Page
+	if page < 1 {
+		page = 1
+	}
+	size := filter.PageSize
+	if size <= 0 {
+		size = 20
+	}
+	if size > 1000 {
+		size = 1000
+	}
+	pagination := &models.Pagination{Page: page, PageSize: size, TotalCount: total}
+	return prefs, pagination, nil
 }

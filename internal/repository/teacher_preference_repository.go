@@ -57,3 +57,67 @@ func (r *TeacherPreferenceRepository) Upsert(ctx context.Context, pref *models.T
 	}
 	return nil
 }
+
+// ListAll returns all teacher preferences with pagination.
+func (r *TeacherPreferenceRepository) ListAll(ctx context.Context, filter models.TeacherPreferenceFilter) ([]models.TeacherPreference, int, error) {
+	conditions := []string{}
+	args := []interface{}{}
+	argIndex := 1
+
+	if filter.TeacherID != "" {
+		conditions = append(conditions, fmt.Sprintf("teacher_id = $%d", argIndex))
+		args = append(args, filter.TeacherID)
+		argIndex++
+	}
+
+	whereClause := ""
+	if len(conditions) > 0 {
+		whereClause = "WHERE " + conditions[0]
+		for i := 1; i < len(conditions); i++ {
+			whereClause += " AND " + conditions[i]
+		}
+	}
+
+	countQuery := fmt.Sprintf(`SELECT COUNT(*) FROM teacher_preferences %s`, whereClause)
+	var total int
+	if err := r.db.GetContext(ctx, &total, countQuery, args...); err != nil {
+		return nil, 0, fmt.Errorf("count all teacher preferences: %w", err)
+	}
+
+	page := filter.Page
+	if page < 1 {
+		page = 1
+	}
+	size := filter.PageSize
+	if size <= 0 {
+		size = 20
+	}
+	if size > 1000 {
+		size = 1000
+	}
+
+	offset := (page - 1) * size
+
+	sortBy := filter.SortBy
+	if sortBy == "" {
+		sortBy = "teacher_id"
+	}
+	sortOrder := filter.SortOrder
+	if sortOrder == "" {
+		sortOrder = "ASC"
+	}
+
+	query := fmt.Sprintf(`
+SELECT id, teacher_id, max_load_per_day, max_load_per_week, unavailable, created_at, updated_at
+FROM teacher_preferences
+%s
+ORDER BY %s %s
+LIMIT $%d OFFSET $%d`, whereClause, sortBy, sortOrder, argIndex, argIndex+1)
+	args = append(args, size, offset)
+
+	var prefs []models.TeacherPreference
+	if err := r.db.SelectContext(ctx, &prefs, query, args...); err != nil {
+		return nil, 0, fmt.Errorf("list all teacher preferences: %w", err)
+	}
+	return prefs, total, nil
+}

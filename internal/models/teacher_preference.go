@@ -22,3 +22,12 @@ type TeacherPreference struct {
 	CreatedAt      time.Time      `db:"created_at" json:"created_at"`
 	UpdatedAt      time.Time      `db:"updated_at" json:"updated_at"`
 }
+
+// TeacherPreferenceFilter defines filter criteria for listing teacher preferences.
+type TeacherPreferenceFilter struct {
+	TeacherID string
+	Page      int
+	PageSize  int
+	SortBy    string
+	SortOrder string
+}

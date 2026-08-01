@@ -36,6 +36,10 @@ Sumber kebenaran:
 | Penilaian → Async Export | `POST /reports/generate`, `GET /reports/status/{id}`, `GET /export/{token}` | Feature-flagged | `ENABLE_REPORTS=true`. |
 | Kehadiran → Ringkasan | `GET /attendance` | Feature-flagged | `ENABLE_ATTENDANCE_ALIAS=true`; FE alias. |
 | Kehadiran → Harian | `GET /attendance/daily` | Feature-flagged | `ENABLE_ATTENDANCE_ALIAS=true`; FE alias. |
+| Kehadiran → Input Harian | `POST /attendance/daily`, `POST /attendance/daily/bulk` | Always-on | CRUD daily attendance. |
+| Kehadiran → Input Pelajaran | `POST /attendance/subject`, `POST /attendance/subject/bulk` | Always-on | CRUD subject attendance. |
+| Akademik → Mapel Kelas (List All) | `GET /class-subjects` | Always-on | Standalone list with filters (classId, subjectId, teacherId, termId). |
+| Guru → Preferences (List All) | `GET /teacher-preferences` | Always-on | Standalone list all teacher preferences with filters. |
 | Komunikasi → Pengumuman | `GET/POST /announcements`, `GET/PUT/DELETE /announcements/{id}` | Always-on | CRUD announcement. |
 | Komunikasi → Catatan Perilaku | `GET/POST /behavior-notes`, `PUT/DELETE /behavior-notes/{id}`, `GET /students/{id}/behavior-summary` | Always-on | Behavior notes and summary. |
 | Guru → Data Guru | `GET/POST /teachers`, `GET/PUT/DELETE /teachers/{id}` | Always-on | CRUD teacher. |

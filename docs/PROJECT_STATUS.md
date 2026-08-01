@@ -22,7 +22,7 @@ Sumber kebenaran teknis:
 | Phase 1 | Auth dan user management | Implemented + exposed | `/auth` dan `/users` aktif di gateway. |
 | Phase 2 | Academic management | Implemented + exposed | Terms, subjects, classes, class-subjects, schedules CRUD aktif. Scheduler/generator tetap feature-flagged. |
 | Phase 3 | Student, enrollment, grading, report card | Implemented + exposed | Students, enrollments, grade components/configs/grades, report card JSON aktif. Async reports tetap feature-flagged. |
-| Phase 4 | Attendance, communication, calendar | Partially exposed | Announcements, behavior notes, calendar events aktif. Attendance dan calendar FE aliases tetap feature-flagged. |
+| Phase 4 | Attendance, communication, calendar | Implemented + exposed | Announcements, behavior notes, calendar events, **attendance CRUD (daily/subject)** aktif. Calendar FE alias tetap feature-flagged. |
 | Phase 5 | Analytics, dashboard, cache, async reports, scheduler | Implemented behind flags | Perlu contract test, smoke test, dan data validation sebelum dianggap production-ready. |
 | Phase 6 | Cutover, rollback, decommission | Planned + support implemented | Middleware, runbook, shadow compare script, dan checklist ada. Cutover produksi belum selesai. |
 
@@ -47,6 +47,10 @@ Always-on core:
 - `/behavior-notes`
 - `/calendar-events`
 - `/teachers`
+- `/class-subjects`
+- `/attendance/daily`
+- `/attendance/subject`
+- `/teacher-preferences`
 
 Feature-flagged:
 
@@ -60,13 +64,13 @@ Feature-flagged:
 | Archives | `/archives` | `ENABLE_ARCHIVES` |
 | Homerooms | `/homerooms` | `ENABLE_HOMEROOMS` |
 | Calendar alias | `/calendar` | `ENABLE_CALENDAR_ALIAS` |
-| Attendance alias | `/attendance`, `/attendance/daily` | `ENABLE_ATTENDANCE_ALIAS` |
 | Configuration API | `/configuration` | `ENABLE_CONFIGURATION_API` |
 
 ## Milestone Terakhir
 
 - Core route gateway dibuka untuk auth, users, academic, student, enrollment, grading, reports JSON, communication, calendar event, dan teachers.
 - Handler HTTP ditambahkan untuk announcements, behavior notes, dan calendar events.
+- **New endpoints added**: `GET /class-subjects` (standalone), `POST /attendance/daily`, `POST /attendance/daily/bulk`, `POST /attendance/subject`, `POST /attendance/subject/bulk` (attendance CRUD), `GET /teacher-preferences` (standalone).
 - Swagger pindah ke output standar Swaggo: `docs.go`, `swagger.json`, dan `swagger.yaml`.
 - `api/swagger/swagger.go` lama tidak dipakai lagi karena konflik dengan generated `docs.go`.
 - Contract collection diperluas dari health-only menjadi smoke contract berfolder: `Public Gateway`, `Cutover Readiness Smoke`, `Core Protected Smoke`, `Seeded Core Smoke`, dan `Gated Feature Smoke`.

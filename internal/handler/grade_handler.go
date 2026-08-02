@@ -65,10 +65,30 @@ func (h *GradeHandler) Upsert(c *gin.Context) {
 // Update is the generic CRUD compatibility route. Grade records are uniquely
 // identified by enrollment, subject, and component, so the payload is handled
 // by the same validated upsert workflow as POST /grades.
+//
+// @Summary Update grade entry
+// @Tags Grades
+// @Accept json
+// @Produce json
+// @Param id path string true "Grade ID"
+// @Param payload body service.UpsertGradeRequest true "Grade payload"
+// @Success 200 {object} response.Envelope
+// @Router /grades/{id} [patch]
 func (h *GradeHandler) Update(c *gin.Context) { h.Upsert(c) }
 
 // Report provides the admin grade-list report contract using the canonical
 // grade entries. Rich report-card endpoints remain under /reports.
+//
+// @Summary List grade report compatibility view
+// @Tags Grades
+// @Produce json
+// @Param termId query string false "Term ID"
+// @Param classId query string false "Class ID"
+// @Param subjectId query string false "Subject ID"
+// @Param componentId query string false "Component ID"
+// @Param teacherId query string false "Teacher ID"
+// @Success 200 {object} response.Envelope
+// @Router /grades/report [get]
 func (h *GradeHandler) Report(c *gin.Context) {
 	grades, err := h.grades.List(c.Request.Context(), models.GradeFilter{SubjectID: c.Query("subjectId"), ComponentID: c.Query("componentId")})
 	if err != nil {

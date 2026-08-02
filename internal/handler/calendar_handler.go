@@ -33,6 +33,7 @@ func NewCalendarHandler(calendar *service.CalendarService) *CalendarHandler {
 // @Param limit query int false "Page size"
 // @Success 200 {object} response.Envelope
 // @Router /calendar-events [get]
+// @Router /exam-events [get]
 func (h *CalendarHandler) List(c *gin.Context) {
 	start, err := parseDateParam(c.Query("startDate"))
 	if err != nil {
@@ -67,6 +68,7 @@ func (h *CalendarHandler) List(c *gin.Context) {
 // @Param id path string true "Calendar event ID"
 // @Success 200 {object} response.Envelope
 // @Router /calendar-events/{id} [get]
+// @Router /exam-events/{id} [get]
 func (h *CalendarHandler) Get(c *gin.Context) {
 	event, err := h.calendar.Get(c.Request.Context(), c.Param("id"))
 	if err != nil {
@@ -84,6 +86,7 @@ func (h *CalendarHandler) Get(c *gin.Context) {
 // @Param payload body service.CreateCalendarEventRequest true "Calendar event payload"
 // @Success 201 {object} response.Envelope
 // @Router /calendar-events [post]
+// @Router /exam-events [post]
 func (h *CalendarHandler) Create(c *gin.Context) {
 	claims := claimsFromContext(c)
 	if claims == nil {
@@ -114,6 +117,7 @@ func (h *CalendarHandler) Create(c *gin.Context) {
 // @Param payload body service.UpdateCalendarEventRequest true "Calendar event payload"
 // @Success 200 {object} response.Envelope
 // @Router /calendar-events/{id} [put]
+// @Router /exam-events/{id} [put]
 func (h *CalendarHandler) Update(c *gin.Context) {
 	var req service.UpdateCalendarEventRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -135,6 +139,7 @@ func (h *CalendarHandler) Update(c *gin.Context) {
 // @Param id path string true "Calendar event ID"
 // @Success 204
 // @Router /calendar-events/{id} [delete]
+// @Router /exam-events/{id} [delete]
 func (h *CalendarHandler) Delete(c *gin.Context) {
 	if err := h.calendar.Delete(c.Request.Context(), c.Param("id")); err != nil {
 		response.Error(c, err)

@@ -1,4 +1,4 @@
-.PHONY: help setup dev build test test-coverage migrate-create migrate-up migrate-down docker-up docker-down swag lint fmt contract-test shadow-compare toggle-go
+.PHONY: help setup dev build test test-coverage migrate-create migrate-up migrate-down docker-up docker-down swag validate-swagger-routes lint fmt contract-test shadow-compare toggle-go
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' \
@@ -69,3 +69,6 @@ docker-down: ## Stop services
 
 swag: ## Generate swagger docs
 	swag init -g cmd/api-gateway/main.go -o api/swagger --parseDependency --parseInternal
+
+validate-swagger-routes: ## Verify every API gateway route has a generated Swagger path
+	python3 scripts/validate_swagger_routes.py

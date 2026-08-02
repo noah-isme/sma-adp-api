@@ -23,6 +23,14 @@ type TeacherHandler struct {
 }
 
 // ImportCSV imports email, full_name, and optional nip, phone, expertise.
+//
+// @Summary Import teachers from CSV
+// @Tags Teachers
+// @Accept text/csv
+// @Produce json
+// @Param csv body string true "CSV document"
+// @Success 200 {object} response.Envelope
+// @Router /teachers/import [post]
 func (h *TeacherHandler) ImportCSV(c *gin.Context) {
 	r := csv.NewReader(c.Request.Body)
 	header, err := r.Read()
@@ -106,6 +114,18 @@ func (h *TeacherHandler) List(c *gin.Context) {
 }
 
 // Roster preserves the existing admin response shape.
+//
+// @Summary List teacher roster
+// @Tags Teachers
+// @Produce json
+// @Param search query string false "Search by name, email, or NIP"
+// @Param active query bool false "Filter by active state"
+// @Param page query int false "Page"
+// @Param perPage query int false "Page size"
+// @Param sort query string false "Sort field"
+// @Param order query string false "Sort order"
+// @Success 200 {object} response.Envelope
+// @Router /teachers/roster [get]
 func (h *TeacherHandler) Roster(c *gin.Context) {
 	filter := teacherFilter(c)
 	teachers, pagination, err := h.teachers.List(c.Request.Context(), filter)
@@ -225,6 +245,14 @@ func (h *TeacherHandler) Update(c *gin.Context) {
 
 // UpdateStatus toggles a teacher's active state without requiring the full
 // teacher update payload used by PUT /teachers/:id.
+// @Summary Update teacher status
+// @Tags Teachers
+// @Accept json
+// @Produce json
+// @Param id path string true "Teacher ID"
+// @Param payload body map[string]interface{} true "Status payload"
+// @Success 200 {object} response.Envelope
+// @Router /teachers/{id}/status [patch]
 func (h *TeacherHandler) UpdateStatus(c *gin.Context) {
 	var payload struct {
 		Status string `json:"status"`

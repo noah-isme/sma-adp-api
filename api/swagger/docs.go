@@ -15,6 +15,82 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/analytics/attendance": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Attendance analytics",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/analytics/behavior": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Behavior analytics",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/analytics/grades": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Grade analytics",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/analytics/system": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "System analytics",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
         "/announcements": {
             "get": {
                 "produces": [
@@ -435,6 +511,26 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Attendance"
+                ],
+                "summary": "Compatibility attendance upsert",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
             }
         },
         "/attendance/daily": {
@@ -639,6 +735,48 @@ const docTemplate = `{
                         }
                     }
                 ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/attendance/{id}": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Attendance"
+                ],
+                "summary": "Compatibility attendance upsert",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Attendance"
+                ],
+                "summary": "Compatibility attendance upsert",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1996,6 +2134,240 @@ const docTemplate = `{
                 }
             }
         },
+        "/exam-events": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Calendar"
+                ],
+                "summary": "List calendar events",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Start date (YYYY-MM-DD)",
+                        "name": "startDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "End date (YYYY-MM-DD)",
+                        "name": "endDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Comma-separated audience filters",
+                        "name": "audience",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Comma-separated class IDs",
+                        "name": "classIds",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Calendar"
+                ],
+                "summary": "Create calendar event",
+                "parameters": [
+                    {
+                        "description": "Calendar event payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateCalendarEventRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/exam-events/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Calendar"
+                ],
+                "summary": "Get calendar event",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Calendar event ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Calendar"
+                ],
+                "summary": "Update calendar event",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Calendar event ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Calendar event payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpdateCalendarEventRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Calendar"
+                ],
+                "summary": "Delete calendar event",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Calendar event ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/export/attendance": {
+            "get": {
+                "produces": [
+                    "text/csv"
+                ],
+                "tags": [
+                    "Exports"
+                ],
+                "summary": "Export attendance as CSV",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    }
+                }
+            }
+        },
+        "/export/grades": {
+            "get": {
+                "produces": [
+                    "text/csv"
+                ],
+                "tags": [
+                    "Exports"
+                ],
+                "summary": "Export grades as CSV",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    }
+                }
+            }
+        },
+        "/export/students": {
+            "get": {
+                "produces": [
+                    "text/csv"
+                ],
+                "tags": [
+                    "Exports"
+                ],
+                "summary": "Export students as CSV",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    }
+                }
+            }
+        },
         "/export/{token}": {
             "get": {
                 "produces": [
@@ -2402,6 +2774,97 @@ const docTemplate = `{
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.FinalGradeFilter"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/grades/report": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Grades"
+                ],
+                "summary": "List grade report compatibility view",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Term ID",
+                        "name": "termId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Class ID",
+                        "name": "classId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Subject ID",
+                        "name": "subjectId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Component ID",
+                        "name": "componentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Teacher ID",
+                        "name": "teacherId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/grades/{id}": {
+            "patch": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Grades"
+                ],
+                "summary": "Update grade entry",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Grade ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Grade payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpsertGradeRequest"
                         }
                     }
                 ],
@@ -3321,6 +3784,102 @@ const docTemplate = `{
                 }
             }
         },
+        "/students/import": {
+            "post": {
+                "consumes": [
+                    "text/csv"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Students"
+                ],
+                "summary": "Import students from CSV",
+                "parameters": [
+                    {
+                        "description": "CSV document",
+                        "name": "csv",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/students/roster": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Students"
+                ],
+                "summary": "List student roster",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search by name or NIS",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by class",
+                        "name": "classId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by active state",
+                        "name": "active",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "perPage",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort field",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort order",
+                        "name": "order",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
         "/students/{id}": {
             "get": {
                 "produces": [
@@ -3426,6 +3985,47 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/students/{id}/status": {
+            "patch": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Students"
+                ],
+                "summary": "Update student status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Student ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Status payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     }
                 ],
                 "responses": {
@@ -3658,6 +4258,48 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Teacher Preferences"
+                ],
+                "summary": "Compatibility teacher preference upsert",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/teacher-preferences/{id}": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Teacher Preferences"
+                ],
+                "summary": "Compatibility teacher preference upsert",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
             }
         },
         "/teachers": {
@@ -3741,6 +4383,96 @@ const docTemplate = `{
                 "responses": {
                     "201": {
                         "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/teachers/import": {
+            "post": {
+                "consumes": [
+                    "text/csv"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Teachers"
+                ],
+                "summary": "Import teachers from CSV",
+                "parameters": [
+                    {
+                        "description": "CSV document",
+                        "name": "csv",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/teachers/roster": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Teachers"
+                ],
+                "summary": "List teacher roster",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search by name, email, or NIP",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by active state",
+                        "name": "active",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "perPage",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort field",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort order",
+                        "name": "order",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
                         }
@@ -4011,6 +4743,47 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/teachers/{id}/status": {
+            "patch": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Teachers"
+                ],
+                "summary": "Update teacher status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Teacher ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Status payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     }
                 ],
                 "responses": {
@@ -4900,12 +5673,24 @@ const docTemplate = `{
             "type": "string",
             "enum": [
                 "SUPERADMIN",
-                "ADMIN",
-                "TEACHER",
-                "STUDENT"
+                "ADMIN_TU",
+                "WALI_KELAS",
+                "GURU_MAPEL",
+                "KEPALA_SEKOLAH",
+                "SISWA",
+                "ORTU",
+                "ADMIN_TU",
+                "GURU_MAPEL",
+                "SISWA"
             ],
             "x-enum-varnames": [
                 "RoleSuperAdmin",
+                "RoleAdminTU",
+                "RoleWaliKelas",
+                "RoleGuruMapel",
+                "RoleKepalaSekolah",
+                "RoleSiswa",
+                "RoleOrtu",
                 "RoleAdmin",
                 "RoleTeacher",
                 "RoleStudent"
@@ -5456,6 +6241,9 @@ const docTemplate = `{
                 "active": {
                     "type": "boolean"
                 },
+                "class_id": {
+                    "type": "string"
+                },
                 "email": {
                     "type": "string"
                 },
@@ -5469,15 +6257,24 @@ const docTemplate = `{
                 "role": {
                     "enum": [
                         "SUPERADMIN",
-                        "ADMIN",
-                        "TEACHER",
-                        "STUDENT"
+                        "ADMIN_TU",
+                        "WALI_KELAS",
+                        "GURU_MAPEL",
+                        "KEPALA_SEKOLAH",
+                        "SISWA",
+                        "ORTU"
                     ],
                     "allOf": [
                         {
                             "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.UserRole"
                         }
                     ]
+                },
+                "student_id": {
+                    "type": "string"
+                },
+                "teacher_id": {
+                    "type": "string"
                 }
             }
         },
@@ -5908,21 +6705,33 @@ const docTemplate = `{
                 "active": {
                     "type": "boolean"
                 },
+                "class_id": {
+                    "type": "string"
+                },
                 "full_name": {
                     "type": "string"
                 },
                 "role": {
                     "enum": [
                         "SUPERADMIN",
-                        "ADMIN",
-                        "TEACHER",
-                        "STUDENT"
+                        "ADMIN_TU",
+                        "WALI_KELAS",
+                        "GURU_MAPEL",
+                        "KEPALA_SEKOLAH",
+                        "SISWA",
+                        "ORTU"
                     ],
                     "allOf": [
                         {
                             "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.UserRole"
                         }
                     ]
+                },
+                "student_id": {
+                    "type": "string"
+                },
+                "teacher_id": {
+                    "type": "string"
                 }
             }
         },

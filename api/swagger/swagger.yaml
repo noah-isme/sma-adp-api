@@ -314,12 +314,24 @@ definitions:
   github_com_noah-isme_sma-adp-api_internal_models.UserRole:
     enum:
     - SUPERADMIN
-    - ADMIN
-    - TEACHER
-    - STUDENT
+    - ADMIN_TU
+    - WALI_KELAS
+    - GURU_MAPEL
+    - KEPALA_SEKOLAH
+    - SISWA
+    - ORTU
+    - ADMIN_TU
+    - GURU_MAPEL
+    - SISWA
     type: string
     x-enum-varnames:
     - RoleSuperAdmin
+    - RoleAdminTU
+    - RoleWaliKelas
+    - RoleGuruMapel
+    - RoleKepalaSekolah
+    - RoleSiswa
+    - RoleOrtu
     - RoleAdmin
     - RoleTeacher
     - RoleStudent
@@ -695,6 +707,8 @@ definitions:
     properties:
       active:
         type: boolean
+      class_id:
+        type: string
       email:
         type: string
       full_name:
@@ -707,9 +721,16 @@ definitions:
         - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.UserRole'
         enum:
         - SUPERADMIN
-        - ADMIN
-        - TEACHER
-        - STUDENT
+        - ADMIN_TU
+        - WALI_KELAS
+        - GURU_MAPEL
+        - KEPALA_SEKOLAH
+        - SISWA
+        - ORTU
+      student_id:
+        type: string
+      teacher_id:
+        type: string
     required:
     - email
     - full_name
@@ -1007,6 +1028,8 @@ definitions:
     properties:
       active:
         type: boolean
+      class_id:
+        type: string
       full_name:
         type: string
       role:
@@ -1014,9 +1037,16 @@ definitions:
         - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.UserRole'
         enum:
         - SUPERADMIN
-        - ADMIN
-        - TEACHER
-        - STUDENT
+        - ADMIN_TU
+        - WALI_KELAS
+        - GURU_MAPEL
+        - KEPALA_SEKOLAH
+        - SISWA
+        - ORTU
+      student_id:
+        type: string
+      teacher_id:
+        type: string
     required:
     - full_name
     - role
@@ -1077,6 +1107,54 @@ info:
   title: SMA ADP API
   version: 0.1.0
 paths:
+  /analytics/attendance:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Attendance analytics
+      tags:
+      - Analytics
+  /analytics/behavior:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Behavior analytics
+      tags:
+      - Analytics
+  /analytics/grades:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Grade analytics
+      tags:
+      - Analytics
+  /analytics/system:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: System analytics
+      tags:
+      - Analytics
   /announcements:
     get:
       parameters:
@@ -1351,6 +1429,46 @@ paths:
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
       summary: Attendance summary alias endpoint
+      tags:
+      - Attendance
+    post:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Compatibility attendance upsert
+      tags:
+      - Attendance
+  /attendance/{id}:
+    patch:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Compatibility attendance upsert
+      tags:
+      - Attendance
+    put:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Compatibility attendance upsert
       tags:
       - Attendance
   /attendance/daily:
@@ -2364,6 +2482,121 @@ paths:
       summary: Transfer enrollment to another class
       tags:
       - Enrollments
+  /exam-events:
+    get:
+      parameters:
+      - description: Start date (YYYY-MM-DD)
+        in: query
+        name: startDate
+        type: string
+      - description: End date (YYYY-MM-DD)
+        in: query
+        name: endDate
+        type: string
+      - description: Comma-separated audience filters
+        in: query
+        name: audience
+        type: string
+      - description: Comma-separated class IDs
+        in: query
+        name: classIds
+        type: string
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List calendar events
+      tags:
+      - Calendar
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Calendar event payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.CreateCalendarEventRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Create calendar event
+      tags:
+      - Calendar
+  /exam-events/{id}:
+    delete:
+      parameters:
+      - description: Calendar event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      summary: Delete calendar event
+      tags:
+      - Calendar
+    get:
+      parameters:
+      - description: Calendar event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get calendar event
+      tags:
+      - Calendar
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Calendar event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Calendar event payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpdateCalendarEventRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Update calendar event
+      tags:
+      - Calendar
   /export/{token}:
     get:
       parameters:
@@ -2382,6 +2615,42 @@ paths:
       summary: Download generated report via signed token
       tags:
       - Reports
+  /export/attendance:
+    get:
+      produces:
+      - text/csv
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+      summary: Export attendance as CSV
+      tags:
+      - Exports
+  /export/grades:
+    get:
+      produces:
+      - text/csv
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+      summary: Export grades as CSV
+      tags:
+      - Exports
+  /export/students:
+    get:
+      produces:
+      - text/csv
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+      summary: Export students as CSV
+      tags:
+      - Exports
   /grade-components:
     get:
       parameters:
@@ -2570,6 +2839,32 @@ paths:
       summary: Upsert grade entry
       tags:
       - Grades
+  /grades/{id}:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Grade ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Grade payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpsertGradeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Update grade entry
+      tags:
+      - Grades
   /grades/bulk:
     post:
       consumes:
@@ -2631,6 +2926,39 @@ paths:
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
       summary: Recalculate final grades
+      tags:
+      - Grades
+  /grades/report:
+    get:
+      parameters:
+      - description: Term ID
+        in: query
+        name: termId
+        type: string
+      - description: Class ID
+        in: query
+        name: classId
+        type: string
+      - description: Subject ID
+        in: query
+        name: subjectId
+        type: string
+      - description: Component ID
+        in: query
+        name: componentId
+        type: string
+      - description: Teacher ID
+        in: query
+        name: teacherId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List grade report compatibility view
       tags:
       - Grades
   /homerooms:
@@ -3298,6 +3626,95 @@ paths:
       summary: Get student behavior summary
       tags:
       - Behavior
+  /students/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Student ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Status payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Update student status
+      tags:
+      - Students
+  /students/import:
+    post:
+      consumes:
+      - text/csv
+      parameters:
+      - description: CSV document
+        in: body
+        name: csv
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Import students from CSV
+      tags:
+      - Students
+  /students/roster:
+    get:
+      parameters:
+      - description: Search by name or NIS
+        in: query
+        name: search
+        type: string
+      - description: Filter by class
+        in: query
+        name: classId
+        type: string
+      - description: Filter by active state
+        in: query
+        name: active
+        type: boolean
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: perPage
+        type: integer
+      - description: Sort field
+        in: query
+        name: sort
+        type: string
+      - description: Sort order
+        in: query
+        name: order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List student roster
+      tags:
+      - Students
   /subjects:
     get:
       parameters:
@@ -3440,6 +3857,33 @@ paths:
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
       summary: List all teacher preferences
+      tags:
+      - Teacher Preferences
+    post:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Compatibility teacher preference upsert
+      tags:
+      - Teacher Preferences
+  /teacher-preferences/{id}:
+    put:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Compatibility teacher preference upsert
       tags:
       - Teacher Preferences
   /teachers:
@@ -3678,6 +4122,91 @@ paths:
       summary: List schedules by teacher
       tags:
       - Schedules
+  /teachers/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Teacher ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Status payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Update teacher status
+      tags:
+      - Teachers
+  /teachers/import:
+    post:
+      consumes:
+      - text/csv
+      parameters:
+      - description: CSV document
+        in: body
+        name: csv
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Import teachers from CSV
+      tags:
+      - Teachers
+  /teachers/roster:
+    get:
+      parameters:
+      - description: Search by name, email, or NIP
+        in: query
+        name: search
+        type: string
+      - description: Filter by active state
+        in: query
+        name: active
+        type: boolean
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: perPage
+        type: integer
+      - description: Sort field
+        in: query
+        name: sort
+        type: string
+      - description: Sort order
+        in: query
+        name: order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List teacher roster
+      tags:
+      - Teachers
   /terms:
     get:
       description: List terms with filters

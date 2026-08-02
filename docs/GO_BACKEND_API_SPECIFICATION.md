@@ -1,7 +1,7 @@
 # 🚀 Go Backend API Specification
 
 > **Admin Panel SMA - Complete API Endpoints Documentation**  
-> Version: 1.1.0
+> Version: 1.2.0
 > Last Updated: 2026-08-02
 > Target: Go + Fiber/Gin + PostgreSQL + Redis
 
@@ -425,20 +425,17 @@ Set both flags to `true` when enabling a capability. Omitting a flag is equivale
 
 ### GET /api/v1/students/roster
 
-**Get students roster with advanced filtering**
+**Get students roster (partial compatibility contract)**
+
+The current compatibility handler supports `search`, `classId`, `active`, `page`/`perPage`, `sort`, and `order`. The documented `gender`, `track`, `guardian`, `birthYearStart`, and `birthYearEnd` filters are not implemented yet and must not be treated as production-supported filters.
 
 **Query Parameters:**
 
 - `page`, `perPage`
 - `classId` (string): Filter by class
-- `status` (string): active, inactive, alumni, graduated
-- `gender` (string): M, F
-- `track` (string): IPA, IPS
-- `guardian` (string): Filter by guardian name
-- `birthYearStart`, `birthYearEnd` (int)
 - `search` (string)
-- `sortField` (string): fullName, className, nis, lastUpdated
-- `sortOrder` (string): ascend, descend
+- `active` (bool)
+- `sort`, `order`
 
 **Response (200):**
 
@@ -584,19 +581,16 @@ Set both flags to `true` when enabling a capability. Omitting a flag is equivale
 
 ### GET /api/v1/teachers/roster
 
-**Get teachers roster with filtering**
+**Get teachers roster (partial compatibility contract)**
+
+The current compatibility handler supports `search`, `active`, `page`/`perPage`, `sort`, and `order`. Subject, track, availability, and homeroom filters are not implemented yet.
 
 **Query Parameters:**
 
 - `page`, `perPage`
-- `subjectId` (string): Filter by main subject
-- `status` (string): active, inactive, on_leave
-- `track` (string): IPA, IPS
-- `availability` (string): HIGH, MEDIUM, LOW
-- `homeroomClassId` (string): Filter homeroom teachers
 - `search` (string)
-- `sortField` (string): fullName, mainSubjectName, assignmentCount, availability
-- `sortOrder` (string): ascend, descend
+- `active` (bool)
+- `sort`, `order`
 
 **Response (200):**
 
@@ -805,21 +799,14 @@ Set both flags to `true` when enabling a capability. Omitting a flag is equivale
 
 ### GET /api/v1/grades/report
 
-**Get comprehensive grade report with filters**
+**Get partial grade report compatibility view**
+
+The current handler supports `subjectId` and `componentId` filtering and calculates average score from returned grade entries. Term, class, teacher, status, score-range, search, sorting, and rich filter metadata are not implemented by this compatibility view. Use `/reports/students/{id}` and `/reports/classes/{id}` for canonical report-card data.
 
 **Query Parameters:**
 
-- `termId` (string)
-- `classId` (string)
 - `subjectId` (string)
 - `componentId` (string)
-- `teacherId` (string)
-- `status` (string): ALL, PASS, CAUTION, REMEDIAL
-- `scoreMin`, `scoreMax` (number)
-- `search` (string): Student name or NIS
-- `page`, `perPage`
-- `sortField` (string): studentName, subjectName, componentName, score, lastUpdated
-- `sortOrder` (string): ascend, descend
 
 **Response (200):**
 
@@ -929,10 +916,11 @@ Set both flags to `true` when enabling a capability. Omitting a flag is equivale
 
 **List grades with simple filtering**
 
+The current handler supports `enrollmentId`, `subjectId`, and `componentId`. `teacherId`, `scoreMin`, and `scoreMax` are not currently implemented.
+
 **Query Parameters:**
 
-- `enrollmentId`, `componentId`, `subjectId`, `teacherId`
-- `scoreMin`, `scoreMax`
+- `enrollmentId`, `componentId`, `subjectId`
 
 **Response (200):**
 

@@ -19,14 +19,32 @@ func NewExportCompatibilityHandler(db *sqlx.DB) *ExportCompatibilityHandler {
 	return &ExportCompatibilityHandler{db: db}
 }
 
+// Students exports students as CSV.
+// @Summary Export students as CSV
+// @Tags Exports
+// @Produce text/csv
+// @Success 200 {file} binary
+// @Router /export/students [get]
 func (h *ExportCompatibilityHandler) Students(c *gin.Context) {
 	h.write(c, "students.csv", []string{"id", "nis", "full_name", "gender", "active"}, `SELECT id, nis, full_name, gender, active FROM students ORDER BY full_name`)
 }
 
+// Grades exports grades as CSV.
+// @Summary Export grades as CSV
+// @Tags Exports
+// @Produce text/csv
+// @Success 200 {file} binary
+// @Router /export/grades [get]
 func (h *ExportCompatibilityHandler) Grades(c *gin.Context) {
 	h.write(c, "grades.csv", []string{"id", "enrollment_id", "subject_id", "component_id", "grade_value", "updated_at"}, `SELECT id, enrollment_id, subject_id, component_id, grade_value, updated_at FROM grades ORDER BY updated_at DESC`)
 }
 
+// Attendance exports daily attendance as CSV.
+// @Summary Export attendance as CSV
+// @Tags Exports
+// @Produce text/csv
+// @Success 200 {file} binary
+// @Router /export/attendance [get]
 func (h *ExportCompatibilityHandler) Attendance(c *gin.Context) {
 	h.write(c, "attendance.csv", []string{"id", "enrollment_id", "date", "status", "notes", "updated_at"}, `SELECT id, enrollment_id, date, status, COALESCE(notes, ''), updated_at FROM daily_attendance ORDER BY date DESC`)
 }

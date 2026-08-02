@@ -24,6 +24,14 @@ type StudentHandler struct {
 // ImportCSV imports the supported student CSV columns: nis, full_name, gender,
 // birth_date, address, phone. Invalid rows are reported without rolling back
 // valid rows.
+//
+// @Summary Import students from CSV
+// @Tags Students
+// @Accept text/csv
+// @Produce json
+// @Param csv body string true "CSV document"
+// @Success 200 {object} response.Envelope
+// @Router /students/import [post]
 func (h *StudentHandler) ImportCSV(c *gin.Context) {
 	r := csv.NewReader(c.Request.Body)
 	header, err := r.Read()
@@ -102,6 +110,19 @@ func (h *StudentHandler) List(c *gin.Context) {
 
 // Roster preserves the admin screen's aggregate response shape while using
 // the canonical student service as its data source.
+//
+// @Summary List student roster
+// @Tags Students
+// @Produce json
+// @Param search query string false "Search by name or NIS"
+// @Param classId query string false "Filter by class"
+// @Param active query bool false "Filter by active state"
+// @Param page query int false "Page"
+// @Param perPage query int false "Page size"
+// @Param sort query string false "Sort field"
+// @Param order query string false "Sort order"
+// @Success 200 {object} response.Envelope
+// @Router /students/roster [get]
 func (h *StudentHandler) Roster(c *gin.Context) {
 	filter := studentFilter(c)
 	students, pagination, err := h.students.List(c.Request.Context(), filter)
@@ -222,6 +243,14 @@ func (h *StudentHandler) Update(c *gin.Context) {
 
 // UpdateStatus toggles a student's active state without requiring the full
 // student update payload used by PUT /students/:id.
+// @Summary Update student status
+// @Tags Students
+// @Accept json
+// @Produce json
+// @Param id path string true "Student ID"
+// @Param payload body map[string]interface{} true "Status payload"
+// @Success 200 {object} response.Envelope
+// @Router /students/{id}/status [patch]
 func (h *StudentHandler) UpdateStatus(c *gin.Context) {
 	var payload struct {
 		Status string `json:"status"`

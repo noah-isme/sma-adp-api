@@ -24,6 +24,11 @@ func NewAnalyticsHandler(analytics *service.AnalyticsService) *AnalyticsHandler 
 }
 
 // Attendance returns aggregated attendance data.
+// @Summary Attendance analytics
+// @Tags Analytics
+// @Produce json
+// @Success 200 {object} response.Envelope
+// @Router /analytics/attendance [get]
 func (h *AnalyticsHandler) Attendance(c *gin.Context) {
 	if h.analytics == nil {
 		response.Error(c, appErrors.ErrInternal)
@@ -50,6 +55,11 @@ func (h *AnalyticsHandler) Attendance(c *gin.Context) {
 }
 
 // Grades returns aggregated grade analytics.
+// @Summary Grade analytics
+// @Tags Analytics
+// @Produce json
+// @Success 200 {object} response.Envelope
+// @Router /analytics/grades [get]
 func (h *AnalyticsHandler) Grades(c *gin.Context) {
 	if h.analytics == nil {
 		response.Error(c, appErrors.ErrInternal)
@@ -76,6 +86,11 @@ func (h *AnalyticsHandler) Grades(c *gin.Context) {
 }
 
 // Behavior returns behaviour analytics.
+// @Summary Behavior analytics
+// @Tags Analytics
+// @Produce json
+// @Success 200 {object} response.Envelope
+// @Router /analytics/behavior [get]
 func (h *AnalyticsHandler) Behavior(c *gin.Context) {
 	if h.analytics == nil {
 		response.Error(c, appErrors.ErrInternal)
@@ -102,6 +117,11 @@ func (h *AnalyticsHandler) Behavior(c *gin.Context) {
 }
 
 // System returns instrumentation metrics snapshots.
+// @Summary System analytics
+// @Tags Analytics
+// @Produce json
+// @Success 200 {object} response.Envelope
+// @Router /analytics/system [get]
 func (h *AnalyticsHandler) System(c *gin.Context) {
 	if h.analytics == nil {
 		response.Error(c, appErrors.ErrInternal)

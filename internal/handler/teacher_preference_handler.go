@@ -62,6 +62,13 @@ func (h *TeacherPreferenceHandler) ListAll(c *gin.Context) {
 // LegacyUpsert accepts the existing admin-panel preference payload. The
 // canonical model only persists capacity and unavailable windows; preferred
 // slots remain presentation metadata and are returned for client continuity.
+// @Summary Compatibility teacher preference upsert
+// @Tags Teacher Preferences
+// @Accept json
+// @Produce json
+// @Success 200 {object} response.Envelope
+// @Router /teacher-preferences [post]
+// @Router /teacher-preferences/{id} [put]
 func (h *TeacherPreferenceHandler) LegacyUpsert(c *gin.Context) {
 	var payload struct {
 		TeacherID         string `json:"teacher_id" binding:"required"`

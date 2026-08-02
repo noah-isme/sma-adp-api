@@ -6,10 +6,16 @@ import "time"
 type UserRole string
 
 const (
-	RoleSuperAdmin UserRole = "SUPERADMIN"
-	RoleAdmin      UserRole = "ADMIN"
-	RoleTeacher    UserRole = "TEACHER"
-	RoleStudent    UserRole = "STUDENT"
+	RoleSuperAdmin    UserRole = "SUPERADMIN"
+	RoleAdminTU       UserRole = "ADMIN_TU"
+	RoleWaliKelas     UserRole = "WALI_KELAS"
+	RoleGuruMapel     UserRole = "GURU_MAPEL"
+	RoleKepalaSekolah UserRole = "KEPALA_SEKOLAH"
+	RoleSiswa         UserRole = "SISWA"
+	RoleOrtu          UserRole = "ORTU"
+	RoleAdmin         UserRole = RoleAdminTU
+	RoleTeacher       UserRole = RoleGuruMapel
+	RoleStudent       UserRole = RoleSiswa
 )
 
 // User represents an application user stored in the users table.
@@ -19,6 +25,9 @@ type User struct {
 	PasswordHash string     `db:"password_hash" json:"-"`
 	FullName     string     `db:"full_name" json:"full_name"`
 	Role         UserRole   `db:"role" json:"role"`
+	TeacherID    *string    `db:"teacher_id" json:"teacher_id,omitempty"`
+	StudentID    *string    `db:"student_id" json:"student_id,omitempty"`
+	ClassID      *string    `db:"class_id" json:"class_id,omitempty"`
 	Active       bool       `db:"active" json:"active"`
 	LastLogin    *time.Time `db:"last_login" json:"last_login,omitempty"`
 	CreatedAt    time.Time  `db:"created_at" json:"created_at"`

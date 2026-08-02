@@ -1,8 +1,8 @@
 # 🚀 Go Backend API Specification
 
 > **Admin Panel SMA - Complete API Endpoints Documentation**  
-> Version: 1.0.0  
-> Last Updated: 2025-11-09  
+> Version: 1.1.0
+> Last Updated: 2026-08-02
 > Target: Go + Fiber/Gin + PostgreSQL + Redis
 
 ---
@@ -11,20 +11,53 @@
 
 1. [Authentication & Authorization](#1-authentication--authorization)
 2. [User Management](#2-user-management)
-3. [Academic Management](#3-academic-management)
-4. [Student Management](#4-student-management)
-5. [Teacher Management](#5-teacher-management)
-6. [Class Management](#6-class-management)
-7. [Subject Management](#7-subject-management)
-8. [Grade Management](#8-grade-management)
-9. [Attendance Management](#9-attendance-management)
-10. [Schedule Management](#10-schedule-management)
-11. [Dashboard & Analytics](#11-dashboard--analytics)
-12. [Reports & Export](#12-reports--export)
-13. [Calendar & Events](#13-calendar--events)
-14. [Announcements](#14-announcements)
-15. [Behavior Notes](#15-behavior-notes)
-16. [Mutations & Archives](#16-mutations--archives)
+3. [Compatibility & Runtime Flags](#3-compatibility--runtime-flags)
+4. [Academic Management](#4-academic-management)
+5. [Student Management](#5-student-management)
+6. [Teacher Management](#6-teacher-management)
+7. [Class Management](#7-class-management)
+8. [Subject Management](#8-subject-management)
+9. [Grade Management](#9-grade-management)
+10. [Attendance Management](#10-attendance-management)
+11. [Schedule Management](#11-schedule-management)
+12. [Dashboard & Analytics](#12-dashboard--analytics)
+13. [Reports & Export](#13-reports--export)
+14. [Calendar & Events](#14-calendar--events)
+15. [Announcements](#15-announcements)
+16. [Behavior Notes](#16-behavior-notes)
+17. [Mutations & Archives](#17-mutations--archives)
+
+---
+
+## 📦 Response Envelope & Field Naming (IMPORTANT)
+
+The implemented Go backend (`sma-adp-api`) wraps **every** JSON success response in a common envelope and uses **snake_case** field names throughout. The per-endpoint examples below were written before the NestJS → Go migration and show **camelCase** fields at the top level — treat them as illustrative of the payload shape only. The actual contract is:
+
+- **Success:** `{ "data": <resource or array>, "pagination": {...}, "meta": {...} }` (see `pkg/response/response.go`).
+- **Error:** `{ "error": { "code": "...", "message": "...", ... } }`.
+- Field names are **snake_case**: `access_token`, `refresh_token`, `expires_in`, `full_name`, `created_at`, etc.
+- `POST`/`PUT`/`PATCH` create/update return `201`/`200` with the resource inside `data`; `DELETE` and password changes return `204 No Content` (empty body).
+
+Example — `POST /api/v1/auth/login` actual response:
+
+```json
+{
+  "data": {
+    "access_token": "eyJhbGciOiJIUzI1NiIs...",
+    "refresh_token": "eyJhbGciOiJIUzI1NiIs...",
+    "expires_in": 3600,
+    "issued_at": "2026-07-12T00:00:00Z",
+    "user": {
+      "id": "user_123",
+      "email": "admin@harapannusantara.sch.id",
+      "full_name": "Admin Tata Usaha",
+      "role": "ADMIN_TU"
+    }
+  }
+}
+```
+
+Canonical live examples are in the repository root `README.md` ("Contoh curl endpoint utama") and the generated Swagger served at `/docs`.
 
 ---
 
@@ -47,19 +80,17 @@
 
 ```json
 {
-  "accessToken": "eyJhbGciOiJIUzI1NiIs...",
-  "refreshToken": "eyJhbGciOiJIUzI1NiIs...",
-  "expiresIn": 3600,
-  "refreshExpiresIn": 86400,
-  "tokenType": "Bearer",
-  "user": {
-    "id": "user_123",
-    "email": "admin@harapannusantara.sch.id",
-    "fullName": "Admin Tata Usaha",
-    "role": "ADMIN_TU",
-    "teacherId": null,
-    "studentId": null,
-    "classId": null
+  "data": {
+    "access_token": "eyJhbGciOiJIUzI1NiIs...",
+    "refresh_token": "eyJhbGciOiJIUzI1NiIs...",
+    "expires_in": 3600,
+    "issued_at": "2026-07-12T00:00:00Z",
+    "user": {
+      "id": "user_123",
+      "email": "admin@harapannusantara.sch.id",
+      "full_name": "Admin Tata Usaha",
+      "role": "ADMIN_TU"
+    }
   }
 }
 ```
@@ -85,13 +116,12 @@ Authorization: Bearer {accessToken}
 
 ```json
 {
-  "id": "user_123",
-  "email": "admin@harapannusantara.sch.id",
-  "fullName": "Admin Tata Usaha",
-  "role": "ADMIN_TU",
-  "teacherId": null,
-  "studentId": null,
-  "classId": null
+  "data": {
+    "id": "user_123",
+    "email": "admin@harapannusantara.sch.id",
+    "full_name": "Admin Tata Usaha",
+    "role": "ADMIN_TU"
+  }
 }
 ```
 
@@ -105,7 +135,7 @@ Authorization: Bearer {accessToken}
 
 ```json
 {
-  "refreshToken": "eyJhbGciOiJIUzI1NiIs..."
+  "refresh_token": "eyJhbGciOiJIUzI1NiIs..."
 }
 ```
 
@@ -113,9 +143,12 @@ Authorization: Bearer {accessToken}
 
 ```json
 {
-  "accessToken": "eyJhbGciOiJIUzI1NiIs...",
-  "refreshToken": "eyJhbGciOiJIUzI1NiIs...",
-  "expiresIn": 3600
+  "data": {
+    "access_token": "eyJhbGciOiJIUzI1NiIs...",
+    "refresh_token": "eyJhbGciOiJIUzI1NiIs...",
+    "expires_in": 3600,
+    "issued_at": "2026-07-12T00:00:00Z"
+  }
 }
 ```
 
@@ -282,7 +315,48 @@ Authorization: Bearer {accessToken}
 
 ---
 
-## 📚 3. Academic Management
+## 🔁 3. Compatibility & Runtime Flags
+
+The Go API keeps the existing admin-panel contracts available while the frontend migrates to the canonical resource routes. These aliases use the same response envelope and authorization rules as their canonical handlers:
+
+| Admin contract | Go route | Notes |
+| --- | --- | --- |
+| Exam events | `/exam-events` | Alias of `/calendar-events`; use `event_type` to distinguish exams. |
+| Enrollment edit | `PUT /enrollments/:id` | Accepts `class_id` (or legacy `target_class_id`) and performs the validated transfer workflow. |
+| Attendance write | `POST /attendance`, `PUT/PATCH /attendance/:id` | Compatibility upsert mapped to daily attendance. Canonical bulk and subject routes remain available under `/attendance/daily` and `/attendance/subject`. |
+| Teacher preferences | `POST /teacher-preferences`, `PUT /teacher-preferences/:id` | Compatibility upsert; per-teacher canonical route is `PUT /teachers/:id/preferences`. |
+
+The admin data provider unwraps `data` from the response envelope and converts browser camelCase fields to the API's snake_case fields. New integrations should use the canonical snake_case contract directly.
+
+### User roles and persisted relations
+
+The API accepts exactly these seven role values:
+
+`SUPERADMIN`, `ADMIN_TU`, `WALI_KELAS`, `GURU_MAPEL`, `KEPALA_SEKOLAH`, `SISWA`, `ORTU`.
+
+User records persist optional authoritative links in `teacher_id`, `student_id`, and `class_id`. These fields are returned by user endpoints and are intended to connect an account to its teacher, student, or class record; they are not frontend-only metadata. The relation columns and indexes are added by migration `000015_user_relations.up.sql` (and are included in the initial schema for new installations).
+
+### Feature flags
+
+Optional API capabilities are disabled by default. The frontend must expose a page/resource only when its corresponding Vite flag is enabled, so disabled backend capabilities do not produce navigable 404 pages.
+
+| Go API flag | Admin flag | Capability |
+| --- | --- | --- |
+| `ENABLE_DASHBOARD` | `VITE_ENABLE_DASHBOARD` | Dashboard and analytics endpoints |
+| `ENABLE_SCHEDULER` | `VITE_ENABLE_SCHEDULER` | Schedule generator and preferences UI |
+| `ENABLE_REPORTS` | `VITE_ENABLE_REPORTS` | Report generation/export endpoints |
+| `ENABLE_MUTATIONS` | `VITE_ENABLE_MUTATIONS` | Student mutation workflows |
+| `ENABLE_ARCHIVES` | `VITE_ENABLE_ARCHIVES` | Archive storage/download workflows |
+| `ENABLE_HOMEROOMS` | `VITE_ENABLE_HOMEROOMS` | Homeroom endpoints |
+| `ENABLE_CONFIGURATION_API` | `VITE_ENABLE_CONFIGURATION_API` | Configuration endpoints |
+| `ENABLE_CALENDAR_ALIAS` | `VITE_ENABLE_CALENDAR_ALIAS` | `/calendar` compatibility alias |
+| `ENABLE_ATTENDANCE_ALIAS` | `VITE_ENABLE_ATTENDANCE_ALIAS` | Attendance summary alias |
+
+Set both flags to `true` when enabling a capability. Omitting a flag is equivalent to `false`; canonical resources that are always registered (for example `/schedules`) remain available independently.
+
+---
+
+## 📚 4. Academic Management
 
 ### GET /api/v1/terms
 
@@ -343,7 +417,7 @@ Authorization: Bearer {accessToken}
 
 ---
 
-## 🎓 4. Student Management
+## 🎓 5. Student Management
 
 ### GET /api/v1/students/roster
 
@@ -494,7 +568,7 @@ Authorization: Bearer {accessToken}
 
 ---
 
-## 👨‍🏫 5. Teacher Management
+## 👨‍🏫 6. Teacher Management
 
 ### GET /api/v1/teachers/roster
 
@@ -599,7 +673,7 @@ Authorization: Bearer {accessToken}
 
 ---
 
-## 🏫 6. Class Management
+## 🏫 7. Class Management
 
 ### GET /api/v1/classes
 
@@ -654,7 +728,7 @@ Authorization: Bearer {accessToken}
 
 ---
 
-## 📖 7. Subject Management
+## 📖 8. Subject Management
 
 ### GET /api/v1/subjects
 
@@ -707,7 +781,7 @@ Authorization: Bearer {accessToken}
 
 ---
 
-## 📝 8. Grade Management
+## 📝 9. Grade Management
 
 ### GET /api/v1/grades/report
 
@@ -933,7 +1007,7 @@ Authorization: Bearer {accessToken}
 
 ---
 
-## 📅 9. Attendance Management
+## 📅 10. Attendance Management
 
 ### GET /api/v1/attendance
 
@@ -1059,7 +1133,7 @@ Authorization: Bearer {accessToken}
 
 ---
 
-## 🗓️ 10. Schedule Management
+## 🗓️ 11. Schedule Management
 
 ### GET /api/v1/schedules
 
@@ -1186,7 +1260,7 @@ Authorization: Bearer {accessToken}
 
 ---
 
-## 📊 11. Dashboard & Analytics
+## 📊 12. Dashboard & Analytics
 
 ### GET /api/v1/dashboard
 
@@ -1264,7 +1338,7 @@ Authorization: Bearer {accessToken}
 
 ---
 
-## 📄 12. Reports & Export
+## 📄 13. Reports & Export
 
 ### POST /api/v1/reports/generate
 
@@ -1340,7 +1414,7 @@ Returns file download
 
 ---
 
-## 📆 13. Calendar & Events
+## 📆 14. Calendar & Events
 
 ### GET /api/v1/calendar-events
 
@@ -1393,7 +1467,7 @@ Returns file download
 
 ---
 
-## 📢 14. Announcements
+## 📢 15. Announcements
 
 ### GET /api/v1/announcements
 
@@ -1443,7 +1517,7 @@ Returns file download
 
 ---
 
-## 📝 15. Behavior Notes
+## 📝 16. Behavior Notes
 
 ### GET /api/v1/behavior-notes
 
@@ -1486,7 +1560,7 @@ Returns file download
 
 ---
 
-## 🔄 16. Mutations & Archives
+## 🔄 17. Mutations & Archives
 
 ### GET /api/v1/mutations
 
@@ -1820,6 +1894,6 @@ GET /api/v1/students?search=aditya
 
 **Total Endpoints: 100+**
 
-**Last Updated:** 2025-11-09  
-**Document Version:** 1.0.0  
+**Last Updated:** 2026-08-02
+**Document Version:** 1.1.0
 **Maintained By:** Development Team

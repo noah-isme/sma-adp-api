@@ -36,6 +36,13 @@ func (m *prefRepoMock) Upsert(ctx context.Context, pref *models.TeacherPreferenc
 	return nil
 }
 
+func (m *prefRepoMock) ListAll(ctx context.Context, filter models.TeacherPreferenceFilter) ([]models.TeacherPreference, int, error) {
+	if m.stored == nil {
+		return nil, 0, nil
+	}
+	return []models.TeacherPreference{*m.stored}, 1, nil
+}
+
 func TestTeacherPreferenceServiceGetDefault(t *testing.T) {
 	teacherRepo := &teacherRepoStub{
 		items: map[string]*models.Teacher{"teacher-1": {ID: "teacher-1", Active: true}},

@@ -25,7 +25,7 @@ func NewUserRepository(db *sqlx.DB) *UserRepository {
 
 // FindByEmail returns a user by email address.
 func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*models.User, error) {
-	const query = `SELECT id, email, password_hash, full_name, role, active, last_login, created_at, updated_at FROM users WHERE email = $1 LIMIT 1`
+	const query = `SELECT id, email, password_hash, full_name, role, teacher_id, student_id, class_id, active, last_login, created_at, updated_at FROM users WHERE email = $1 LIMIT 1`
 	var user models.User
 	if err := r.db.GetContext(ctx, &user, query, email); err != nil {
 		if err == sql.ErrNoRows {
@@ -38,7 +38,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*models
 
 // FindByID returns a user by identifier.
 func (r *UserRepository) FindByID(ctx context.Context, id string) (*models.User, error) {
-	const query = `SELECT id, email, password_hash, full_name, role, active, last_login, created_at, updated_at FROM users WHERE id = $1 LIMIT 1`
+	const query = `SELECT id, email, password_hash, full_name, role, teacher_id, student_id, class_id, active, last_login, created_at, updated_at FROM users WHERE id = $1 LIMIT 1`
 	var user models.User
 	if err := r.db.GetContext(ctx, &user, query, id); err != nil {
 		if err == sql.ErrNoRows {
@@ -119,7 +119,7 @@ func (r *UserRepository) List(ctx context.Context, filter models.UserFilter) ([]
 	}
 	offset := (page - 1) * pageSize
 
-	listQuery := fmt.Sprintf("SELECT id, email, password_hash, full_name, role, active, last_login, created_at, updated_at %s ORDER BY %s %s LIMIT %d OFFSET %d", baseQuery, sortBy, sortOrder, pageSize, offset)
+	listQuery := fmt.Sprintf("SELECT id, email, password_hash, full_name, role, teacher_id, student_id, class_id, active, last_login, created_at, updated_at %s ORDER BY %s %s LIMIT %d OFFSET %d", baseQuery, sortBy, sortOrder, pageSize, offset)
 
 	var users []models.User
 	if err := r.db.SelectContext(ctx, &users, listQuery, args...); err != nil {
@@ -146,7 +146,7 @@ func (r *UserRepository) Create(ctx context.Context, user *models.User) error {
 	}
 	user.UpdatedAt = now
 
-	const query = `INSERT INTO users (id, email, password_hash, full_name, role, active, created_at, updated_at) VALUES (:id, :email, :password_hash, :full_name, :role, :active, :created_at, :updated_at)`
+	const query = `INSERT INTO users (id, email, password_hash, full_name, role, teacher_id, student_id, class_id, active, created_at, updated_at) VALUES (:id, :email, :password_hash, :full_name, :role, :teacher_id, :student_id, :class_id, :active, :created_at, :updated_at)`
 	if _, err := r.db.NamedExecContext(ctx, query, user); err != nil {
 		return fmt.Errorf("create user: %w", err)
 	}
@@ -156,7 +156,7 @@ func (r *UserRepository) Create(ctx context.Context, user *models.User) error {
 // Update updates mutable fields of a user.
 func (r *UserRepository) Update(ctx context.Context, user *models.User) error {
 	user.UpdatedAt = time.Now().UTC()
-	const query = `UPDATE users SET full_name = :full_name, role = :role, active = :active, updated_at = :updated_at WHERE id = :id`
+	const query = `UPDATE users SET full_name = :full_name, role = :role, teacher_id = :teacher_id, student_id = :student_id, class_id = :class_id, active = :active, updated_at = :updated_at WHERE id = :id`
 	if _, err := r.db.NamedExecContext(ctx, query, user); err != nil {
 		return fmt.Errorf("update user: %w", err)
 	}

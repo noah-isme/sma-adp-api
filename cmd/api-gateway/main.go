@@ -437,6 +437,7 @@ func main() {
 	enrollmentsGroup := secured.Group("/enrollments")
 	enrollmentsGroup.GET("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), enrollmentHandler.List)
 	enrollmentsGroup.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), enrollmentHandler.Create)
+	enrollmentsGroup.PUT("/:id", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), enrollmentHandler.Update)
 	enrollmentsGroup.PUT("/:id/transfer", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), enrollmentHandler.Transfer)
 	enrollmentsGroup.DELETE("/:id", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), enrollmentHandler.Delete)
 
@@ -478,6 +479,15 @@ func main() {
 	calendarEventsGroup.PUT("/:id", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), calendarHandler.Update)
 	calendarEventsGroup.DELETE("/:id", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), calendarHandler.Delete)
 
+	// Backward-compatible alias for the admin calendar. Exam events are stored
+	// as calendar events; clients distinguish them through their event_type.
+	examEventsGroup := secured.Group("/exam-events")
+	examEventsGroup.GET("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), calendarHandler.List)
+	examEventsGroup.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), calendarHandler.Create)
+	examEventsGroup.GET("/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), calendarHandler.Get)
+	examEventsGroup.PUT("/:id", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), calendarHandler.Update)
+	examEventsGroup.DELETE("/:id", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), calendarHandler.Delete)
+
 	reportJSONGroup := secured.Group("/reports")
 	reportJSONGroup.GET("/students/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), reportHandler.StudentReport)
 	reportJSONGroup.GET("/classes/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), reportHandler.ClassReport)
@@ -514,12 +524,17 @@ func main() {
 		attendanceCRUDGroup.POST("/daily/bulk", attendanceHandler.BulkMarkDaily)
 		attendanceCRUDGroup.POST("/subject", attendanceHandler.MarkSubject)
 		attendanceCRUDGroup.POST("/subject/bulk", attendanceHandler.BulkMarkSubject)
+		attendanceCRUDGroup.POST("", attendanceHandler.LegacyUpsert)
+		attendanceCRUDGroup.PUT("/:id", attendanceHandler.LegacyUpsert)
+		attendanceCRUDGroup.PATCH("/:id", attendanceHandler.LegacyUpsert)
 	}
 
 	// Standalone teacher-preferences endpoint
 	teacherPrefsGroup := secured.Group("/teacher-preferences")
 	teacherPrefsGroup.Use(internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)))
 	teacherPrefsGroup.GET("", teacherPreferenceHandler.ListAll)
+	teacherPrefsGroup.POST("", teacherPreferenceHandler.LegacyUpsert)
+	teacherPrefsGroup.PUT("/:id", teacherPreferenceHandler.LegacyUpsert)
 
 	if configurationHandler != nil {
 		configGroup := secured.Group("/configuration")

@@ -24,6 +24,37 @@ type AttendanceHandler struct {
 	service attendanceService
 }
 
+// LegacyUpsert keeps the generic /attendance CRUD contract used by the admin
+// panel. Legacy records do not carry a schedule_id, so they map to the daily
+// attendance store, whose upsert semantics make POST and PUT idempotent.
+func (h *AttendanceHandler) LegacyUpsert(c *gin.Context) {
+	var payload struct {
+		EnrollmentID string `json:"enrollment_id" binding:"required"`
+		Date         string `json:"date" binding:"required"`
+		Status       string `json:"status" binding:"required"`
+		Note         string `json:"note"`
+		Notes        string `json:"notes"`
+	}
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		response.Error(c, appErrors.Wrap(err, appErrors.ErrValidation.Code, http.StatusBadRequest, "invalid attendance payload"))
+		return
+	}
+	note := payload.Note
+	if note == "" {
+		note = payload.Notes
+	}
+	var notes *string
+	if note != "" {
+		notes = &note
+	}
+	record, err := h.service.MarkDaily(c.Request.Context(), service.MarkDailyAttendanceRequest{EnrollmentID: payload.EnrollmentID, Date: payload.Date, Status: payload.Status, Notes: notes})
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+	response.JSON(c, http.StatusOK, record, nil)
+}
+
 // NewAttendanceHandler constructs the handler.
 func NewAttendanceHandler(service attendanceService) *AttendanceHandler {
 	return &AttendanceHandler{service: service}

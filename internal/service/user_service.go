@@ -28,18 +28,24 @@ type userRepository interface {
 
 // CreateUserRequest represents payload for creating users.
 type CreateUserRequest struct {
-	Email    string          `json:"email" validate:"required,email"`
-	FullName string          `json:"full_name" validate:"required"`
-	Role     models.UserRole `json:"role" validate:"required,oneof=SUPERADMIN ADMIN TEACHER STUDENT"`
-	Active   bool            `json:"active"`
-	Password string          `json:"password" validate:"required,min=6"`
+	Email     string          `json:"email" validate:"required,email"`
+	FullName  string          `json:"full_name" validate:"required"`
+	Role      models.UserRole `json:"role" validate:"required,oneof=SUPERADMIN ADMIN_TU WALI_KELAS GURU_MAPEL KEPALA_SEKOLAH SISWA ORTU"`
+	TeacherID *string         `json:"teacher_id"`
+	StudentID *string         `json:"student_id"`
+	ClassID   *string         `json:"class_id"`
+	Active    bool            `json:"active"`
+	Password  string          `json:"password" validate:"required,min=6"`
 }
 
 // UpdateUserRequest payload for updating users.
 type UpdateUserRequest struct {
-	FullName string          `json:"full_name" validate:"required"`
-	Role     models.UserRole `json:"role" validate:"required,oneof=SUPERADMIN ADMIN TEACHER STUDENT"`
-	Active   *bool           `json:"active"`
+	FullName  string          `json:"full_name" validate:"required"`
+	Role      models.UserRole `json:"role" validate:"required,oneof=SUPERADMIN ADMIN_TU WALI_KELAS GURU_MAPEL KEPALA_SEKOLAH SISWA ORTU"`
+	Active    *bool           `json:"active"`
+	TeacherID *string         `json:"teacher_id"`
+	StudentID *string         `json:"student_id"`
+	ClassID   *string         `json:"class_id"`
 }
 
 // UserService handles user management workflows.
@@ -119,6 +125,9 @@ func (s *UserService) Create(ctx context.Context, req CreateUserRequest, actorID
 		Email:        strings.ToLower(req.Email),
 		FullName:     req.FullName,
 		Role:         req.Role,
+		TeacherID:    req.TeacherID,
+		StudentID:    req.StudentID,
+		ClassID:      req.ClassID,
 		Active:       req.Active,
 		PasswordHash: string(passwordHash),
 	}
@@ -161,6 +170,9 @@ func (s *UserService) Update(ctx context.Context, id string, req UpdateUserReque
 
 	user.FullName = req.FullName
 	user.Role = req.Role
+	user.TeacherID = req.TeacherID
+	user.StudentID = req.StudentID
+	user.ClassID = req.ClassID
 	if req.Active != nil {
 		user.Active = *req.Active
 	}

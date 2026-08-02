@@ -103,6 +103,35 @@ func (h *EnrollmentHandler) Transfer(c *gin.Context) {
 	response.JSON(c, http.StatusOK, enrollment, nil)
 }
 
+// Update is a backward-compatible alias for clients that use generic CRUD
+// updates. Enrollments can only be changed by transferring to another class,
+// so both class_id and target_class_id are accepted and routed through the
+// normal transfer validation.
+func (h *EnrollmentHandler) Update(c *gin.Context) {
+	var payload struct {
+		ClassID       string `json:"class_id"`
+		TargetClassID string `json:"target_class_id"`
+	}
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		response.Error(c, appErrors.Wrap(err, appErrors.ErrValidation.Code, http.StatusBadRequest, "invalid enrollment payload"))
+		return
+	}
+	targetClassID := payload.TargetClassID
+	if targetClassID == "" {
+		targetClassID = payload.ClassID
+	}
+	if targetClassID == "" {
+		response.Error(c, appErrors.Clone(appErrors.ErrValidation, "class_id is required"))
+		return
+	}
+	enrollment, err := h.enrollments.Transfer(c.Request.Context(), c.Param("id"), service.TransferEnrollmentRequest{TargetClassID: targetClassID})
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+	response.JSON(c, http.StatusOK, enrollment, nil)
+}
+
 // Delete godoc
 // @Summary Unenroll student
 // @Tags Enrollments

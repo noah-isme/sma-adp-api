@@ -2,7 +2,9 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -54,7 +56,58 @@ func (h *TeacherPreferenceHandler) ListAll(c *gin.Context) {
 		response.Error(c, err)
 		return
 	}
-	response.JSON(c, http.StatusOK, prefs, pagination)
+	response.JSON(c, http.StatusOK, legacyPreferences(prefs), pagination)
+}
+
+// LegacyUpsert accepts the existing admin-panel preference payload. The
+// canonical model only persists capacity and unavailable windows; preferred
+// slots remain presentation metadata and are returned for client continuity.
+func (h *TeacherPreferenceHandler) LegacyUpsert(c *gin.Context) {
+	var payload struct {
+		TeacherID         string `json:"teacher_id" binding:"required"`
+		PreferredDays     []int  `json:"preferred_days"`
+		BlockedDays       []int  `json:"blocked_days"`
+		PreferredSlots    []int  `json:"preferred_slots"`
+		MaxDailySessions  int    `json:"max_daily_sessions"`
+		AvailabilityLevel string `json:"availability_level"`
+		Notes             string `json:"notes"`
+	}
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		response.Error(c, appErrors.Wrap(err, appErrors.ErrValidation.Code, http.StatusBadRequest, "invalid preference payload"))
+		return
+	}
+	unavailable := make([]models.TeacherUnavailableSlot, 0, len(payload.BlockedDays))
+	for _, day := range payload.BlockedDays {
+		unavailable = append(unavailable, models.TeacherUnavailableSlot{DayOfWeek: strconv.Itoa(day), TimeRange: "all"})
+	}
+	pref, err := h.service.Upsert(c.Request.Context(), payload.TeacherID, service.UpsertTeacherPreferenceRequest{
+		MaxLoadPerDay: payload.MaxDailySessions, MaxLoadPerWeek: payload.MaxDailySessions * 5, Unavailable: unavailable,
+	})
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+	response.JSON(c, http.StatusOK, legacyPreference(*pref), nil)
+}
+
+func legacyPreferences(prefs []models.TeacherPreference) []gin.H {
+	result := make([]gin.H, len(prefs))
+	for i, pref := range prefs {
+		result[i] = legacyPreference(pref)
+	}
+	return result
+}
+
+func legacyPreference(pref models.TeacherPreference) gin.H {
+	blocked := []int{}
+	var unavailable []models.TeacherUnavailableSlot
+	_ = json.Unmarshal(pref.Unavailable, &unavailable)
+	for _, slot := range unavailable {
+		if day, err := strconv.Atoi(slot.DayOfWeek); err == nil {
+			blocked = append(blocked, day)
+		}
+	}
+	return gin.H{"id": pref.ID, "teacher_id": pref.TeacherID, "preferred_days": []int{}, "blocked_days": blocked, "preferred_slots": []int{}, "max_daily_sessions": pref.MaxLoadPerDay, "availability_level": "MEDIUM", "notes": ""}
 }
 
 // Get godoc

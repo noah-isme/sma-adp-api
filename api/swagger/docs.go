@@ -2313,13 +2313,14 @@ const docTemplate = `{
         },
         "/export/attendance": {
             "get": {
+                "description": "Streams the complete daily attendance table as text/csv. Query filters and XLSX format are unsupported.",
                 "produces": [
                     "text/csv"
                 ],
                 "tags": [
                     "Exports"
                 ],
-                "summary": "Export attendance as CSV",
+                "summary": "Export attendance as unfiltered CSV",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2332,13 +2333,14 @@ const docTemplate = `{
         },
         "/export/grades": {
             "get": {
+                "description": "Streams the complete grades table as text/csv. Query filters and XLSX format are unsupported.",
                 "produces": [
                     "text/csv"
                 ],
                 "tags": [
                     "Exports"
                 ],
-                "summary": "Export grades as CSV",
+                "summary": "Export grades as unfiltered CSV",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2351,13 +2353,14 @@ const docTemplate = `{
         },
         "/export/students": {
             "get": {
+                "description": "Streams the complete students table as text/csv. Query filters and XLSX format are unsupported.",
                 "produces": [
                     "text/csv"
                 ],
                 "tags": [
                     "Exports"
                 ],
-                "summary": "Export students as CSV",
+                "summary": "Export students as unfiltered CSV",
                 "responses": {
                     "200": {
                         "description": "OK",

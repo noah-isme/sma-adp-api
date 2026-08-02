@@ -2617,6 +2617,8 @@ paths:
       - Reports
   /export/attendance:
     get:
+      description: Streams the complete daily attendance table as text/csv. Query
+        filters and XLSX format are unsupported.
       produces:
       - text/csv
       responses:
@@ -2624,11 +2626,13 @@ paths:
           description: OK
           schema:
             type: file
-      summary: Export attendance as CSV
+      summary: Export attendance as unfiltered CSV
       tags:
       - Exports
   /export/grades:
     get:
+      description: Streams the complete grades table as text/csv. Query filters and
+        XLSX format are unsupported.
       produces:
       - text/csv
       responses:
@@ -2636,11 +2640,13 @@ paths:
           description: OK
           schema:
             type: file
-      summary: Export grades as CSV
+      summary: Export grades as unfiltered CSV
       tags:
       - Exports
   /export/students:
     get:
+      description: Streams the complete students table as text/csv. Query filters
+        and XLSX format are unsupported.
       produces:
       - text/csv
       responses:
@@ -2648,7 +2654,7 @@ paths:
           description: OK
           schema:
             type: file
-      summary: Export students as CSV
+      summary: Export students as unfiltered CSV
       tags:
       - Exports
   /grade-components:

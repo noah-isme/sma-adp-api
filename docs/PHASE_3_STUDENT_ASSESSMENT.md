@@ -1,5 +1,7 @@
 # Phase 3: Student Management & Assessment (Week 9-11)
 
+> **Historical design — status moved to `docs/CONTRACT_MATRIX.md` and `docs/PROJECT_STATUS.md`.** This document preserves the original plan and checklist; unchecked items do not indicate current implementation status.
+
 ## 🎯 Objectives
 
 - Implement student CRUD operations

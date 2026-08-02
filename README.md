@@ -28,7 +28,7 @@ make dev
 ## Endpoint Availability
 
 - Always-on core: `/auth`, `/users`, `/terms`, `/subjects`, `/classes`, `/schedules`, `/students`, `/enrollments`, `/grade-components`, `/grade-configs`, `/grades`, `/reports/students/{id}`, `/reports/classes/{id}`, `/announcements`, `/behavior-notes`, `/calendar-events`, `/teachers`.
-- Feature-flagged: `/analytics` (`ENABLE_ANALYTICS`), `/dashboard` (`ENABLE_DASHBOARD`), `/schedule/generate` and semester schedules (`ENABLE_SCHEDULER`), async `/reports/generate` and `/export/{token}` (`ENABLE_REPORTS`), `/mutations` (`ENABLE_MUTATIONS`), `/archives` (`ENABLE_ARCHIVES`), `/homerooms` (`ENABLE_HOMEROOMS`), `/calendar` and `/attendance` aliases (`ENABLE_CALENDAR_ALIAS`, `ENABLE_ATTENDANCE_ALIAS`), `/configuration` (`ENABLE_CONFIGURATION_API`).
+- Feature-flagged: `/analytics` (`ENABLE_ANALYTICS`), `/dashboard` (`ENABLE_DASHBOARD`), `/schedule/generate` and semester schedules (`ENABLE_SCHEDULER`), async `/reports/generate` and `/export/{token}` (`ENABLE_REPORTS`), `/mutations` (`ENABLE_MUTATIONS`), `/archives` (`ENABLE_ARCHIVES`), `/homerooms` (`ENABLE_HOMEROOMS`), `/calendar` alias (`ENABLE_CALENDAR_ALIAS`), attendance daily/subject, summary, and compatibility routes (`ENABLE_ATTENDANCE_ALIAS`), `/configuration` (`ENABLE_CONFIGURATION_API`). The admin has no standalone `VITE_ENABLE_ANALYTICS`; dashboard analytics are gated by `VITE_ENABLE_DASHBOARD`, while attendance analytics follow `VITE_ENABLE_ATTENDANCE_ALIAS`.
 
 Detail status per fase ada di [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md).
 

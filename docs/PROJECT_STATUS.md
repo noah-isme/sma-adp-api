@@ -51,7 +51,7 @@ Always-on core:
 - `/class-subjects`
 - `/teacher-preferences`
 
-Attendance is not always-on. The daily, subject, generic compatibility, and summary routes are registered only when `ENABLE_ATTENDANCE_ALIAS=true`.
+Attendance routes and compatibility aliases are not always-on. The daily, subject, generic write, and summary routes are registered only when `ENABLE_ATTENDANCE_ALIAS=true`.
 
 Feature-flagged:
 

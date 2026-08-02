@@ -346,7 +346,7 @@ Optional API capabilities are disabled by default. The frontend must expose a pa
 
 | Go API flag | Admin flag | Capability |
 | --- | --- | --- |
-| `ENABLE_DASHBOARD` | `VITE_ENABLE_DASHBOARD` | Dashboard and analytics endpoints |
+| `ENABLE_DASHBOARD` | `VITE_ENABLE_DASHBOARD` | Dashboard endpoints (including dashboard analytics sections) |
 | `ENABLE_SCHEDULER` | `VITE_ENABLE_SCHEDULER` | Schedule generator and preferences UI |
 | `ENABLE_REPORTS` | `VITE_ENABLE_REPORTS` | Report generation/export endpoints |
 | `ENABLE_MUTATIONS` | `VITE_ENABLE_MUTATIONS` | Student mutation workflows |
@@ -354,9 +354,17 @@ Optional API capabilities are disabled by default. The frontend must expose a pa
 | `ENABLE_HOMEROOMS` | `VITE_ENABLE_HOMEROOMS` | Homeroom endpoints |
 | `ENABLE_CONFIGURATION_API` | `VITE_ENABLE_CONFIGURATION_API` | Configuration endpoints |
 | `ENABLE_CALENDAR_ALIAS` | `VITE_ENABLE_CALENDAR_ALIAS` | `/calendar` compatibility alias |
-| `ENABLE_ATTENDANCE_ALIAS` | `VITE_ENABLE_ATTENDANCE_ALIAS` | Attendance summary alias |
+| `ENABLE_ATTENDANCE_ALIAS` | `VITE_ENABLE_ATTENDANCE_ALIAS` | Attendance routes and compatibility aliases (daily, subject, generic writes, and summary) |
 
-Set both flags to `true` when enabling a capability. Omitting a flag is equivalent to `false`; canonical resources that are always registered (for example `/schedules`) remain available independently.
+`ENABLE_ANALYTICS` controls the standalone `/analytics/*` API. There is no standalone
+`VITE_ENABLE_ANALYTICS` page flag: the admin dashboard is gated by
+`VITE_ENABLE_DASHBOARD`, while the attendance analytics screen is gated by
+`VITE_ENABLE_ATTENDANCE_ALIAS` and reads the attendance resource. When dashboard
+analytics are enabled, set `ENABLE_ANALYTICS` alongside `ENABLE_DASHBOARD` for the
+cached analytics service; the dashboard has a repository fallback when only
+`ENABLE_DASHBOARD` is enabled.
+
+Set both flags to `true` when enabling a paired capability. `ENABLE_ANALYTICS` is the exception: it has no separate Vite flag and is a backend dependency/optimization for dashboard analytics. Omitting a flag is equivalent to `false`; canonical resources that are always registered (for example `/schedules`) remain available independently.
 
 ---
 
@@ -1397,28 +1405,33 @@ The current handler supports `enrollmentId`, `subjectId`, and `componentId`. `te
 
 ### GET /api/v1/export/students
 
-**Export students data (CSV/Excel)**
+**Export students data (unfiltered CSV compatibility download)**
 
-**Query Parameters:**
+This browser-compatibility endpoint always streams the complete students table as
+`text/csv`. Query parameters such as `format`, `classId`, and `status` are not
+implemented and are ignored; XLSX output is not supported. Use the asynchronous
+report flow under `/reports/generate` and `/export/{token}` when filtered or
+non-CSV output is required.
 
-- `format` (string): csv, xlsx
-- `classId` (string)
-- `status` (string)
-
-**Response (200):**
-Returns file download
+**Response (200):** Returns an unfiltered CSV file download.
 
 ---
 
 ### GET /api/v1/export/grades
 
-**Export grades data**
+**Export grades data (unfiltered CSV compatibility download)**
+
+The endpoint always streams the complete grades table as `text/csv`; filtering,
+`format=xlsx`, and other query parameters are not supported.
 
 ---
 
 ### GET /api/v1/export/attendance
 
-**Export attendance data**
+**Export attendance data (unfiltered CSV compatibility download)**
+
+The endpoint always streams the complete daily attendance table as `text/csv`;
+filtering, `format=xlsx`, and other query parameters are not supported.
 
 ---
 

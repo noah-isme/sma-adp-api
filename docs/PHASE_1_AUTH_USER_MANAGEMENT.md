@@ -1,5 +1,7 @@
 # Phase 1: Authentication & User Management (Week 3-5)
 
+> **Historical design — status moved to `docs/CONTRACT_MATRIX.md` and `docs/PROJECT_STATUS.md`.** This document preserves the original plan and checklist; unchecked items do not indicate current implementation status.
+
 ## 🎯 Objectives
 
 - Implement authentication system (login/logout)

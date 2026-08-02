@@ -11,17 +11,18 @@ import (
 )
 
 // ExportCompatibilityHandler serves the legacy browser-download routes. They
-// deliberately return CSV directly; asynchronous report jobs remain available
-// separately under /reports/generate and /export/{token}.
+// deliberately return unfiltered CSV directly; asynchronous report jobs remain
+// available separately under /reports/generate and /export/{token}.
 type ExportCompatibilityHandler struct{ db *sqlx.DB }
 
 func NewExportCompatibilityHandler(db *sqlx.DB) *ExportCompatibilityHandler {
 	return &ExportCompatibilityHandler{db: db}
 }
 
-// Students exports students as CSV.
-// @Summary Export students as CSV
+// Students exports the complete students table as an unfiltered CSV download.
+// @Summary Export students as unfiltered CSV
 // @Tags Exports
+// @Description Streams the complete students table as text/csv. Query filters and XLSX format are unsupported.
 // @Produce text/csv
 // @Success 200 {file} binary
 // @Router /export/students [get]
@@ -29,9 +30,10 @@ func (h *ExportCompatibilityHandler) Students(c *gin.Context) {
 	h.write(c, "students.csv", []string{"id", "nis", "full_name", "gender", "active"}, `SELECT id, nis, full_name, gender, active FROM students ORDER BY full_name`)
 }
 
-// Grades exports grades as CSV.
-// @Summary Export grades as CSV
+// Grades exports the complete grades table as an unfiltered CSV download.
+// @Summary Export grades as unfiltered CSV
 // @Tags Exports
+// @Description Streams the complete grades table as text/csv. Query filters and XLSX format are unsupported.
 // @Produce text/csv
 // @Success 200 {file} binary
 // @Router /export/grades [get]
@@ -39,9 +41,10 @@ func (h *ExportCompatibilityHandler) Grades(c *gin.Context) {
 	h.write(c, "grades.csv", []string{"id", "enrollment_id", "subject_id", "component_id", "grade_value", "updated_at"}, `SELECT id, enrollment_id, subject_id, component_id, grade_value, updated_at FROM grades ORDER BY updated_at DESC`)
 }
 
-// Attendance exports daily attendance as CSV.
-// @Summary Export attendance as CSV
+// Attendance exports the complete daily attendance table as an unfiltered CSV download.
+// @Summary Export attendance as unfiltered CSV
 // @Tags Exports
+// @Description Streams the complete daily attendance table as text/csv. Query filters and XLSX format are unsupported.
 // @Produce text/csv
 // @Success 200 {file} binary
 // @Router /export/attendance [get]

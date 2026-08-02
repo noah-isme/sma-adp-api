@@ -20,13 +20,22 @@ Sumber kebenaran teknis:
 - `python3 scripts/validate_swagger_routes.py` passed (101 generated paths cover
   all gateway routes).
 - `python3 scripts/compatibility_smoke.py` passed its static check (22 required
-  compatibility operations are present in both gateway and Swagger). Seeded HTTP
-  checks are available with `RUN_COMPATIBILITY_SMOKE=1`, `BASE_URL`, and
-  `ACCESS_TOKEN`, but were not runnable in this environment because database and
-  Go module-cache prerequisites were unavailable.
-- Go package tests were attempted with a writable temporary module cache; the
-  compiler hit the disk quota while building downloaded dependencies. This is an
-  environment verification block, not a recorded test pass.
+  compatibility operations are present in both gateway and Swagger).
+- Seeded runtime verification passed with Postgres, Redis, migrations 15–18,
+  `scripts/seed.sql`, and all compatibility feature flags enabled. The suite
+  covered roster/report reads, CSV exports, grade and component edit/delete,
+  student and teacher CSV import replay, attendance POST/PATCH, teacher
+  preference POST/PUT, exam-event CRUD, enrollment transfer/restore, dashboard,
+  analytics, and the asynchronous report job/status/download flow. Every
+  compatibility matrix row now records its actual result or explicitly notes
+  that it is browser-only.
+- The seeded run also exposed a non-fatal audit persistence warning on login
+  (`audit_logs` JSON encoding); authentication and all HTTP smoke assertions
+  still returned their expected 2xx responses. Treat audit-log persistence as a
+  follow-up before production sign-off.
+- Go package tests remain blocked by the environment's module-cache/disk quota;
+  no current Go test or vet pass is claimed here. The runtime verification above
+  is an HTTP-level result against the seeded gateway.
 
 ## Status Per Fase
 
@@ -101,7 +110,7 @@ Feature-flagged:
 - **Shadow compare: BLOCKED** — legacy NestJS backend tidak tersedia di environment ini.
 - Hasil contract test SUPERADMIN/ADMIN: **37 dari 38 request return 200 OK, 75 dari 76 assertions pass** (1 failure: Report Job Status 404 — expected).
 - Hasil contract test TEACHER: **29 dari 38 request return 200 OK** (9 failures: semua expected RBAC denials atau validation errors).
-- Verifikasi terakhir: `go test ./...`, `go vet ./...`, dan `go build` semua pass.
+- Last successful verification — 12 Jul 2026: `go test ./...`, `go vet ./...`, dan `go build` semua pass.
 
 ## Hasil Contract Test (12 Jul 2026)
 

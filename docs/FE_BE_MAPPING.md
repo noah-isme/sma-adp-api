@@ -22,5 +22,9 @@ This file is intentionally a navigation page, not a second source of truth. Comp
 - `POST /students/import`, `POST /teachers/import` (5 MiB/10,000-row limits, idempotency replay, row-level failures, and audit records)
 
 The matrix records `Static contract smoke passed` when gateway and Swagger method/path
-coverage is verified. Keep seeded runtime status separate until a live database-backed
-request has been executed; the optional harness is `scripts/compatibility_smoke.py`.
+coverage is verified. The latest seeded runtime verification (Postgres/Redis,
+migrations 15–18, seed data, and compatibility flags) passed on 2026-08-02; its
+coverage and the remaining browser-only row are recorded per route in the matrix.
+The repeatable read-only harness is `scripts/compatibility_smoke.py`; current Go
+package tests remain blocked by the environment's module-cache/disk quota (see
+[`PROJECT_STATUS.md`](PROJECT_STATUS.md)).

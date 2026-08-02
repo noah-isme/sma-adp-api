@@ -174,3 +174,20 @@ func (s *StudentService) Deactivate(ctx context.Context, id string) error {
 	}
 	return nil
 }
+
+// SetActive changes only the active flag, preserving the rest of the student
+// record. It is used by the admin roster's status action.
+func (s *StudentService) SetActive(ctx context.Context, id string, active bool) (*models.Student, error) {
+	detail, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, appErrors.Clone(appErrors.ErrNotFound, "student not found")
+		}
+		return nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to load student")
+	}
+	detail.Active = active
+	if err := s.repo.Update(ctx, &detail.Student); err != nil {
+		return nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to update student status")
+	}
+	return &detail.Student, nil
+}

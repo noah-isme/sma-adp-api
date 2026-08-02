@@ -560,6 +560,14 @@ Set both flags to `true` when enabling a capability. Omitting a flag is equivale
 
 **Update student**
 
+### PATCH /api/v1/students/:id/status
+
+**Update only the active status**
+
+```json
+{ "status": "active" }
+```
+
 ---
 
 ### DELETE /api/v1/students/:id
@@ -643,6 +651,14 @@ Set both flags to `true` when enabling a capability. Omitting a flag is equivale
 ### PATCH /api/v1/teachers/:id
 
 **Update teacher**
+
+### PATCH /api/v1/teachers/:id/status
+
+**Update only the active status**
+
+```json
+{ "active": false }
+```
 
 ---
 

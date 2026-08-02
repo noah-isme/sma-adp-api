@@ -431,6 +431,7 @@ func main() {
 	studentsGroup.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), studentHandler.Create)
 	studentsGroup.GET("/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), studentHandler.Get)
 	studentsGroup.PUT("/:id", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), studentHandler.Update)
+	studentsGroup.PATCH("/:id/status", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), studentHandler.UpdateStatus)
 	studentsGroup.DELETE("/:id", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), studentHandler.Delete)
 	studentsGroup.GET("/:id/behavior-summary", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), behaviorHandler.Summary)
 
@@ -497,6 +498,7 @@ func main() {
 	teachersGroup.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.Create)
 	teachersGroup.GET("/:id", internalmiddleware.RBAC("SELF", string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.Get)
 	teachersGroup.PUT("/:id", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.Update)
+	teachersGroup.PATCH("/:id/status", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.UpdateStatus)
 	teachersGroup.DELETE("/:id", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), teacherHandler.Delete)
 	teachersGroup.GET("/:id/assignments", internalmiddleware.RBAC("SELF", string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.ListAssignments)
 	teachersGroup.POST("/:id/assignments", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), teacherHandler.CreateAssignment)

@@ -133,6 +133,40 @@ func (h *TeacherHandler) Update(c *gin.Context) {
 	response.JSON(c, http.StatusOK, teacher, nil)
 }
 
+// UpdateStatus toggles a teacher's active state without requiring the full
+// teacher update payload used by PUT /teachers/:id.
+func (h *TeacherHandler) UpdateStatus(c *gin.Context) {
+	var payload struct {
+		Status string `json:"status"`
+		Active *bool  `json:"active"`
+	}
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		response.Error(c, appErrors.Wrap(err, appErrors.ErrValidation.Code, http.StatusBadRequest, "invalid teacher status payload"))
+		return
+	}
+	active := payload.Active
+	if active == nil {
+		value := strings.ToLower(strings.TrimSpace(payload.Status))
+		switch value {
+		case "active":
+			v := true
+			active = &v
+		case "inactive":
+			v := false
+			active = &v
+		default:
+			response.Error(c, appErrors.Clone(appErrors.ErrValidation, "status must be active or inactive"))
+			return
+		}
+	}
+	teacher, err := h.teachers.SetActive(c.Request.Context(), c.Param("id"), *active)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+	response.JSON(c, http.StatusOK, teacher, nil)
+}
+
 // Delete godoc
 // @Summary Deactivate teacher
 // @Tags Teachers

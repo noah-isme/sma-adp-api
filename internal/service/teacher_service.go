@@ -160,6 +160,23 @@ func (s *TeacherService) Deactivate(ctx context.Context, id string) error {
 	return nil
 }
 
+// SetActive changes only the active flag, preserving the rest of the teacher
+// record. It is used by the admin roster's status action.
+func (s *TeacherService) SetActive(ctx context.Context, id string, active bool) (*models.Teacher, error) {
+	teacher, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, appErrors.Clone(appErrors.ErrNotFound, "teacher not found")
+		}
+		return nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to load teacher")
+	}
+	teacher.Active = active
+	if err := s.repo.Update(ctx, teacher); err != nil {
+		return nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to update teacher status")
+	}
+	return teacher, nil
+}
+
 func (s *TeacherService) ensureUniqueFields(ctx context.Context, email string, nip *string, excludeID string) error {
 	exists, err := s.repo.ExistsByEmail(ctx, email, excludeID)
 	if err != nil {

@@ -15,6 +15,8 @@ make dev
 - Status progres: [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md)
 - Instruksi kerja: [`docs/DEVELOPMENT_WORKFLOW.md`](docs/DEVELOPMENT_WORKFLOW.md)
 - FE ↔ BE mapping: [`docs/FE_BE_MAPPING.md`](docs/FE_BE_MAPPING.md)
+- Compatibility contract matrix: [`docs/COMPATIBILITY_CONTRACT_MATRIX.md`](docs/COMPATIBILITY_CONTRACT_MATRIX.md)
+- Complete core-resource contract: generated [`api/swagger/swagger.json`](api/swagger/swagger.json) and [`docs/GO_BACKEND_API_SPECIFICATION.md`](docs/GO_BACKEND_API_SPECIFICATION.md)
 - Migration plan: [`docs/BACKEND_MIGRATION_PLAN.md`](docs/BACKEND_MIGRATION_PLAN.md)
 - Cutover runbook: [`docs/operations.md`](docs/operations.md)
 - Decommission checklist: [`docs/decommission.md`](docs/decommission.md)

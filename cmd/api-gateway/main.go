@@ -141,7 +141,8 @@ func main() {
 	scheduleSvc := service.NewScheduleService(scheduleRepo, nil, logr)
 	scheduleHandler := internalhandler.NewScheduleHandler(scheduleSvc)
 	studentSvc := service.NewStudentService(studentRepo, nil, logr)
-	studentHandler := internalhandler.NewStudentHandler(studentSvc)
+	importRunRepo := repository.NewImportRunRepository(db)
+	studentHandler := internalhandler.NewStudentHandler(studentSvc, importRunRepo)
 	enrollmentSvc := service.NewEnrollmentService(enrollmentRepo, studentRepo, classRepo, termRepo, nil, logr)
 	enrollmentHandler := internalhandler.NewEnrollmentHandler(enrollmentSvc)
 	gradeComponentSvc := service.NewGradeComponentService(gradeComponentRepo, nil, logr)
@@ -170,7 +171,7 @@ func main() {
 		logr,
 	)
 	preferenceSvc := service.NewTeacherPreferenceService(teacherRepo, preferenceRepo, nil, logr)
-	teacherHandler := internalhandler.NewTeacherHandler(teacherSvc, assignmentSvc, preferenceSvc)
+	teacherHandler := internalhandler.NewTeacherHandler(teacherSvc, assignmentSvc, preferenceSvc, importRunRepo)
 	var schedulePreferenceHandler *internalhandler.SchedulePreferenceAliasHandler
 	if preferenceSvc != nil {
 		schedulePreferenceHandler = internalhandler.NewSchedulePreferenceHandler(preferenceSvc)
@@ -448,6 +449,8 @@ func main() {
 	gradeComponentsGroup := secured.Group("/grade-components")
 	gradeComponentsGroup.GET("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), gradeComponentHandler.List)
 	gradeComponentsGroup.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), gradeComponentHandler.Create)
+	gradeComponentsGroup.PUT("/:id", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), gradeComponentHandler.Update)
+	gradeComponentsGroup.DELETE("/:id", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), gradeComponentHandler.Delete)
 
 	gradeConfigsGroup := secured.Group("/grade-configs")
 	gradeConfigsGroup.GET("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), gradeConfigHandler.List)
@@ -461,6 +464,8 @@ func main() {
 	gradesGroup.GET("/report", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), gradeHandler.Report)
 	gradesGroup.POST("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), gradeHandler.Upsert)
 	gradesGroup.PATCH("/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), gradeHandler.Update)
+	gradesGroup.PUT("/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), gradeHandler.Update)
+	gradesGroup.DELETE("/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), gradeHandler.Delete)
 	gradesGroup.POST("/bulk", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), gradeHandler.Bulk)
 	gradesGroup.POST("/recalculate", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), gradeHandler.Recalculate)
 	gradesGroup.POST("/finalize", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), gradeHandler.Finalize)

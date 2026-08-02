@@ -20,6 +20,7 @@ type gradeRepo interface {
 	Upsert(ctx context.Context, grade *models.Grade) error
 	BulkUpsert(ctx context.Context, grades []models.Grade) error
 	FetchByEnrollments(ctx context.Context, enrollmentIDs []string, subjectID string) (map[string][]models.Grade, error)
+	Delete(ctx context.Context, id string) error
 }
 
 type gradeFinalRepo interface {
@@ -47,11 +48,12 @@ type gradeComponentFetcher interface {
 
 // UpsertGradeRequest represents a single grade entry payload.
 type UpsertGradeRequest struct {
-	EnrollmentID  string  `json:"enrollment_id" validate:"required"`
-	SubjectID     string  `json:"subject_id" validate:"required"`
-	ComponentID   string  `json:"component_id"`
-	ComponentCode string  `json:"component_code"`
-	GradeValue    float64 `json:"grade_value" validate:"required"`
+	EnrollmentID  string   `json:"enrollment_id" validate:"required"`
+	SubjectID     string   `json:"subject_id" validate:"required"`
+	ComponentID   string   `json:"component_id"`
+	ComponentCode string   `json:"component_code"`
+	GradeValue    float64  `json:"grade_value" validate:"required"`
+	Score         *float64 `json:"score,omitempty"`
 }
 
 // BulkGradeItem represents grade info within bulk payload.
@@ -132,8 +134,59 @@ func (s *GradeService) List(ctx context.Context, filter models.GradeFilter) ([]m
 	return grades, nil
 }
 
+// Delete soft-deletes a grade entry and recalculates its non-finalized final grade.
+func (s *GradeService) Delete(ctx context.Context, id string) error {
+	if strings.TrimSpace(id) == "" {
+		return appErrors.Clone(appErrors.ErrValidation, "grade id required")
+	}
+	grades, err := s.grades.List(ctx, models.GradeFilter{ID: id})
+	if err != nil {
+		return appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to load grade")
+	}
+	if len(grades) == 0 {
+		return appErrors.Clone(appErrors.ErrNotFound, "grade not found")
+	}
+	grade := grades[0]
+	enrollment, err := s.enrollments.FindByID(ctx, grade.EnrollmentID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return appErrors.Clone(appErrors.ErrNotFound, "enrollment not found")
+		}
+		return appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to load enrollment")
+	}
+	config, err := s.configs.FindByScope(ctx, enrollment.ClassID, grade.SubjectID, enrollment.TermID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return appErrors.Clone(appErrors.ErrPreconditionFailed, "grade config missing")
+		}
+		return appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to load grade config")
+	}
+	if config.Finalized {
+		return appErrors.Clone(appErrors.ErrFinalized, "grade config finalized")
+	}
+	finals, err := s.finals.FetchByEnrollments(ctx, []string{grade.EnrollmentID}, grade.SubjectID)
+	if err != nil {
+		return appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to inspect final grade")
+	}
+	if final, ok := finals[grade.EnrollmentID]; ok && final.Finalized {
+		return appErrors.Clone(appErrors.ErrFinalized, "final grade already finalized")
+	}
+	if err := s.grades.Delete(ctx, id); err != nil {
+		if err == sql.ErrNoRows {
+			return appErrors.Clone(appErrors.ErrNotFound, "grade not found")
+		}
+		return appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to delete grade")
+	}
+	return s.recalculate(ctx, config, []models.Enrollment{*enrollment})
+}
+
 // Upsert handles single grade entry.
 func (s *GradeService) Upsert(ctx context.Context, req UpsertGradeRequest) (*models.Grade, error) {
+	// The legacy admin contract calls this field score; normalize it before
+	// validation so both payload spellings remain compatible.
+	if req.Score != nil {
+		req.GradeValue = *req.Score
+	}
 	if err := s.validator.Struct(req); err != nil {
 		return nil, appErrors.Wrap(err, appErrors.ErrValidation.Code, appErrors.ErrValidation.Status, "invalid grade payload")
 	}

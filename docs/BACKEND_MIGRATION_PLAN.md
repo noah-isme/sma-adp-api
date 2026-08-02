@@ -911,7 +911,7 @@ Status implementasi harian tidak lagi dipelihara di dokumen strategi ini. Gunaka
 - [Backend Migration Plan](./BACKEND_MIGRATION_PLAN.md) (This document)
 - [Project Status](./PROJECT_STATUS.md)
 - [Development Workflow](./DEVELOPMENT_WORKFLOW.md)
-- [Frontend ↔ Backend Mapping](./FE_BE_MAPPING.md)
+- [Frontend ↔ Backend Mapping](./FE_BE_MAPPING.md) (compatibility matrix: [COMPATIBILITY_CONTRACT_MATRIX.md](./COMPATIBILITY_CONTRACT_MATRIX.md))
 
 ### Phase Documentation
 
@@ -931,7 +931,7 @@ Status implementasi harian tidak lagi dipelihara di dokumen strategi ini. Gunaka
 
 - [Project Status](./PROJECT_STATUS.md)
 - [Development Workflow](./DEVELOPMENT_WORKFLOW.md)
-- [Frontend ↔ Backend Mapping](./FE_BE_MAPPING.md)
+- [Frontend ↔ Backend Mapping](./FE_BE_MAPPING.md) (compatibility matrix: [COMPATIBILITY_CONTRACT_MATRIX.md](./COMPATIBILITY_CONTRACT_MATRIX.md))
 
 ---
 

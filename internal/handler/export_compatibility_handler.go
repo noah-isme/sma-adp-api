@@ -38,7 +38,7 @@ func (h *ExportCompatibilityHandler) Students(c *gin.Context) {
 // @Success 200 {file} binary
 // @Router /export/grades [get]
 func (h *ExportCompatibilityHandler) Grades(c *gin.Context) {
-	h.write(c, "grades.csv", []string{"id", "enrollment_id", "subject_id", "component_id", "grade_value", "updated_at"}, `SELECT id, enrollment_id, subject_id, component_id, grade_value, updated_at FROM grades ORDER BY updated_at DESC`)
+	h.write(c, "grades.csv", []string{"id", "enrollment_id", "subject_id", "component_id", "grade_value", "updated_at"}, `SELECT id, enrollment_id, subject_id, component_id, grade_value, updated_at FROM grades WHERE deleted_at IS NULL ORDER BY updated_at DESC`)
 }
 
 // Attendance exports the complete daily attendance table as an unfiltered CSV download.

@@ -103,7 +103,8 @@ CREATE TABLE IF NOT EXISTS grade_components (
     name VARCHAR(150) NOT NULL,
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS grade_configs (
@@ -134,6 +135,7 @@ CREATE TABLE IF NOT EXISTS grades (
     grade_value DECIMAL(6,2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP,
     UNIQUE(enrollment_id, subject_id, component_id)
 );
 

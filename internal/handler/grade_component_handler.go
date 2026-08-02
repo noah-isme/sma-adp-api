@@ -57,3 +57,41 @@ func (h *GradeComponentHandler) Create(c *gin.Context) {
 	}
 	response.Created(c, component)
 }
+
+// Update godoc
+// @Summary Update grade component
+// @Tags Grade Components
+// @Accept json
+// @Produce json
+// @Param id path string true "Grade component ID"
+// @Param payload body service.UpdateGradeComponentRequest true "Component payload"
+// @Success 200 {object} response.Envelope
+// @Router /grade-components/{id} [put]
+func (h *GradeComponentHandler) Update(c *gin.Context) {
+	var req service.UpdateGradeComponentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, appErrors.Wrap(err, appErrors.ErrValidation.Code, http.StatusBadRequest, "invalid grade component payload"))
+		return
+	}
+	component, err := h.components.Update(c.Request.Context(), c.Param("id"), req)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+	response.JSON(c, http.StatusOK, component, nil)
+}
+
+// Delete godoc
+// @Summary Soft-delete grade component
+// @Tags Grade Components
+// @Produce json
+// @Param id path string true "Grade component ID"
+// @Success 200 {object} response.Envelope
+// @Router /grade-components/{id} [delete]
+func (h *GradeComponentHandler) Delete(c *gin.Context) {
+	if err := h.components.Delete(c.Request.Context(), c.Param("id")); err != nil {
+		response.Error(c, err)
+		return
+	}
+	response.JSON(c, http.StatusOK, gin.H{"id": c.Param("id"), "status": "deleted"}, nil)
+}

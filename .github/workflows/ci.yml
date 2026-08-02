@@ -34,3 +34,6 @@ jobs:
       - name: Validate gateway routes are documented
         run: |
           python3 scripts/validate_swagger_routes.py
+      - name: Validate compatibility contract
+        run: |
+          python3 scripts/compatibility_smoke.py

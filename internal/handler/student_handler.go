@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"encoding/csv"
-	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -19,6 +17,7 @@ import (
 // StudentHandler exposes student endpoints.
 type StudentHandler struct {
 	students *service.StudentService
+	imports  importRunStore
 }
 
 // ImportCSV imports the supported student CSV columns: nis, full_name, gender,
@@ -30,60 +29,47 @@ type StudentHandler struct {
 // @Accept text/csv
 // @Produce json
 // @Param csv body string true "CSV document"
+// @Param Idempotency-Key header string false "Stable key for safe retries"
 // @Success 200 {object} response.Envelope
 // @Router /students/import [post]
 func (h *StudentHandler) ImportCSV(c *gin.Context) {
-	r := csv.NewReader(c.Request.Body)
-	header, err := r.Read()
-	if err != nil {
-		response.Error(c, appErrors.Clone(appErrors.ErrValidation, "CSV header required"))
+	body, ok := readCSVImportBody(c)
+	if !ok {
 		return
 	}
-	columns := map[string]int{}
-	for i, name := range header {
-		columns[strings.TrimSpace(strings.ToLower(name))] = i
+	columns, rows, err := parseCSVImport(body, []string{"nis", "full_name", "gender", "birth_date"})
+	if err != nil {
+		response.Error(c, err)
+		return
 	}
-	for _, required := range []string{"nis", "full_name", "gender", "birth_date"} {
-		if _, ok := columns[required]; !ok {
-			response.Error(c, appErrors.Clone(appErrors.ErrValidation, "missing CSV column: "+required))
-			return
-		}
+	run, proceed := beginCSVImport(c, h.imports, "students", body)
+	if !proceed {
+		return
 	}
-	created, failures, row := 0, []gin.H{}, 1
-	for {
-		row++
-		values, err := r.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			failures = append(failures, gin.H{"row": row, "error": err.Error()})
-			continue
-		}
-		value := func(name string) string {
-			i, ok := columns[name]
-			if !ok || i >= len(values) {
-				return ""
-			}
-			return strings.TrimSpace(values[i])
-		}
-		birthDate, err := time.Parse("2006-01-02", value("birth_date"))
+	created, failures := 0, []gin.H{}
+	for index, values := range rows {
+		row := index + 2
+		birthDate, err := time.Parse("2006-01-02", importValue(values, columns, "birth_date"))
 		if err != nil {
 			failures = append(failures, gin.H{"row": row, "error": "invalid birth_date"})
 			continue
 		}
-		if _, err = h.students.Create(c.Request.Context(), service.CreateStudentRequest{NIS: value("nis"), FullName: value("full_name"), Gender: value("gender"), BirthDate: birthDate, Address: value("address"), Phone: value("phone")}); err != nil {
+		if _, err = h.students.Create(c.Request.Context(), service.CreateStudentRequest{NIS: importValue(values, columns, "nis"), FullName: importValue(values, columns, "full_name"), Gender: importValue(values, columns, "gender"), BirthDate: birthDate, Address: importValue(values, columns, "address"), Phone: importValue(values, columns, "phone")}); err != nil {
 			failures = append(failures, gin.H{"row": row, "error": err.Error()})
 			continue
 		}
 		created++
 	}
-	response.JSON(c, http.StatusOK, gin.H{"created": created, "failed": len(failures), "failures": failures}, nil)
+	completeCSVImport(c, h.imports, run, "students", created, failures)
 }
 
 // NewStudentHandler constructs StudentHandler.
-func NewStudentHandler(students *service.StudentService) *StudentHandler {
-	return &StudentHandler{students: students}
+func NewStudentHandler(students *service.StudentService, stores ...importRunStore) *StudentHandler {
+	var imports importRunStore
+	if len(stores) > 0 {
+		imports = stores[0]
+	}
+	return &StudentHandler{students: students, imports: imports}
 }
 
 // List godoc

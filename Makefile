@@ -1,4 +1,4 @@
-.PHONY: help setup dev build test test-coverage migrate-create migrate-up migrate-down docker-up docker-down swag validate-swagger-routes lint fmt contract-test shadow-compare toggle-go
+.PHONY: help setup dev build test test-coverage migrate-create migrate-up migrate-down docker-up docker-down swag validate-swagger-routes compatibility-smoke lint fmt contract-test shadow-compare toggle-go
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' \
@@ -72,3 +72,6 @@ swag: ## Generate swagger docs
 
 validate-swagger-routes: ## Verify every API gateway route has a generated Swagger path
 	python3 scripts/validate_swagger_routes.py
+
+compatibility-smoke: ## Verify compatibility routes and optionally run seeded HTTP smoke
+	python3 scripts/compatibility_smoke.py

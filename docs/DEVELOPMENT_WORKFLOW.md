@@ -8,7 +8,9 @@ Dokumen ini adalah instruksi kerja harian untuk mengurangi kesalahan saat mengub
 - Baca `docs/PROJECT_STATUS.md` untuk mengetahui status fase, endpoint aktif, feature flag, dan blocker.
 - Cek route aktual di `cmd/api-gateway/main.go` sebelum menambah endpoint.
 - Cari handler, service, repository, model, dan DTO yang sudah ada sebelum membuat file baru.
-- Cek `docs/FE_BE_MAPPING.md` dan Swagger untuk memastikan endpoint belum tersedia.
+- Cek `docs/FE_BE_MAPPING.md` dan `COMPATIBILITY_CONTRACT_MATRIX.md` untuk cakupan
+  compatibility; gunakan Swagger dan `GO_BACKEND_API_SPECIFICATION.md` untuk daftar
+  resource core yang lengkap.
 - Tentukan apakah fitur harus always-on atau feature-flagged.
 
 ## Aturan Implementasi Route
@@ -101,6 +103,10 @@ Aturan contract test:
 - Jangan menambahkan write/destructive request ke contract default sebelum ada seed data dan cleanup strategy yang eksplisit.
 
 ## Smoke Matrix RBAC
+
+The compatibility matrix records route-level smoke evidence for reconciled frontend
+contracts. It is intentionally separate from this RBAC matrix and is not a complete
+CRUD listing.
 
 Gunakan matrix ini saat validasi manual atau saat memperluas contract test:
 

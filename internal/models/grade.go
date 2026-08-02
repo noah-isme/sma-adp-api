@@ -71,6 +71,7 @@ type GradeFinal struct {
 
 // GradeFilter allows querying of grade entries.
 type GradeFilter struct {
+	ID           string
 	EnrollmentID string
 	SubjectID    string
 	ComponentID  string

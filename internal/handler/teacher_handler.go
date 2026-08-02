@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"encoding/csv"
-	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -20,6 +18,7 @@ type TeacherHandler struct {
 	teachers    *service.TeacherService
 	assignments *service.TeacherAssignmentService
 	prefs       *service.TeacherPreferenceService
+	imports     importRunStore
 }
 
 // ImportCSV imports email, full_name, and optional nip, phone, expertise.
@@ -29,64 +28,51 @@ type TeacherHandler struct {
 // @Accept text/csv
 // @Produce json
 // @Param csv body string true "CSV document"
+// @Param Idempotency-Key header string false "Stable key for safe retries"
 // @Success 200 {object} response.Envelope
 // @Router /teachers/import [post]
 func (h *TeacherHandler) ImportCSV(c *gin.Context) {
-	r := csv.NewReader(c.Request.Body)
-	header, err := r.Read()
-	if err != nil {
-		response.Error(c, appErrors.Clone(appErrors.ErrValidation, "CSV header required"))
+	body, ok := readCSVImportBody(c)
+	if !ok {
 		return
 	}
-	columns := map[string]int{}
-	for i, name := range header {
-		columns[strings.TrimSpace(strings.ToLower(name))] = i
+	columns, rows, err := parseCSVImport(body, []string{"email", "full_name"})
+	if err != nil {
+		response.Error(c, err)
+		return
 	}
-	for _, required := range []string{"email", "full_name"} {
-		if _, ok := columns[required]; !ok {
-			response.Error(c, appErrors.Clone(appErrors.ErrValidation, "missing CSV column: "+required))
-			return
-		}
+	run, proceed := beginCSVImport(c, h.imports, "teachers", body)
+	if !proceed {
+		return
 	}
-	value := func(values []string, name string) *string {
-		i, ok := columns[name]
-		if !ok || i >= len(values) || strings.TrimSpace(values[i]) == "" {
-			return nil
-		}
-		result := strings.TrimSpace(values[i])
-		return &result
-	}
-	created, failures, row := 0, []gin.H{}, 1
-	for {
-		row++
-		values, err := r.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			failures = append(failures, gin.H{"row": row, "error": err.Error()})
-			continue
-		}
-		email, fullName := value(values, "email"), value(values, "full_name")
+	created, failures := 0, []gin.H{}
+	for index, values := range rows {
+		row := index + 2
+		email, fullName := importOptionalValue(values, columns, "email"), importOptionalValue(values, columns, "full_name")
 		if email == nil || fullName == nil {
 			failures = append(failures, gin.H{"row": row, "error": "email and full_name required"})
 			continue
 		}
-		if _, err = h.teachers.Create(c.Request.Context(), service.CreateTeacherRequest{Email: *email, FullName: *fullName, NIP: value(values, "nip"), Phone: value(values, "phone"), Expertise: value(values, "expertise")}); err != nil {
+		if _, err = h.teachers.Create(c.Request.Context(), service.CreateTeacherRequest{Email: *email, FullName: *fullName, NIP: importOptionalValue(values, columns, "nip"), Phone: importOptionalValue(values, columns, "phone"), Expertise: importOptionalValue(values, columns, "expertise")}); err != nil {
 			failures = append(failures, gin.H{"row": row, "error": err.Error()})
 			continue
 		}
 		created++
 	}
-	response.JSON(c, http.StatusOK, gin.H{"created": created, "failed": len(failures), "failures": failures}, nil)
+	completeCSVImport(c, h.imports, run, "teachers", created, failures)
 }
 
 // NewTeacherHandler constructs a new TeacherHandler.
-func NewTeacherHandler(teachers *service.TeacherService, assignments *service.TeacherAssignmentService, prefs *service.TeacherPreferenceService) *TeacherHandler {
+func NewTeacherHandler(teachers *service.TeacherService, assignments *service.TeacherAssignmentService, prefs *service.TeacherPreferenceService, stores ...importRunStore) *TeacherHandler {
+	var imports importRunStore
+	if len(stores) > 0 {
+		imports = stores[0]
+	}
 	return &TeacherHandler{
 		teachers:    teachers,
 		assignments: assignments,
 		prefs:       prefs,
+		imports:     imports,
 	}
 }
 

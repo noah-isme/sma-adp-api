@@ -1,6 +1,6 @@
 # Frontend ↔ Backend Mapping
 
-The complete caller → route → handler → flag → casing → envelope → readiness matrix is maintained in [`CONTRACT_MATRIX.md`](CONTRACT_MATRIX.md).
+The compatibility caller → route → handler → flag → casing → envelope → readiness matrix is maintained in [`COMPATIBILITY_CONTRACT_MATRIX.md`](COMPATIBILITY_CONTRACT_MATRIX.md). It is not an exhaustive core-resource CRUD inventory; use Swagger and the API specification for that surface.
 
 This file is intentionally a navigation page, not a second source of truth. Compatibility routes covered by the matrix include:
 
@@ -14,7 +14,13 @@ This file is intentionally a navigation page, not a second source of truth. Comp
 - `GET /teachers/roster`
 - `GET /grades/report`
 - `PATCH /grades/:id`
+- `PUT /grades/:id` (generic admin provider compatibility)
+- `DELETE /grades/:id` (soft delete and final-grade recalculation)
+- `PUT /grade-components/:id`
+- `DELETE /grade-components/:id` (soft delete)
 - `GET /export/students`, `/export/grades`, `/export/attendance`
-- `POST /students/import`, `POST /teachers/import`
+- `POST /students/import`, `POST /teachers/import` (5 MiB/10,000-row limits, idempotency replay, row-level failures, and audit records)
 
-Use `Pending` in the matrix until a route has passed backend tests, gateway build, and a smoke request against seeded data.
+The matrix records `Static contract smoke passed` when gateway and Swagger method/path
+coverage is verified. Keep seeded runtime status separate until a live database-backed
+request has been executed; the optional harness is `scripts/compatibility_smoke.py`.

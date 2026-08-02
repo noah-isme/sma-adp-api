@@ -10,10 +10,23 @@ Sumber kebenaran teknis:
 
 - Runtime route: `cmd/api-gateway/main.go`
 - Kontrak API publik: `api/swagger/docs.go`, `api/swagger/swagger.json`, `api/swagger/swagger.yaml`
-- Contract matrix (backend status, FE integration, readiness, smoke date): `docs/CONTRACT_MATRIX.md`
+- Compatibility contract matrix (compatibility status, FE integration, readiness, smoke date): `docs/COMPATIBILITY_CONTRACT_MATRIX.md`
 - Mapping index: `docs/FE_BE_MAPPING.md`
 - Cutover/rollback: `docs/operations.md`
 - Decommission: `docs/decommission.md`
+
+### Latest compatibility verification (2026-08-02)
+
+- `python3 scripts/validate_swagger_routes.py` passed (101 generated paths cover
+  all gateway routes).
+- `python3 scripts/compatibility_smoke.py` passed its static check (22 required
+  compatibility operations are present in both gateway and Swagger). Seeded HTTP
+  checks are available with `RUN_COMPATIBILITY_SMOKE=1`, `BASE_URL`, and
+  `ACCESS_TOKEN`, but were not runnable in this environment because database and
+  Go module-cache prerequisites were unavailable.
+- Go package tests were attempted with a writable temporary module cache; the
+  compiler hit the disk quota while building downloaded dependencies. This is an
+  environment verification block, not a recorded test pass.
 
 ## Status Per Fase
 

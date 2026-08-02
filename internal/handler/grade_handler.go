@@ -74,7 +74,23 @@ func (h *GradeHandler) Upsert(c *gin.Context) {
 // @Param payload body service.UpsertGradeRequest true "Grade payload"
 // @Success 200 {object} response.Envelope
 // @Router /grades/{id} [patch]
+// @Router /grades/{id} [put]
 func (h *GradeHandler) Update(c *gin.Context) { h.Upsert(c) }
+
+// Delete godoc
+// @Summary Soft-delete grade entry
+// @Tags Grades
+// @Produce json
+// @Param id path string true "Grade ID"
+// @Success 200 {object} response.Envelope
+// @Router /grades/{id} [delete]
+func (h *GradeHandler) Delete(c *gin.Context) {
+	if err := h.grades.Delete(c.Request.Context(), c.Param("id")); err != nil {
+		response.Error(c, err)
+		return
+	}
+	response.JSON(c, http.StatusOK, gin.H{"id": c.Param("id"), "status": "deleted"}, nil)
+}
 
 // Report provides the admin grade-list report contract using the canonical
 // grade entries. Rich report-card endpoints remain under /reports.

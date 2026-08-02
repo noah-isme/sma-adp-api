@@ -907,6 +907,17 @@ definitions:
     - name
     - track
     type: object
+  github_com_noah-isme_sma-adp-api_internal_service.UpdateGradeComponentRequest:
+    properties:
+      code:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+    required:
+    - name
+    type: object
   github_com_noah-isme_sma-adp-api_internal_service.UpdateGradeConfigRequest:
     properties:
       calculation_scheme:
@@ -1060,6 +1071,8 @@ definitions:
       enrollment_id:
         type: string
       grade_value:
+        type: number
+      score:
         type: number
       subject_id:
         type: string
@@ -2694,6 +2707,49 @@ paths:
       summary: Create grade component
       tags:
       - Grade Components
+  /grade-components/{id}:
+    delete:
+      parameters:
+      - description: Grade component ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Soft-delete grade component
+      tags:
+      - Grade Components
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Grade component ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Component payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpdateGradeComponentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Update grade component
+      tags:
+      - Grade Components
   /grade-configs:
     get:
       parameters:
@@ -2846,7 +2902,49 @@ paths:
       tags:
       - Grades
   /grades/{id}:
+    delete:
+      parameters:
+      - description: Grade ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Soft-delete grade entry
+      tags:
+      - Grades
     patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Grade ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Grade payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.UpsertGradeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Update grade entry
+      tags:
+      - Grades
+    put:
       consumes:
       - application/json
       parameters:
@@ -3670,6 +3768,10 @@ paths:
         required: true
         schema:
           type: string
+      - description: Stable key for safe retries
+        in: header
+        name: Idempotency-Key
+        type: string
       produces:
       - application/json
       responses:
@@ -4166,6 +4268,10 @@ paths:
         required: true
         schema:
           type: string
+      - description: Stable key for safe retries
+        in: header
+        name: Idempotency-Key
+        type: string
       produces:
       - application/json
       responses:

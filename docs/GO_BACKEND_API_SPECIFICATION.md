@@ -57,7 +57,7 @@ Example — `POST /api/v1/auth/login` actual response:
 }
 ```
 
-Canonical live examples are in the repository root `README.md` ("Contoh curl endpoint utama"), the generated Swagger served at `/docs`, and the [contract matrix](CONTRACT_MATRIX.md).
+Canonical live examples are in the repository root `README.md` ("Contoh curl endpoint utama"), the generated Swagger served at `/docs`, and the [compatibility contract matrix](COMPATIBILITY_CONTRACT_MATRIX.md). Swagger and this specification cover the complete core-resource API surface.
 
 ---
 
@@ -326,11 +326,34 @@ The Go API keeps the existing admin-panel contracts available while the frontend
 | Attendance write | `POST /attendance`, `PUT/PATCH /attendance/:id` | Compatibility upsert mapped to daily attendance. Canonical bulk and subject routes remain available under `/attendance/daily` and `/attendance/subject`. |
 | Teacher preferences | `POST /teacher-preferences`, `PUT /teacher-preferences/:id` | Compatibility upsert; per-teacher canonical route is `PUT /teachers/:id/preferences`. |
 | Student/teacher rosters | `GET /students/roster`, `GET /teachers/roster` | Admin-compatible roster responses; canonical list resources remain available. |
-| Grade report/edit | `GET /grades/report`, `PATCH /grades/:id` | Admin-compatible grade-list view; PATCH uses the validated grade upsert payload. |
+| Grade report/edit/delete | `GET /grades/report`, `PUT/PATCH /grades/:id`, `DELETE /grades/:id` | Admin-compatible grade-list view; PUT/PATCH uses the validated grade upsert payload. DELETE soft-deletes the entry, recalculates its non-finalized final grade, and is rejected after finalization. |
+| Grade component edit/delete | `PUT/DELETE /grade-components/:id` | Updates an active component; DELETE soft-deletes it so historical grade/config references remain intact. |
 | Browser CSV exports | `GET /export/students`, `/export/grades`, `/export/attendance` | Direct CSV downloads; report-job token downloads remain under `/export/{token}`. |
 | CSV imports | `POST /students/import`, `POST /teachers/import` | Row-level validation summary; see `FE_BE_MAPPING.md` for required columns. |
 
 The admin data provider unwraps `data` from the response envelope and converts browser camelCase fields to the API's snake_case fields. New integrations should use the canonical snake_case contract directly.
+
+### CSV import reliability contract
+
+`POST /students/import` and `POST /teachers/import` process CSV rows synchronously and
+return a created/failed summary. Each request is limited to 5 MiB and 10,000 data
+rows. The admin sends an `Idempotency-Key`; clients that omit it receive the same
+deterministic behavior from a key derived from the import type, authenticated actor,
+and request body hash.
+
+- Repeating the same key and body replays the completed result without creating rows again.
+- Reusing a key with a different body returns `409 Conflict`; a concurrent request with
+  the same key returns `409 Import in progress`.
+- Database uniqueness rules (NIS for students and email/NIP rules for teachers) are
+  reported as row failures. A duplicate does not abort valid rows in the same file.
+- Processing is best-effort per row: successful rows remain committed when a later row
+  fails; this is not a whole-file rollback transaction.
+- Every completed request is recorded in `import_runs` and an `audit_logs` row with
+  action `CSV_IMPORT`, result counts, and failure details. The idempotency key, body
+  hash, actor, timestamps, and status are retained for retry/audit inspection.
+
+These limits and behaviors are part of the compatibility contract and should be
+covered by seeded import smoke tests before production readiness is declared.
 
 ### User roles and persisted relations
 
@@ -969,9 +992,24 @@ The current handler supports `enrollmentId`, `subjectId`, and `componentId`. `te
 
 ---
 
-### PATCH /api/v1/grades/:id
+### PUT/PATCH /api/v1/grades/:id
 
 **Update grade**
+
+Both methods are supported. `PUT` is the backward-compatible method used by the
+generic admin data provider; `PATCH` remains available for existing callers. The
+canonical `grade_value` field and the legacy admin `score` field are both
+accepted.
+
+---
+
+### DELETE /api/v1/grades/:id
+
+**Soft-delete grade**
+
+The grade row is retained with `deleted_at` set, omitted from normal grade
+queries, and the non-finalized final grade is recalculated. Deletion is rejected
+when the grade configuration or final grade is already finalized.
 
 ---
 
@@ -1008,6 +1046,26 @@ The current handler supports `enrollmentId`, `subjectId`, and `componentId`. `te
 ### POST /api/v1/grade-components
 
 **Create grade component**
+
+---
+
+### PUT /api/v1/grade-components/:id
+
+**Update grade component**
+
+`name` is required. `code` is optional for the admin edit form; when omitted,
+the existing code is preserved. Codes are normalized to uppercase and must remain
+unique among active components.
+
+---
+
+### DELETE /api/v1/grade-components/:id
+
+**Soft-delete grade component**
+
+The component is marked with `deleted_at` and omitted from active component lists.
+Existing grade and configuration rows remain intact, including their component labels,
+for historical reporting.
 
 ---
 

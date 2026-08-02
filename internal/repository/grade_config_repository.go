@@ -195,7 +195,7 @@ func (r *GradeConfigRepository) replaceComponentsTx(ctx context.Context, tx *sql
 func (r *GradeConfigRepository) loadComponents(ctx context.Context, configID string) ([]models.GradeConfigComponent, error) {
 	const query = `SELECT gcc.id, gcc.grade_config_id, gcc.component_id, gcc.weight, gc.code AS component_code, gc.name AS component_name, gcc.created_at
         FROM grade_config_components gcc
-        JOIN grade_components gc ON gc.id = gcc.component_id
+		JOIN grade_components gc ON gc.id = gcc.component_id
         WHERE gcc.grade_config_id = $1 ORDER BY gc.code`
 	var components []models.GradeConfigComponent
 	if err := r.db.SelectContext(ctx, &components, query, configID); err != nil {

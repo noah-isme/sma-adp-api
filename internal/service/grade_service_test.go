@@ -20,6 +20,9 @@ type mockGradeRepo struct {
 func (m *mockGradeRepo) List(ctx context.Context, filter models.GradeFilter) ([]models.Grade, error) {
 	var result []models.Grade
 	for _, g := range m.storedGrades {
+		if filter.ID != "" && filter.ID != g.ID {
+			continue
+		}
 		if filter.EnrollmentID != "" && filter.EnrollmentID != g.EnrollmentID {
 			continue
 		}
@@ -48,6 +51,16 @@ func (m *mockGradeRepo) BulkUpsert(ctx context.Context, grades []models.Grade) e
 		_ = m.Upsert(ctx, &grades[i])
 	}
 	return nil
+}
+
+func (m *mockGradeRepo) Delete(ctx context.Context, id string) error {
+	for key, grade := range m.storedGrades {
+		if grade.ID == id {
+			delete(m.storedGrades, key)
+			return nil
+		}
+	}
+	return sql.ErrNoRows
 }
 
 func (m *mockGradeRepo) FetchByEnrollments(ctx context.Context, enrollmentIDs []string, subjectID string) (map[string][]models.Grade, error) {
@@ -180,6 +193,26 @@ func TestGradeServiceUpsert(t *testing.T) {
 	assert.Len(t, finalRepo.finals, 1)
 	final := finalRepo.finals["en1"]
 	assert.Equal(t, 90.0, final.FinalGrade)
+}
+
+func TestGradeServiceDeleteSoftDeletesAndRecalculates(t *testing.T) {
+	gradeRepo := &mockGradeRepo{storedGrades: map[string]models.Grade{
+		"grade-key": {ID: "grade-1", EnrollmentID: "en1", SubjectID: "sub", ComponentID: "comp1", GradeValue: 90},
+	}}
+	finalRepo := &mockGradeFinalRepo{finals: map[string]models.GradeFinal{
+		"en1": {ID: "final-1", EnrollmentID: "en1", SubjectID: "sub", FinalGrade: 90},
+	}}
+	enrollments := &mockEnrollmentReader{enrollments: map[string]*models.Enrollment{
+		"en1": {ID: "en1", StudentID: "stu1", ClassID: "class", TermID: "term", Status: models.EnrollmentStatusActive},
+	}}
+	config := &models.GradeConfig{ID: "cfg", ClassID: "class", SubjectID: "sub", TermID: "term", CalculationScheme: models.GradeSchemeWeighted, Components: []models.GradeConfigComponent{{ComponentID: "comp1", Weight: 100, ComponentCode: "CODE"}}}
+	configReader := &mockConfigReader{config: config}
+	componentFetcher := &mockComponentFetcher{components: map[string]*models.GradeComponent{"CODE": {ID: "comp1", Code: "CODE", Name: "Test"}}}
+	svc := NewGradeService(gradeRepo, finalRepo, enrollments, configReader, componentFetcher, validator.New(), zap.NewNop())
+
+	require.NoError(t, svc.Delete(context.Background(), "grade-1"))
+	assert.Empty(t, gradeRepo.storedGrades)
+	assert.Equal(t, 0.0, finalRepo.finals["en1"].FinalGrade)
 }
 
 func TestGradeServiceBulkUpsertAtomic(t *testing.T) {

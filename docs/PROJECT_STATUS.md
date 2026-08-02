@@ -10,7 +10,8 @@ Sumber kebenaran teknis:
 
 - Runtime route: `cmd/api-gateway/main.go`
 - Kontrak API publik: `api/swagger/docs.go`, `api/swagger/swagger.json`, `api/swagger/swagger.yaml`
-- Mapping frontend: `docs/FE_BE_MAPPING.md`
+- Contract matrix (backend status, FE integration, readiness, smoke date): `docs/CONTRACT_MATRIX.md`
+- Mapping index: `docs/FE_BE_MAPPING.md`
 - Cutover/rollback: `docs/operations.md`
 - Decommission: `docs/decommission.md`
 
@@ -22,7 +23,7 @@ Sumber kebenaran teknis:
 | Phase 1 | Auth dan user management | Implemented + exposed | `/auth` dan `/users` aktif di gateway. |
 | Phase 2 | Academic management | Implemented + exposed | Terms, subjects, classes, class-subjects, schedules CRUD aktif. Scheduler/generator tetap feature-flagged. |
 | Phase 3 | Student, enrollment, grading, report card | Implemented + exposed | Students, enrollments, grade components/configs/grades, report card JSON aktif. Async reports tetap feature-flagged. |
-| Phase 4 | Attendance, communication, calendar | Implemented + exposed | Announcements, behavior notes, calendar events, **attendance CRUD (daily/subject)** aktif. Calendar FE alias tetap feature-flagged. |
+| Phase 4 | Attendance, communication, calendar | Implemented behind flag | Announcements, behavior notes, calendar events aktif. Attendance CRUD (daily/subject and compatibility routes) requires `ENABLE_ATTENDANCE_ALIAS`; calendar FE alias remains separately feature-flagged. |
 | Phase 5 | Analytics, dashboard, cache, async reports, scheduler | Implemented behind flags | Perlu contract test, smoke test, dan data validation sebelum dianggap production-ready. |
 | Phase 6 | Cutover, rollback, decommission | Planned + support implemented | Middleware, runbook, shadow compare script, dan checklist ada. Cutover produksi belum selesai. |
 
@@ -48,9 +49,9 @@ Always-on core:
 - `/calendar-events`
 - `/teachers`
 - `/class-subjects`
-- `/attendance/daily`
-- `/attendance/subject`
 - `/teacher-preferences`
+
+Attendance is not always-on. The daily, subject, generic compatibility, and summary routes are registered only when `ENABLE_ATTENDANCE_ALIAS=true`.
 
 Feature-flagged:
 

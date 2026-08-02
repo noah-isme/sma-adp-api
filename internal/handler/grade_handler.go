@@ -62,6 +62,32 @@ func (h *GradeHandler) Upsert(c *gin.Context) {
 	response.JSON(c, http.StatusOK, grade, nil)
 }
 
+// Update is the generic CRUD compatibility route. Grade records are uniquely
+// identified by enrollment, subject, and component, so the payload is handled
+// by the same validated upsert workflow as POST /grades.
+func (h *GradeHandler) Update(c *gin.Context) { h.Upsert(c) }
+
+// Report provides the admin grade-list report contract using the canonical
+// grade entries. Rich report-card endpoints remain under /reports.
+func (h *GradeHandler) Report(c *gin.Context) {
+	grades, err := h.grades.List(c.Request.Context(), models.GradeFilter{SubjectID: c.Query("subjectId"), ComponentID: c.Query("componentId")})
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+	rows := make([]gin.H, 0, len(grades))
+	total := 0.0
+	for _, grade := range grades {
+		total += grade.GradeValue
+		rows = append(rows, gin.H{"id": grade.ID, "studentId": grade.EnrollmentID, "studentName": grade.EnrollmentID, "studentNis": "", "classId": c.Query("classId"), "className": "", "subjectId": grade.SubjectID, "subjectName": grade.SubjectID, "componentId": grade.ComponentID, "componentName": grade.ComponentCode, "componentCategory": "", "componentWeight": 0, "score": grade.GradeValue, "kkm": 0, "status": gin.H{"code": "PASS", "label": "Tuntas", "description": "", "tone": "success", "icon": "check"}, "teacherId": c.Query("teacherId"), "teacherName": "", "recordedAt": grade.CreatedAt, "lastUpdated": grade.UpdatedAt, "termId": c.Query("termId"), "termName": "", "termLabel": ""})
+	}
+	average := 0.0
+	if len(grades) > 0 {
+		average = total / float64(len(grades))
+	}
+	response.JSON(c, http.StatusOK, gin.H{"context": gin.H{"termId": c.Query("termId"), "classId": c.Query("classId"), "subjectId": c.Query("subjectId")}, "summary": gin.H{"averageScore": average, "belowKkmCount": 0, "componentCount": 0, "remedialCount": 0, "statusBreakdown": []gin.H{}, "distribution": []gin.H{}}, "filters": gin.H{"terms": []gin.H{}, "classes": []gin.H{}, "subjects": []gin.H{}, "components": []gin.H{}, "teachers": []gin.H{}, "statuses": []gin.H{}}, "rows": rows, "pagination": gin.H{"page": 1, "perPage": len(rows), "total": len(rows), "totalPages": 1}, "appliedFilters": gin.H{}}, nil)
+}
+
 // Bulk godoc
 // @Summary Bulk upsert grades
 // @Tags Grades

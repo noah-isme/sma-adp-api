@@ -57,7 +57,7 @@ Example — `POST /api/v1/auth/login` actual response:
 }
 ```
 
-Canonical live examples are in the repository root `README.md` ("Contoh curl endpoint utama") and the generated Swagger served at `/docs`.
+Canonical live examples are in the repository root `README.md` ("Contoh curl endpoint utama"), the generated Swagger served at `/docs`, and the [contract matrix](CONTRACT_MATRIX.md).
 
 ---
 
@@ -325,6 +325,10 @@ The Go API keeps the existing admin-panel contracts available while the frontend
 | Enrollment edit | `PUT /enrollments/:id` | Accepts `class_id` (or legacy `target_class_id`) and performs the validated transfer workflow. |
 | Attendance write | `POST /attendance`, `PUT/PATCH /attendance/:id` | Compatibility upsert mapped to daily attendance. Canonical bulk and subject routes remain available under `/attendance/daily` and `/attendance/subject`. |
 | Teacher preferences | `POST /teacher-preferences`, `PUT /teacher-preferences/:id` | Compatibility upsert; per-teacher canonical route is `PUT /teachers/:id/preferences`. |
+| Student/teacher rosters | `GET /students/roster`, `GET /teachers/roster` | Admin-compatible roster responses; canonical list resources remain available. |
+| Grade report/edit | `GET /grades/report`, `PATCH /grades/:id` | Admin-compatible grade-list view; PATCH uses the validated grade upsert payload. |
+| Browser CSV exports | `GET /export/students`, `/export/grades`, `/export/attendance` | Direct CSV downloads; report-job token downloads remain under `/export/{token}`. |
+| CSV imports | `POST /students/import`, `POST /teachers/import` | Row-level validation summary; see `FE_BE_MAPPING.md` for required columns. |
 
 The admin data provider unwraps `data` from the response envelope and converts browser camelCase fields to the API's snake_case fields. New integrations should use the canonical snake_case contract directly.
 

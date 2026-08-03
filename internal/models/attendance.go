@@ -113,15 +113,35 @@ type SubjectAttendanceRecord struct {
 	SubjectName *string `db:"subject_name" json:"subject_name,omitempty"`
 }
 
-// SubjectAttendanceFilter scopes listing queries.
+// SubjectAttendanceFilter scopes listing queries. ScheduleID pins a single
+// session, while ClassID/SubjectID/TermID let the lesson attendance screen load
+// a whole class-subject history without knowing every schedule row id.
 type SubjectAttendanceFilter struct {
-	ScheduleID string
-	Date       *time.Time
-	Status     *AttendanceStatus
-	Page       int
-	PageSize   int
-	SortBy     string
-	SortOrder  string
+	ScheduleID   string
+	ClassID      string
+	SubjectID    string
+	TermID       string
+	EnrollmentID string
+	StudentID    string
+	Date         *time.Time
+	DateFrom     *time.Time
+	DateTo       *time.Time
+	Status       *AttendanceStatus
+	Page         int
+	PageSize     int
+	SortBy       string
+	SortOrder    string
+}
+
+// SubjectAttendanceSummary aggregates session attendance counts for a
+// class-subject pairing over a date range.
+type SubjectAttendanceSummary struct {
+	Present int     `json:"present"`
+	Sick    int     `json:"sick"`
+	Excused int     `json:"excused"`
+	Absent  int     `json:"absent"`
+	Total   int     `json:"total"`
+	Percent float64 `json:"percent"`
 }
 
 // SubjectAttendanceReportRow summarises a session.

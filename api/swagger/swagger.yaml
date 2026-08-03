@@ -1580,6 +1580,76 @@ paths:
       tags:
       - Attendance
   /attendance/subject:
+    get:
+      description: Reads session attendance. Pin one session with scheduleId, or query
+        a class-subject range with classId/subjectId plus dateFrom/dateTo.
+      parameters:
+      - description: Schedule (session) ID
+        in: query
+        name: scheduleId
+        type: string
+      - description: Class ID
+        in: query
+        name: classId
+        type: string
+      - description: Subject ID
+        in: query
+        name: subjectId
+        type: string
+      - description: Term ID
+        in: query
+        name: termId
+        type: string
+      - description: Enrollment ID
+        in: query
+        name: enrollmentId
+        type: string
+      - description: Student ID
+        in: query
+        name: studentId
+        type: string
+      - description: Exact date (YYYY-MM-DD)
+        in: query
+        name: date
+        type: string
+      - description: From date (YYYY-MM-DD)
+        in: query
+        name: dateFrom
+        type: string
+      - description: To date (YYYY-MM-DD)
+        in: query
+        name: dateTo
+        type: string
+      - description: Attendance status (H/S/I/A)
+        in: query
+        name: status
+        type: string
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      - description: Page size (max 200)
+        in: query
+        name: limit
+        type: integer
+      - description: Sort field (date, created_at, student_name, status)
+        in: query
+        name: sortBy
+        type: string
+      - description: Sort order (asc/desc)
+        in: query
+        name: sortOrder
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List lesson (per-subject) attendance records
+      tags:
+      - Attendance
     post:
       consumes:
       - application/json
@@ -1598,6 +1668,41 @@ paths:
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
       summary: Mark subject attendance for a student session
+      tags:
+      - Attendance
+  /attendance/subject/{id}:
+    delete:
+      description: Used when a session is cancelled or a row was recorded against
+        the wrong lesson.
+      parameters:
+      - description: Subject attendance ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      summary: Delete one lesson attendance record
+      tags:
+      - Attendance
+    get:
+      parameters:
+      - description: Subject attendance ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get one lesson attendance record
       tags:
       - Attendance
   /attendance/subject/bulk:
@@ -1621,6 +1726,140 @@ paths:
       summary: Bulk mark subject attendance
       tags:
       - Attendance
+  /attendance/subject/summary:
+    get:
+      description: Aggregates H/S/I/A counts and attendance percentage for the same
+        filters accepted by the list endpoint.
+      parameters:
+      - description: Schedule (session) ID
+        in: query
+        name: scheduleId
+        type: string
+      - description: Class ID
+        in: query
+        name: classId
+        type: string
+      - description: Subject ID
+        in: query
+        name: subjectId
+        type: string
+      - description: Term ID
+        in: query
+        name: termId
+        type: string
+      - description: Student ID
+        in: query
+        name: studentId
+        type: string
+      - description: From date (YYYY-MM-DD)
+        in: query
+        name: dateFrom
+        type: string
+      - description: To date (YYYY-MM-DD)
+        in: query
+        name: dateTo
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Summarise lesson attendance counts
+      tags:
+      - Attendance
+  /audit-logs:
+    get:
+      description: Read-only audit trail viewer. Supports filtering by actor, action,
+        resource, and date range.
+      parameters:
+      - description: Filter by acting user ID
+        in: query
+        name: userId
+        type: string
+      - description: Filter by action (e.g. LOGIN, USER_UPDATE)
+        in: query
+        name: action
+        type: string
+      - description: Filter by resource name
+        in: query
+        name: resource
+        type: string
+      - description: Filter by affected resource ID
+        in: query
+        name: resourceId
+        type: string
+      - description: Free-text search across action, resource, and actor
+        in: query
+        name: search
+        type: string
+      - description: From timestamp (YYYY-MM-DD or RFC3339)
+        in: query
+        name: dateFrom
+        type: string
+      - description: To timestamp (YYYY-MM-DD or RFC3339)
+        in: query
+        name: dateTo
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size (max 200)
+        in: query
+        name: limit
+        type: integer
+      - description: Sort field (created_at, action, resource, user_id)
+        in: query
+        name: sortBy
+        type: string
+      - description: Sort order (asc/desc)
+        in: query
+        name: sortOrder
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List audit log entries
+      tags:
+      - Audit
+  /audit-logs/{id}:
+    get:
+      parameters:
+      - description: Audit log ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get a single audit log entry
+      tags:
+      - Audit
+  /audit-logs/facets:
+    get:
+      description: Returns distinct actions and resources with counts so the viewer
+        can build filter dropdowns.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List available audit filter values
+      tags:
+      - Audit
   /auth/change-password:
     post:
       consumes:
@@ -2394,6 +2633,137 @@ paths:
       summary: Teacher academics dashboard
       tags:
       - Dashboard
+  /documents:
+    get:
+      parameters:
+      - description: Scope filter
+        in: query
+        name: scope
+        type: string
+      - description: Category filter
+        in: query
+        name: category
+        type: string
+      - description: Term reference
+        in: query
+        name: termId
+        type: string
+      - description: Class reference
+        in: query
+        name: classId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List documents (alias of /archives)
+      tags:
+      - Documents
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Title
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: Category
+        in: formData
+        name: category
+        required: true
+        type: string
+      - description: Scope
+        in: formData
+        name: scope
+        required: true
+        type: string
+      - description: Term reference
+        in: formData
+        name: refTermId
+        type: string
+      - description: Class reference
+        in: formData
+        name: refClassId
+        type: string
+      - description: Student reference
+        in: formData
+        name: refStudentId
+        type: string
+      - description: Document
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Upload a document (alias of /archives)
+      tags:
+      - Documents
+  /documents/{id}:
+    delete:
+      parameters:
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      summary: Soft delete a document (alias of /archives)
+      tags:
+      - Documents
+    get:
+      parameters:
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get document metadata with signed download URL (alias of /archives)
+      tags:
+      - Documents
+  /documents/{id}/download:
+    get:
+      parameters:
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Signed token
+        in: query
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+      summary: Download a document via signed token (alias of /archives)
+      tags:
+      - Documents
   /enrollments:
     get:
       parameters:
@@ -2670,6 +3040,21 @@ paths:
       summary: Export students as unfiltered CSV
       tags:
       - Exports
+  /features:
+    get:
+      description: Returns which feature-flagged modules this deployment mounted so
+        clients can hide unavailable navigation instead of surfacing 404s. Unauthenticated
+        by design; exposes no data or secrets.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: List enabled backend features
+      tags:
+      - Features
   /grade-components:
     get:
       parameters:
@@ -3503,12 +3888,30 @@ paths:
       - Academics
   /schedules/preferences:
     get:
+      description: Returns one teacher's preferences when teacher_id is supplied.
+        Omit teacher_id to page through every teacher's preferences, which is what
+        the schedule generator needs to seed its constraint set.
       parameters:
-      - description: Teacher ID
+      - description: Teacher ID. When omitted, all preferences are listed.
         example: teacher_123
         in: query
         name: teacher_id
-        required: true
+        type: string
+      - description: Page (list mode only)
+        in: query
+        name: page
+        type: integer
+      - description: Page size (list mode only)
+        in: query
+        name: limit
+        type: integer
+      - description: Sort field (list mode only)
+        in: query
+        name: sortBy
+        type: string
+      - description: Sort order (asc/desc, list mode only)
+        in: query
+        name: sortOrder
         type: string
       produces:
       - application/json

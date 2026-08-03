@@ -17,6 +17,9 @@ import (
 
 type schedulePreferenceServiceMock struct {
 	upsertCalled bool
+	listCalled   bool
+	listFilter   models.TeacherPreferenceFilter
+	listResp     []models.TeacherPreference
 	resp         *models.TeacherPreference
 	err          error
 }
@@ -30,9 +33,23 @@ func (m *schedulePreferenceServiceMock) Upsert(ctx context.Context, teacherID st
 	return m.resp, m.err
 }
 
-func TestSchedulePreferenceAliasHandlerRequiresTeacherID(t *testing.T) {
+func (m *schedulePreferenceServiceMock) ListAll(ctx context.Context, filter models.TeacherPreferenceFilter) ([]models.TeacherPreference, *models.Pagination, error) {
+	m.listCalled = true
+	m.listFilter = filter
+	if m.err != nil {
+		return nil, nil, m.err
+	}
+	return m.listResp, &models.Pagination{Page: filter.Page, PageSize: filter.PageSize, TotalCount: len(m.listResp)}, nil
+}
+
+// Omitting teacher_id now means "list every teacher's preferences" rather than
+// erroring, which is what the schedule generator needs to seed constraints.
+func TestSchedulePreferenceAliasHandlerListsWhenTeacherIDOmitted(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	handler := NewSchedulePreferenceHandler(&schedulePreferenceServiceMock{})
+	mockSvc := &schedulePreferenceServiceMock{
+		listResp: []models.TeacherPreference{{TeacherID: "t1"}, {TeacherID: "t2"}},
+	}
+	handler := NewSchedulePreferenceHandler(mockSvc)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	req, _ := http.NewRequest(http.MethodGet, "/schedules/preferences", nil)
@@ -40,7 +57,26 @@ func TestSchedulePreferenceAliasHandlerRequiresTeacherID(t *testing.T) {
 
 	handler.Get(c)
 
-	require.Equal(t, http.StatusBadRequest, w.Code)
+	require.Equal(t, http.StatusOK, w.Code)
+	require.True(t, mockSvc.listCalled)
+}
+
+func TestSchedulePreferenceAliasHandlerListHonoursPagination(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	mockSvc := &schedulePreferenceServiceMock{}
+	handler := NewSchedulePreferenceHandler(mockSvc)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	req, _ := http.NewRequest(http.MethodGet, "/schedules/preferences?page=3&limit=25&sortBy=max_load_per_day&sortOrder=DESC", nil)
+	c.Request = req
+
+	handler.Get(c)
+
+	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, 3, mockSvc.listFilter.Page)
+	require.Equal(t, 25, mockSvc.listFilter.PageSize)
+	require.Equal(t, "max_load_per_day", mockSvc.listFilter.SortBy)
+	require.Equal(t, "desc", mockSvc.listFilter.SortOrder)
 }
 
 func TestSchedulePreferenceAliasHandlerInvalidTeacherID(t *testing.T) {

@@ -28,6 +28,9 @@ type subjectAttendanceRepository interface {
 	Upsert(ctx context.Context, record *models.SubjectAttendance) (*models.SubjectAttendance, error)
 	BulkInsert(ctx context.Context, records []models.SubjectAttendance, atomic bool) ([]models.SubjectAttendance, error)
 	SessionReport(ctx context.Context, scheduleID string, date time.Time) ([]models.SubjectAttendanceReportRow, error)
+	FindByID(ctx context.Context, id string) (*models.SubjectAttendanceRecord, error)
+	Delete(ctx context.Context, id string) error
+	Summary(ctx context.Context, filter models.SubjectAttendanceFilter) (*models.SubjectAttendanceSummary, error)
 }
 
 // AttendanceService coordinates attendance workflows.
@@ -101,15 +104,24 @@ type BulkAttendanceResult struct {
 	Conflicts []models.AttendanceBulkConflict `json:"conflicts,omitempty"`
 }
 
-// SubjectAttendanceListRequest describes filters for subject attendance listing.
+// SubjectAttendanceListRequest describes filters for subject attendance
+// listing. Callers may pin a single session via ScheduleID or query a whole
+// class-subject range, which is what the lesson attendance screen needs.
 type SubjectAttendanceListRequest struct {
-	ScheduleID string     `json:"schedule_id"`
-	Date       *time.Time `json:"date"`
-	Status     *string    `json:"status" validate:"omitempty,attendance_status"`
-	Page       int        `json:"page"`
-	PageSize   int        `json:"page_size"`
-	SortBy     string     `json:"sort_by"`
-	SortOrder  string     `json:"sort_order"`
+	ScheduleID   string     `json:"schedule_id"`
+	ClassID      string     `json:"class_id"`
+	SubjectID    string     `json:"subject_id"`
+	TermID       string     `json:"term_id"`
+	EnrollmentID string     `json:"enrollment_id"`
+	StudentID    string     `json:"student_id"`
+	Date         *time.Time `json:"date"`
+	DateFrom     *time.Time `json:"date_from"`
+	DateTo       *time.Time `json:"date_to"`
+	Status       *string    `json:"status" validate:"omitempty,attendance_status"`
+	Page         int        `json:"page"`
+	PageSize     int        `json:"page_size"`
+	SortBy       string     `json:"sort_by"`
+	SortOrder    string     `json:"sort_order"`
 }
 
 // MarkSubjectAttendanceRequest describes a single subject attendance payload.
@@ -273,11 +285,37 @@ func (s *AttendanceService) AttendancePercentage(ctx context.Context, studentID,
 
 // ListSubject returns subject attendance list.
 func (s *AttendanceService) ListSubject(ctx context.Context, req SubjectAttendanceListRequest) ([]models.SubjectAttendanceRecord, *models.Pagination, error) {
+	req.normalise()
 	if err := s.validator.Struct(req); err != nil {
 		return nil, nil, appErrors.Wrap(err, appErrors.ErrValidation.Code, appErrors.ErrValidation.Status, "invalid filter")
 	}
+	if req.DateFrom != nil && req.DateTo != nil && req.DateTo.Before(*req.DateFrom) {
+		return nil, nil, appErrors.Clone(appErrors.ErrValidation, "date_to must not precede date_from")
+	}
+	filter := subjectAttendanceFilterFrom(req)
+	page := filter.Page
+	size := filter.PageSize
+	rows, total, err := s.subjectRepo.List(ctx, filter)
+	if err != nil {
+		return nil, nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to list subject attendance")
+	}
+	pagination := &models.Pagination{Page: page, PageSize: size, TotalCount: total}
+	return rows, pagination, nil
+}
+
+// normalise drops a blank status so an empty query parameter reads as "no
+// filter" instead of failing the attendance_status validation.
+func (r *SubjectAttendanceListRequest) normalise() {
+	if r.Status != nil && strings.TrimSpace(*r.Status) == "" {
+		r.Status = nil
+	}
+}
+
+// subjectAttendanceFilterFrom normalises a list request into a repository
+// filter, applying pagination defaults in one place.
+func subjectAttendanceFilterFrom(req SubjectAttendanceListRequest) models.SubjectAttendanceFilter {
 	var status *models.AttendanceStatus
-	if req.Status != nil {
+	if req.Status != nil && strings.TrimSpace(*req.Status) != "" {
 		st := models.AttendanceStatus(strings.ToUpper(*req.Status))
 		status = &st
 	}
@@ -289,21 +327,70 @@ func (s *AttendanceService) ListSubject(ctx context.Context, req SubjectAttendan
 	if size <= 0 {
 		size = 50
 	}
-	filter := models.SubjectAttendanceFilter{
-		ScheduleID: req.ScheduleID,
-		Date:       req.Date,
-		Status:     status,
-		Page:       page,
-		PageSize:   size,
-		SortBy:     req.SortBy,
-		SortOrder:  req.SortOrder,
+	if size > 200 {
+		size = 200
 	}
-	rows, total, err := s.subjectRepo.List(ctx, filter)
+	return models.SubjectAttendanceFilter{
+		ScheduleID:   req.ScheduleID,
+		ClassID:      req.ClassID,
+		SubjectID:    req.SubjectID,
+		TermID:       req.TermID,
+		EnrollmentID: req.EnrollmentID,
+		StudentID:    req.StudentID,
+		Date:         req.Date,
+		DateFrom:     req.DateFrom,
+		DateTo:       req.DateTo,
+		Status:       status,
+		Page:         page,
+		PageSize:     size,
+		SortBy:       req.SortBy,
+		SortOrder:    req.SortOrder,
+	}
+}
+
+// GetSubject returns a single session attendance record.
+func (s *AttendanceService) GetSubject(ctx context.Context, id string) (*models.SubjectAttendanceRecord, error) {
+	if strings.TrimSpace(id) == "" {
+		return nil, appErrors.Clone(appErrors.ErrValidation, "attendance id is required")
+	}
+	record, err := s.subjectRepo.FindByID(ctx, id)
 	if err != nil {
-		return nil, nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to list subject attendance")
+		if err == sql.ErrNoRows {
+			return nil, appErrors.Clone(appErrors.ErrNotFound, "subject attendance not found")
+		}
+		return nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to load subject attendance")
 	}
-	pagination := &models.Pagination{Page: page, PageSize: size, TotalCount: total}
-	return rows, pagination, nil
+	return record, nil
+}
+
+// DeleteSubject removes a session attendance record.
+func (s *AttendanceService) DeleteSubject(ctx context.Context, id string) error {
+	if strings.TrimSpace(id) == "" {
+		return appErrors.Clone(appErrors.ErrValidation, "attendance id is required")
+	}
+	if err := s.subjectRepo.Delete(ctx, id); err != nil {
+		if err == sql.ErrNoRows {
+			return appErrors.Clone(appErrors.ErrNotFound, "subject attendance not found")
+		}
+		return appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to delete subject attendance")
+	}
+	return nil
+}
+
+// SubjectSummary aggregates status counts for the filtered session set.
+func (s *AttendanceService) SubjectSummary(ctx context.Context, req SubjectAttendanceListRequest) (*models.SubjectAttendanceSummary, error) {
+	req.normalise()
+	if err := s.validator.Struct(req); err != nil {
+		return nil, appErrors.Wrap(err, appErrors.ErrValidation.Code, appErrors.ErrValidation.Status, "invalid filter")
+	}
+	if req.DateFrom != nil && req.DateTo != nil && req.DateTo.Before(*req.DateFrom) {
+		return nil, appErrors.Clone(appErrors.ErrValidation, "date_to must not precede date_from")
+	}
+	summary, err := s.subjectRepo.Summary(ctx, subjectAttendanceFilterFrom(req))
+	if err != nil {
+		return nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to summarise subject attendance")
+	}
+	return summary, nil
 }
 
 // MarkSubject marks attendance for a specific session.

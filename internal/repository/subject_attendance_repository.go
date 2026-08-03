@@ -23,19 +23,42 @@ func NewSubjectAttendanceRepository(db *sqlx.DB) *SubjectAttendanceRepository {
 	return &SubjectAttendanceRepository{db: db}
 }
 
-// List returns session attendance filtered by provided criteria.
-func (r *SubjectAttendanceRepository) List(ctx context.Context, filter models.SubjectAttendanceFilter) ([]models.SubjectAttendanceRecord, int, error) {
-	base := `FROM subject_attendance sa
+// subjectAttendanceBase is the shared FROM/JOIN chain used by the list, count,
+// and summary queries so filters resolve against identical columns.
+const subjectAttendanceBase = `FROM subject_attendance sa
 JOIN enrollments e ON e.id = sa.enrollment_id
 JOIN students s ON s.id = e.student_id
 LEFT JOIN schedules sch ON sch.id = sa.schedule_id
 LEFT JOIN classes c ON c.id = e.class_id
 LEFT JOIN subjects sub ON sub.id = sch.subject_id`
+
+// buildSubjectAttendanceWhere renders the shared predicate and positional args.
+func buildSubjectAttendanceWhere(filter models.SubjectAttendanceFilter) (string, []interface{}) {
 	where := []string{"1=1"}
 	args := []interface{}{}
 	if filter.ScheduleID != "" {
 		where = append(where, fmt.Sprintf("sa.schedule_id = $%d", len(args)+1))
 		args = append(args, filter.ScheduleID)
+	}
+	if filter.ClassID != "" {
+		where = append(where, fmt.Sprintf("e.class_id = $%d", len(args)+1))
+		args = append(args, filter.ClassID)
+	}
+	if filter.SubjectID != "" {
+		where = append(where, fmt.Sprintf("sch.subject_id = $%d", len(args)+1))
+		args = append(args, filter.SubjectID)
+	}
+	if filter.TermID != "" {
+		where = append(where, fmt.Sprintf("e.term_id = $%d", len(args)+1))
+		args = append(args, filter.TermID)
+	}
+	if filter.EnrollmentID != "" {
+		where = append(where, fmt.Sprintf("sa.enrollment_id = $%d", len(args)+1))
+		args = append(args, filter.EnrollmentID)
+	}
+	if filter.StudentID != "" {
+		where = append(where, fmt.Sprintf("e.student_id = $%d", len(args)+1))
+		args = append(args, filter.StudentID)
 	}
 	if filter.Status != nil && filter.Status.Valid() {
 		where = append(where, fmt.Sprintf("sa.status = $%d", len(args)+1))
@@ -45,11 +68,27 @@ LEFT JOIN subjects sub ON sub.id = sch.subject_id`
 		where = append(where, fmt.Sprintf("sa.date = $%d", len(args)+1))
 		args = append(args, *filter.Date)
 	}
-	whereClause := strings.Join(where, " AND ")
+	if filter.DateFrom != nil {
+		where = append(where, fmt.Sprintf("sa.date >= $%d", len(args)+1))
+		args = append(args, *filter.DateFrom)
+	}
+	if filter.DateTo != nil {
+		where = append(where, fmt.Sprintf("sa.date <= $%d", len(args)+1))
+		args = append(args, *filter.DateTo)
+	}
+	return strings.Join(where, " AND "), args
+}
+
+// List returns session attendance filtered by provided criteria.
+func (r *SubjectAttendanceRepository) List(ctx context.Context, filter models.SubjectAttendanceFilter) ([]models.SubjectAttendanceRecord, int, error) {
+	base := subjectAttendanceBase
+	whereClause, args := buildSubjectAttendanceWhere(filter)
 	sortBy := filter.SortBy
 	allowedSort := map[string]string{
-		"date":       "sa.date",
-		"created_at": "sa.created_at",
+		"date":         "sa.date",
+		"created_at":   "sa.created_at",
+		"student_name": "s.full_name",
+		"status":       "sa.status",
 	}
 	if sortBy == "" {
 		sortBy = "date"
@@ -85,6 +124,41 @@ LEFT JOIN subjects sub ON sub.id = sch.subject_id`
 		return nil, 0, fmt.Errorf("count subject attendance: %w", err)
 	}
 	return rows, total, nil
+}
+
+// Summary aggregates status counts for the filtered session attendance set.
+func (r *SubjectAttendanceRepository) Summary(ctx context.Context, filter models.SubjectAttendanceFilter) (*models.SubjectAttendanceSummary, error) {
+	whereClause, args := buildSubjectAttendanceWhere(filter)
+	query := fmt.Sprintf(`SELECT
+        COALESCE(SUM(CASE WHEN sa.status = 'H' THEN 1 ELSE 0 END), 0) AS present,
+        COALESCE(SUM(CASE WHEN sa.status = 'S' THEN 1 ELSE 0 END), 0) AS sick,
+        COALESCE(SUM(CASE WHEN sa.status = 'I' THEN 1 ELSE 0 END), 0) AS excused,
+        COALESCE(SUM(CASE WHEN sa.status = 'A' THEN 1 ELSE 0 END), 0) AS absent,
+        COUNT(*) AS total
+        %s WHERE %s`, subjectAttendanceBase, whereClause)
+
+	var row struct {
+		Present int `db:"present"`
+		Sick    int `db:"sick"`
+		Excused int `db:"excused"`
+		Absent  int `db:"absent"`
+		Total   int `db:"total"`
+	}
+	if err := r.db.GetContext(ctx, &row, query, args...); err != nil {
+		return nil, fmt.Errorf("summarise subject attendance: %w", err)
+	}
+
+	summary := &models.SubjectAttendanceSummary{
+		Present: row.Present,
+		Sick:    row.Sick,
+		Excused: row.Excused,
+		Absent:  row.Absent,
+		Total:   row.Total,
+	}
+	if row.Total > 0 {
+		summary.Percent = float64(row.Present) / float64(row.Total) * 100
+	}
+	return summary, nil
 }
 
 // Upsert inserts or updates a subject attendance record.
@@ -169,4 +243,43 @@ WHERE sa.schedule_id = $1 AND sa.date = $2`
 		return nil, fmt.Errorf("subject attendance session report: %w", err)
 	}
 	return rows, nil
+}
+
+// FindByID loads a single session attendance row, returning sql.ErrNoRows when
+// the record does not exist.
+func (r *SubjectAttendanceRepository) FindByID(ctx context.Context, id string) (*models.SubjectAttendanceRecord, error) {
+	const query = `SELECT sa.id, sa.enrollment_id, sa.schedule_id, sa.date, sa.status, sa.notes, sa.created_at, sa.updated_at,
+        e.student_id, s.full_name AS student_name, e.class_id, c.name AS class_name, sch.subject_id, sub.name AS subject_name
+FROM subject_attendance sa
+JOIN enrollments e ON e.id = sa.enrollment_id
+JOIN students s ON s.id = e.student_id
+LEFT JOIN schedules sch ON sch.id = sa.schedule_id
+LEFT JOIN classes c ON c.id = e.class_id
+LEFT JOIN subjects sub ON sub.id = sch.subject_id
+WHERE sa.id = $1`
+	var record models.SubjectAttendanceRecord
+	if err := r.db.GetContext(ctx, &record, query, id); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, err
+		}
+		return nil, fmt.Errorf("find subject attendance: %w", err)
+	}
+	return &record, nil
+}
+
+// Delete removes a session attendance row. It reports sql.ErrNoRows when the id
+// matched nothing so the caller can answer 404 rather than a silent 204.
+func (r *SubjectAttendanceRepository) Delete(ctx context.Context, id string) error {
+	result, err := r.db.ExecContext(ctx, `DELETE FROM subject_attendance WHERE id = $1`, id)
+	if err != nil {
+		return fmt.Errorf("delete subject attendance: %w", err)
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("delete subject attendance rows affected: %w", err)
+	}
+	if affected == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
 }

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -58,6 +59,16 @@ func (r *TeacherPreferenceRepository) Upsert(ctx context.Context, pref *models.T
 	return nil
 }
 
+// teacherPreferenceSortColumns whitelists ORDER BY targets. Sort input arrives
+// from query parameters, so it must never be interpolated verbatim.
+var teacherPreferenceSortColumns = map[string]string{
+	"teacher_id":        "teacher_id",
+	"max_load_per_day":  "max_load_per_day",
+	"max_load_per_week": "max_load_per_week",
+	"created_at":        "created_at",
+	"updated_at":        "updated_at",
+}
+
 // ListAll returns all teacher preferences with pagination.
 func (r *TeacherPreferenceRepository) ListAll(ctx context.Context, filter models.TeacherPreferenceFilter) ([]models.TeacherPreference, int, error) {
 	conditions := []string{}
@@ -98,12 +109,12 @@ func (r *TeacherPreferenceRepository) ListAll(ctx context.Context, filter models
 
 	offset := (page - 1) * size
 
-	sortBy := filter.SortBy
-	if sortBy == "" {
+	sortBy, ok := teacherPreferenceSortColumns[strings.ToLower(filter.SortBy)]
+	if !ok {
 		sortBy = "teacher_id"
 	}
-	sortOrder := filter.SortOrder
-	if sortOrder == "" {
+	sortOrder := strings.ToUpper(filter.SortOrder)
+	if sortOrder != "ASC" && sortOrder != "DESC" {
 		sortOrder = "ASC"
 	}
 

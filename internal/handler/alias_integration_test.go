@@ -156,4 +156,9 @@ func (schedulePreferenceIntegrationMock) Upsert(ctx context.Context, teacherID s
 	return &models.TeacherPreference{TeacherID: teacherID, MaxLoadPerDay: req.MaxLoadPerDay}, nil
 }
 
+func (schedulePreferenceIntegrationMock) ListAll(ctx context.Context, filter models.TeacherPreferenceFilter) ([]models.TeacherPreference, *models.Pagination, error) {
+	prefs := []models.TeacherPreference{{TeacherID: "teacher-1"}, {TeacherID: "teacher-2"}}
+	return prefs, &models.Pagination{Page: 1, PageSize: len(prefs), TotalCount: len(prefs)}, nil
+}
+
 const defaultGeneratorPayload = `{"termId":"2024","classId":"10A","timeSlotsPerDay":4,"days":[1,2],"subjectLoads":[{"subjectId":"math","teacherId":"t1","weeklyCount":4}]}`

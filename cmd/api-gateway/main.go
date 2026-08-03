@@ -86,6 +86,12 @@ func main() {
 
 	api := r.Group(cfg.APIPrefix)
 
+	// Feature discovery is unauthenticated on purpose: the admin panel reads it
+	// before login to decide which navigation entries to render. It returns only
+	// which modules are mounted, never data or configuration values.
+	featureHandler := internalhandler.NewFeatureHandler(cfg)
+	api.GET("/features", featureHandler.List)
+
 	authRepo := repository.NewUserRepository(db)
 	teacherRepo := repository.NewTeacherRepository(db)
 	authSvc := service.NewAuthService(authRepo, teacherRepo, nil, logr, service.AuthConfig{
@@ -128,6 +134,7 @@ func main() {
 	semesterScheduleRepo := repository.NewSemesterScheduleRepository(db)
 	semesterSlotRepo := repository.NewSemesterScheduleSlotRepository(db)
 	configurationRepo := repository.NewConfigurationRepository(db)
+	auditRepo := repository.NewAuditRepository(db)
 
 	userSvc := service.NewUserService(authRepo, nil, logr)
 	userHandler := internalhandler.NewUserHandler(userSvc)
@@ -301,6 +308,11 @@ func main() {
 
 	// Teacher Preferences Handler
 	teacherPreferenceHandler := internalhandler.NewTeacherPreferenceHandler(preferenceSvc)
+
+	// Audit trail reads are always available: entries are written unconditionally
+	// by the middleware and services, so gating the viewer would only hide data
+	// that already exists.
+	auditHandler := internalhandler.NewAuditHandler(service.NewAuditService(auditRepo, logr))
 
 	reportHandler := internalhandler.NewReportHandler(nil, gradeSvc)
 	if cfg.Reports.Enabled {
@@ -543,6 +555,13 @@ func main() {
 		attendanceCRUDGroup.POST("/daily/bulk", attendanceHandler.BulkMarkDaily)
 		attendanceCRUDGroup.POST("/subject", attendanceHandler.MarkSubject)
 		attendanceCRUDGroup.POST("/subject/bulk", attendanceHandler.BulkMarkSubject)
+		// Lesson-level (per-subject) reads. The admin panel's lesson attendance
+		// screen needs to load an existing session and a class-subject history,
+		// which previously had no backend counterpart.
+		attendanceCRUDGroup.GET("/subject", attendanceHandler.ListSubject)
+		attendanceCRUDGroup.GET("/subject/summary", attendanceHandler.SubjectSummary)
+		attendanceCRUDGroup.GET("/subject/:id", attendanceHandler.GetSubject)
+		attendanceCRUDGroup.DELETE("/subject/:id", attendanceHandler.DeleteSubject)
 		attendanceCRUDGroup.POST("", attendanceHandler.LegacyUpsert)
 		attendanceCRUDGroup.PUT("/:id", attendanceHandler.LegacyUpsert)
 		attendanceCRUDGroup.PATCH("/:id", attendanceHandler.LegacyUpsert)
@@ -554,6 +573,14 @@ func main() {
 	teacherPrefsGroup.GET("", teacherPreferenceHandler.ListAll)
 	teacherPrefsGroup.POST("", teacherPreferenceHandler.LegacyUpsert)
 	teacherPrefsGroup.PUT("/:id", teacherPreferenceHandler.LegacyUpsert)
+
+	// Audit trail viewer. Reads are restricted to SUPERADMIN because entries
+	// expose cross-tenant actor identity and request metadata.
+	auditGroup := secured.Group("/audit-logs")
+	auditGroup.Use(internalmiddleware.RBAC(string(models.RoleSuperAdmin)))
+	auditGroup.GET("", auditHandler.List)
+	auditGroup.GET("/facets", auditHandler.Facets)
+	auditGroup.GET("/:id", auditHandler.Get)
 
 	if configurationHandler != nil {
 		configGroup := secured.Group("/configuration")
@@ -612,6 +639,17 @@ func main() {
 		archives.GET("/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), archiveHandler.Get)
 		archives.GET("/:id/download", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), archiveHandler.Download)
 		archives.DELETE("/:id", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), archiveHandler.Delete)
+
+		// /documents is an alias over the same archive store. The admin panel's
+		// RBAC matrix grants ADMIN_TU a `documents` resource; without this the
+		// permission resolved to no endpoint at all.
+		documentHandler := internalhandler.NewDocumentAliasHandler(archiveHandler)
+		documents := secured.Group("/documents")
+		documents.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), documentHandler.Upload)
+		documents.GET("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), documentHandler.List)
+		documents.GET("/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), documentHandler.Get)
+		documents.GET("/:id/download", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), documentHandler.Download)
+		documents.DELETE("/:id", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), documentHandler.Delete)
 	}
 
 	if cfg.Dashboard.Enabled {

@@ -23,15 +23,25 @@ func newMock(t *testing.T) (*sqlx.DB, sqlmock.Sqlmock, func()) {
 	}
 }
 
+// userColumns mirrors the projection in UserRepository. Migration 000015 added
+// teacher_id/student_id/class_id, so the query selects them too.
+var userColumns = []string{
+	"id", "email", "password_hash", "full_name", "role",
+	"teacher_id", "student_id", "class_id",
+	"active", "last_login", "created_at", "updated_at",
+}
+
+const userSelectList = "SELECT id, email, password_hash, full_name, role, teacher_id, student_id, class_id, active, last_login, created_at, updated_at"
+
 func TestFindByEmail(t *testing.T) {
 	db, mock, cleanup := newMock(t)
 	defer cleanup()
 	repo := NewUserRepository(db)
 
 	now := time.Now()
-	rows := sqlmock.NewRows([]string{"id", "email", "password_hash", "full_name", "role", "active", "last_login", "created_at", "updated_at"}).
-		AddRow("1", "user@example.com", "hash", "User", string(models.RoleAdmin), true, now, now, now)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, email, password_hash, full_name, role, active, last_login, created_at, updated_at FROM users WHERE email = $1 LIMIT 1")).
+	rows := sqlmock.NewRows(userColumns).
+		AddRow("1", "user@example.com", "hash", "User", string(models.RoleAdmin), nil, nil, nil, true, now, now, now)
+	mock.ExpectQuery(regexp.QuoteMeta(userSelectList + " FROM users WHERE email = $1 LIMIT 1")).
 		WithArgs("user@example.com").
 		WillReturnRows(rows)
 
@@ -59,9 +69,9 @@ func TestListUsers(t *testing.T) {
 	repo := NewUserRepository(db)
 
 	now := time.Now()
-	listRows := sqlmock.NewRows([]string{"id", "email", "password_hash", "full_name", "role", "active", "last_login", "created_at", "updated_at"}).
-		AddRow("1", "a@example.com", "hash", "A", string(models.RoleAdmin), true, now, now, now)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, email, password_hash, full_name, role, active, last_login, created_at, updated_at FROM users WHERE 1=1 ORDER BY created_at DESC LIMIT 20 OFFSET 0")).
+	listRows := sqlmock.NewRows(userColumns).
+		AddRow("1", "a@example.com", "hash", "A", string(models.RoleAdmin), nil, nil, nil, true, now, now, now)
+	mock.ExpectQuery(regexp.QuoteMeta(userSelectList + " FROM users WHERE 1=1 ORDER BY created_at DESC LIMIT 20 OFFSET 0")).
 		WillReturnRows(listRows)
 
 	countRows := sqlmock.NewRows([]string{"count"}).AddRow(1)

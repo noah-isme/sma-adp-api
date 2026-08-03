@@ -669,7 +669,11 @@ func main() {
 
 		dashboardGroup := secured.Group("")
 		dashboardGroup.Use(internalmiddleware.WithResponseMeta())
-		dashboardGroup.GET("/dashboard", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), dashboardHandler.Admin)
+		// The payload is school-wide aggregate attendance, grades, behaviour, and
+		// operations, which is precisely a principal's view, so KEPALA_SEKOLAH
+		// reads it too. It exposes no per-student detail beyond the leaderboards
+		// already available to that role through /behavior-notes.
+		dashboardGroup.GET("/dashboard", internalmiddleware.RBAC(string(models.RoleKepalaSekolah), string(models.RoleAdmin), string(models.RoleSuperAdmin)), dashboardHandler.Admin)
 		dashboardGroup.GET("/dashboard/academics", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), dashboardHandler.Teacher)
 	}
 

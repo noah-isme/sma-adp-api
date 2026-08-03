@@ -86,7 +86,7 @@ gated screen. Set the flags for the modules you intend to run.
 | Env var | Default | Endpoints mounted | Admin panel pages affected | Extra config required |
 | --- | --- | --- | --- | --- |
 | `ENABLE_ANALYTICS` | `false` | `GET /analytics/attendance`, `/analytics/grades`, `/analytics/behavior`, `/analytics/system`; also mounts `/debug/pprof` | `attendance-analytics` | `ANALYTICS_CACHE_TTL` (default `10m`); Redis optional, falls back to no cache |
-| `ENABLE_DASHBOARD` | `false` | `GET /dashboard`, `GET /dashboard/academics` | `dashboard` | `DASHBOARD_CACHE_TTL` (default `5m`) |
+| `ENABLE_DASHBOARD` | `false` | `GET /dashboard` (SUPERADMIN, ADMIN_TU, KEPALA_SEKOLAH), `GET /dashboard/academics` (teachers) | `dashboard` | `DASHBOARD_CACHE_TTL` (default `5m`) |
 | `ENABLE_SCHEDULER` | `false` | `POST /schedule/generate`, `POST /schedules/generator`, `POST /schedule/save`, `GET /semester-schedule`, `GET /semester-schedule/{id}/slots`, `DELETE /semester-schedule/{id}` | `schedule-generator` | `SCHEDULER_PROPOSAL_TTL` (default `30m`) |
 | `ENABLE_REPORTS` | `false` | `POST /reports/generate`, `GET /reports/status/{id}`, `GET /export/{token}` | `reports` | `REPORTS_STORAGE_DIR`, `REPORTS_SIGNED_URL_SECRET`, `REPORTS_SIGNED_URL_TTL`, `REPORTS_CLEANUP_INTERVAL`, `REPORTS_WORKER_CONCURRENCY`, `REPORTS_WORKER_RETRIES` |
 | `ENABLE_MUTATIONS` | `false` | `POST /mutations`, `GET /mutations`, `GET /mutations/{id}`, `POST /mutations/{id}/review` | `mutations` | none |

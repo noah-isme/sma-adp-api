@@ -1,0 +1,82 @@
+name: Nightly Seeded Smoke Tests
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # 3 AM UTC daily
+  workflow_dispatch: {}
+
+concurrency:
+  group: nightly-smoke
+  cancel-in-progress: true
+
+jobs:
+  seeded-smoke:
+    name: Seeded Compatibility Smoke Test
+    runs-on: ubuntu-latest
+    env:
+      BASE_URL: http://localhost:8080/api/v1
+      RUN_COMPATIBILITY_SMOKE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+      - name: Start Postgres & Redis
+        run: |
+          docker compose -f docker/docker-compose.yml up -d
+          sleep 5
+      - name: Run migrations
+        run: make migrate-up
+      - name: Seed test data
+        run: |
+          psql "postgresql://postgres:postgres@localhost:5432/admin_panel_sma?sslmode=disable" -f scripts/seed.sql
+      - name: Build and start API
+        run: |
+          go run ./cmd/api-gateway &
+          echo $! > api.pid
+          sleep 5
+          curl -f http://localhost:8080/health || (echo "API failed to start" && exit 1)
+      - name: Login to get ACCESS_TOKEN
+        run: |
+          RESPONSE=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
+            -H "Content-Type: application/json" \
+            -d '{"email":"superadmin@sma.test","password":"admin123"}')
+          echo "ACCESS_TOKEN=$(echo $RESPONSE | jq -r '.data.access_token')" >> $GITHUB_ENV
+      - name: Run seeded compatibility smoke (read-only)
+        env:
+          ACCESS_TOKEN: ${{ env.ACCESS_TOKEN }}
+          RUN_COMPATIBILITY_SMOKE: "1"
+        run: python3 scripts/compatibility_smoke.py
+      - name: Run seeded mutating smoke (optional, needs fixtures)
+        if: ${{ secrets.SMOKE_FIXTURES_ENABLED == 'true' }}
+        env:
+          ACCESS_TOKEN: ${{ env.ACCESS_TOKEN }}
+          RUN_COMPATIBILITY_SMOKE: "1"
+          RUN_MUTATING_SMOKE: "1"
+          SMOKE_GRADE_EDIT_ID: ${{ secrets.SMOKE_GRADE_EDIT_ID }}
+          SMOKE_GRADE_EDIT_PAYLOAD: ${{ secrets.SMOKE_GRADE_EDIT_PAYLOAD }}
+          SMOKE_GRADE_DELETE_ID: ${{ secrets.SMOKE_GRADE_DELETE_ID }}
+          SMOKE_COMPONENT_EDIT_ID: ${{ secrets.SMOKE_COMPONENT_EDIT_ID }}
+          SMOKE_COMPONENT_EDIT_PAYLOAD: ${{ secrets.SMOKE_COMPONENT_EDIT_PAYLOAD }}
+          SMOKE_COMPONENT_DELETE_ID: ${{ secrets.SMOKE_COMPONENT_DELETE_ID }}
+          SMOKE_STUDENT_CSV_PATH: ${{ secrets.SMOKE_STUDENT_CSV_PATH }}
+          SMOKE_TEACHER_CSV_PATH: ${{ secrets.SMOKE_TEACHER_CSV_PATH }}
+          SMOKE_ATTENDANCE_PAYLOAD: ${{ secrets.SMOKE_ATTENDANCE_PAYLOAD }}
+          SMOKE_ATTENDANCE_ID: ${{ secrets.SMOKE_ATTENDANCE_ID }}
+          SMOKE_TEACHER_PREFERENCE_PAYLOAD: ${{ secrets.SMOKE_TEACHER_PREFERENCE_PAYLOAD }}
+          SMOKE_TEACHER_PREFERENCE_ID: ${{ secrets.SMOKE_TEACHER_PREFERENCE_ID }}
+        run: python3 scripts/compatibility_smoke.py
+      - name: Stop services
+        if: always()
+        run: |
+          if [ -f api.pid ]; then
+            kill $(cat api.pid) || true
+          fi
+          docker compose -f docker/docker-compose.yml down

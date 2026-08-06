@@ -4,10 +4,11 @@ import "github.com/noah-isme/sma-adp-api/internal/models"
 
 // ReportRequest captures POST /reports/generate payload.
 type ReportRequest struct {
-	Type    models.ReportType   `json:"type"`
-	TermID  string              `json:"termId"`
-	ClassID *string             `json:"classId,omitempty"`
-	Format  models.ReportFormat `json:"format"`
+	Type     models.ReportType   `json:"type"`
+	TermID   string              `json:"termId"`
+	ClassID  *string             `json:"classId,omitempty"`
+	Format   models.ReportFormat `json:"format"`
+	Template *string             `json:"template,omitempty"`
 }
 
 // ReportJobResponse is returned after enqueueing a report.

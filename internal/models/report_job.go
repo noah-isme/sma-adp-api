@@ -51,10 +51,11 @@ type ReportJob struct {
 
 // ReportJobParams stores request-scoped options persisted as JSONB.
 type ReportJobParams struct {
-	TermID  string            `json:"termId"`
-	ClassID *string           `json:"classId,omitempty"`
-	Format  ReportFormat      `json:"format"`
-	Extras  map[string]string `json:"extras,omitempty"`
+	TermID   string            `json:"termId"`
+	ClassID  *string           `json:"classId,omitempty"`
+	Format   ReportFormat      `json:"format"`
+	Template *string           `json:"template,omitempty"`
+	Extras   map[string]string `json:"extras,omitempty"`
 }
 
 // Value marshals params to JSON for persistence.

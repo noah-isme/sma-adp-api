@@ -17,7 +17,8 @@ func NewPDFExporter() *PDFExporter {
 }
 
 // Render creates a PDF document with an optional title and table body.
-func (e *PDFExporter) Render(data Dataset, title string) ([]byte, error) {
+// template can be used to select different PDF layouts (e.g., "simple", "detailed", "landscape").
+func (e *PDFExporter) Render(data Dataset, title string, template *string) ([]byte, error) {
 	if len(data.Headers) == 0 {
 		return nil, fmt.Errorf("pdf requires at least one header")
 	}
@@ -31,8 +32,24 @@ func (e *PDFExporter) Render(data Dataset, title string) ([]byte, error) {
 		pdf.Ln(5)
 	}
 
-	pdf.SetFont("Arial", "B", 10)
-	colWidth := 190.0 / float64(len(data.Headers))
+	// Apply template-specific formatting
+	switch deref(template) {
+	case "landscape":
+		pdf.SetOrientation("L")
+		pdf.SetMargins(15, 10, 15)
+		pdf.AddPage()
+	case "detailed":
+		pdf.SetFont("Arial", "B", 12)
+		pdf.CellFormat(0, 10, strings.ToUpper(title), "", 1, "L", false, 0, "")
+		pdf.Ln(8)
+		pdf.SetFont("Arial", "I", 9)
+		pdf.CellFormat(0, 6, "Generated: "+time.Now().UTC().Format("2006-01-02 15:04:05 UTC"), "", 1, "L", false, 0, "")
+		pdf.Ln(5)
+	default: // "simple" or empty
+		pdf.SetFont("Arial", "B", 10)
+	}
+
+	colWidth := getPageWidth(pdf) / float64(len(data.Headers))
 	for _, header := range data.Headers {
 		pdf.CellFormat(colWidth, 8, header, "1", 0, "C", false, 0, "")
 	}
@@ -52,4 +69,16 @@ func (e *PDFExporter) Render(data Dataset, title string) ([]byte, error) {
 		return nil, fmt.Errorf("render pdf: %w", err)
 	}
 	return buf.Bytes(), nil
+}
+
+func getPageWidth(pdf *gofpdf.Fpdf) float64 {
+	_, pageWidth := pdf.GetPageSize()
+	return pageWidth - pdf.GetMargins().Left - pdf.GetMargins().Right
+}
+
+func deref(ptr *string) string {
+	if ptr == nil {
+		return ""
+	}
+	return *ptr
 }

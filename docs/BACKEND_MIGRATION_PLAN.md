@@ -22,36 +22,100 @@ Dokumen ini merupakan panduan lengkap migrasi backend Admin Panel SMA dari arsit
 
 ### Target Architecture
 
+```mermaid
+graph TB
+    subgraph "Frontend"
+        FE[React Admin Panel]
+    end
+    
+    subgraph "API Gateway (Go/Gin)"
+        GW[API Gateway\n- Auth & Authorization\n- Rate Limiting\n- Request Routing]
+    end
+    
+    subgraph "Microservices"
+        AS[Academic Service\n- Grades\n- Schedules\n- Subjects]
+        SS[Student Service\n- Students\n- Classes\n- Enrollment]
+        HS[HR Service\n- Teachers\n- Staff]
+        MS[... Other Services]
+    end
+    
+    subgraph "Data Layer"
+        PG[(PostgreSQL\nExisting Schema)]
+        RD[(Redis\nCache & Queue)]
+    end
+    
+    FE --> GW
+    GW --> AS
+    GW --> SS
+    GW --> HS
+    GW --> MS
+    AS --> PG
+    SS --> PG
+    HS --> PG
+    MS --> PG
+    GW --> RD
+    AS --> RD
+    SS --> RD
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      Frontend (React)                       │
-└──────────────────┬──────────────────────────────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   API Gateway (Golang)                      │
-│              - Authentication & Authorization               │
-│              - Rate Limiting                                │
-│              - Request Routing                              │
-└──────────────────┬──────────────────────────────────────────┘
-                   │
-        ┌──────────┴──────────┬──────────┬──────────┐
-        ▼                     ▼          ▼          ▼
-┌──────────────┐  ┌──────────────┐  ┌────────┐  ┌────────┐
-│ Academic Svc │  │ Student Svc  │  │ HR Svc │  │ ...    │
-│              │  │              │  │        │  │        │
-│ - Grades     │  │ - Students   │  │ - Tchr │  │        │
-│ - Schedules  │  │ - Classes    │  │ - Stf  │  │        │
-│ - Subjects   │  │ - Enrollment │  │        │  │        │
-└──────┬───────┘  └──────┬───────┘  └────┬───┘  └────┬───┘
-       │                 │               │           │
-       └─────────────────┴───────────────┴───────────┘
-                         │
-                         ▼
-              ┌────────────────────┐
-              │   PostgreSQL DB    │
-              │ (Existing Schema)  │
-              └────────────────────┘
+
+### Legacy Architecture (NestJS - Being Decommissioned)
+
+```mermaid
+graph TB
+    subgraph "Frontend"
+        FE[React Admin Panel]
+    end
+    
+    subgraph "Legacy Backend (NestJS Monolith)"
+        NEST[NestJS API\n- All domains in one process\n- BullMQ Workers embedded\n- Prisma ORM]
+    end
+    
+    subgraph "Data Layer"
+        PG[(PostgreSQL)]
+        RD[(Redis)]
+    end
+    
+    FE --> NEST
+    NEST --> PG
+    NEST --> RD
+```
+
+### Migration Phases Overview
+
+```mermaid
+gantt
+    title Backend Migration Timeline
+    dateFormat  YYYY-MM-DD
+    axisFormat  %m/%d
+    
+    section Phase 0: Infrastructure
+    Setup & Config           :done, p0, 2025-10-01, 14d
+    Docker & CI/CD           :done, p0b, after p0, 7d
+    
+    section Phase 1: Auth & Core
+    Auth & User Mgmt         :done, p1, 2025-10-15, 21d
+    JWT & RBAC               :done, p1b, after p1, 7d
+    
+    section Phase 2: Academic
+    Terms, Subjects, Classes :done, p2, 2025-11-15, 21d
+    Schedules & Generator    :done, p2b, after p2, 7d
+    
+    section Phase 3: Student & Assessment
+    Students & Enrollment    :done, p3, 2025-12-15, 21d
+    Grades & Reports         :done, p3b, after p3, 7d
+    
+    section Phase 4: Attendance & Comm
+    Attendance System        :active, p4, 2026-01-15, 21d
+    Announcements & Calendar :active, p4b, after p4, 7d
+    
+    section Phase 5: Analytics
+    Dashboard & Analytics    :active, p5, 2026-02-15, 21d
+    Caching & Optimization   :active, p5b, after p5, 7d
+    
+    section Phase 6: Cutover
+    Shadow Compare           :crit, p6, 2026-03-15, 14d
+    Production Cutover       :crit, p6b, after p6, 7d
+    Legacy Decommission      :crit, p6c, after p6b, 7d
 ```
 
 ---

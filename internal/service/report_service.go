@@ -92,7 +92,7 @@ func (s *ReportService) CreateJob(ctx context.Context, req dto.ReportRequest, ac
 	}
 	job := &models.ReportJob{
 		Type:      req.Type,
-		Params:    models.ReportJobParams{TermID: req.TermID, ClassID: req.ClassID, Format: req.Format},
+		Params:    models.ReportJobParams{TermID: req.TermID, ClassID: req.ClassID, Format: req.Format, Template: req.Template},
 		Status:    models.ReportStatusQueued,
 		Progress:  0,
 		CreatedBy: actorID,

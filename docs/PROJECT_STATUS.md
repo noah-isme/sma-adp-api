@@ -15,12 +15,22 @@ Sumber kebenaran teknis:
 - Cutover/rollback: `docs/operations.md`
 - Decommission: `docs/decommission.md`
 
-### Latest compatibility verification (2026-08-02)
+### Latest compatibility verification (2026-08-06)
 
 - `python3 scripts/validate_swagger_routes.py` passed (101 generated paths cover
   all gateway routes).
 - `python3 scripts/compatibility_smoke.py` passed its static check (22 required
   compatibility operations are present in both gateway and Swagger).
+- **Extended compatibility matrix** with 13 new rows covering:
+  - Attendance analytics server aggregation (`/analytics/attendance`)
+  - Reports template selection (`POST /reports/generate` with template field)
+  - Schedule generator preview (`/schedules/generator`) with conflicts & stats
+  - Schedule generator legacy (`/schedule/generate`) - deprecated
+  - Schedule save by proposal (`POST /schedule/save` with proposalId)
+  - Auth token refresh (`POST /auth/refresh`) - single refresh mechanism
+  - Feature discovery (`GET /features`) - runtime feature flags
+  - Mutations list & approve/reject (`GET/PATCH /mutations`)
+  - Archives list, upload, download (`GET/POST /archives`, `GET /archives/:id/download`)
 - Seeded runtime verification passed with Postgres, Redis, migrations 15–18,
   `scripts/seed.sql`, and all compatibility feature flags enabled. The suite
   covered roster/report reads, CSV exports, grade and component edit/delete,
@@ -39,6 +49,39 @@ Sumber kebenaran teknis:
 
 ## Status Per Fase
 
+```mermaid
+graph TB
+    subgraph "Phase 0: Infrastructure"
+        P0[✅ Implemented]
+    end
+    
+    subgraph "Phase 1: Auth & User Mgmt"
+        P1[✅ Implemented + Exposed]
+    end
+    
+    subgraph "Phase 2: Academic Mgmt"
+        P2[✅ Implemented + Exposed]
+    end
+    
+    subgraph "Phase 3: Student & Assessment"
+        P3[✅ Implemented + Exposed]
+    end
+    
+    subgraph "Phase 4: Attendance & Comm"
+        P4[⚠️ Partially Exposed]
+    end
+    
+    subgraph "Phase 5: Analytics & Optimization"
+        P5[🔶 Implemented (Flagged)]
+    end
+    
+    subgraph "Phase 6: Cutover & Decommission"
+        P6[🔶 Support Implemented]
+    end
+    
+    P0 --> P1 --> P2 --> P3 --> P4 --> P5 --> P6
+```
+
 | Fase | Area | Status | Catatan |
 | --- | --- | --- | --- |
 | Phase 0 | Infrastructure, config, DB, middleware, Docker, Swagger | Implemented | Health, readiness, metrics, cutover headers, Docker Postgres/Redis, Makefile tersedia. |
@@ -50,6 +93,49 @@ Sumber kebenaran teknis:
 | Phase 6 | Cutover, rollback, decommission | Planned + support implemented | Middleware, runbook, shadow compare script, dan checklist ada. Cutover produksi belum selesai. |
 
 ## Endpoint Availability
+
+```mermaid
+graph TB
+    subgraph "Always-On Core Endpoints"
+        AUTH[/auth]
+        USERS[/users]
+        TERMS[/terms]
+        SUBJ[/subjects]
+        CLASSES[/classes]
+        SCHED[/schedules]
+        STUD[/students]
+        ENROL[/enrollments]
+        GC[/grade-components]
+        GCFG[/grade-configs]
+        GRADES[/grades]
+        RPT[/reports/*]
+        ANNOUNCE[/announcements]
+        BEH[/behavior-notes]
+        CAL[/calendar-events]
+        TEACH[/teachers]
+        CSUBJ[/class-subjects]
+        TPREF[/teacher-preferences]
+    end
+    
+    subgraph "Conditional (ENABLE_ATTENDANCE_ALIAS)"
+        ATTD[/attendance/daily]
+        ATTS[/attendance/subject]
+        ATTDB[/attendance/daily/bulk]
+        ATTSB[/attendance/subject/bulk]
+    end
+    
+    subgraph "Feature-Flagged Modules"
+        ANALYTICS[/analytics/*] -->|ENABLE_ANALYTICS| ANALYTICS
+        DASH[/dashboard/*] -->|ENABLE_DASHBOARD| DASH
+        SCHEDGEN[/schedule/generate] -->|ENABLE_SCHEDULER| SCHEDGEN
+        ASYNCRPT[/reports/generate] -->|ENABLE_REPORTS| ASYNCRPT
+        MUT[/mutations] -->|ENABLE_MUTATIONS| MUT
+        ARCH[/archives] -->|ENABLE_ARCHIVES| ARCH
+        HOMEROOM[/homerooms] -->|ENABLE_HOMEROOMS| HOMEROOM
+        CALALIAS[/calendar] -->|ENABLE_CALENDAR_ALIAS| CALALIAS
+        CONFIG[/configuration] -->|ENABLE_CONFIGURATION_API| CONFIG
+    end
+```
 
 Always-on core:
 
@@ -94,6 +180,12 @@ Feature-flagged:
 - Core route gateway dibuka untuk auth, users, academic, student, enrollment, grading, reports JSON, communication, calendar event, dan teachers.
 - Handler HTTP ditambahkan untuk announcements, behavior notes, dan calendar events.
 - **New endpoints added**: `GET /class-subjects` (standalone), `POST /attendance/daily`, `POST /attendance/daily/bulk`, `POST /attendance/subject`, `POST /attendance/subject/bulk` (attendance CRUD), `GET /teacher-preferences` (standalone).
+- **Frontend gap fixes completed (2026-08-06)**:
+  - Attendance Analytics: Server-side aggregation via `/analytics/attendance` (eliminates 5000+ client fetches)
+  - Reports Generation: PDF template selector (simple/detailed/landscape) via `template` field
+  - Scheduler Generator: Canonical `/schedules/generator` endpoint with conflict resolution UI, proposalId save
+  - Auth/Feature Flags: Single token refresh mechanism (`POST /auth/refresh`), removed dual storage, removed dev bypasses
+  - Mutations/Archives: Audit trail UI, approve/reject actions, document preview, upload, download
 - Swagger pindah ke output standar Swaggo: `docs.go`, `swagger.json`, dan `swagger.yaml`.
 - `api/swagger/swagger.go` lama tidak dipakai lagi karena konflik dengan generated `docs.go`.
 - Contract collection diperluas dari health-only menjadi smoke contract berfolder: `Public Gateway`, `Cutover Readiness Smoke`, `Core Protected Smoke`, `Seeded Core Smoke`, dan `Gated Feature Smoke`.

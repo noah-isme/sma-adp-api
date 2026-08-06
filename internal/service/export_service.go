@@ -58,7 +58,7 @@ type csvRenderer interface {
 }
 
 type pdfRenderer interface {
-	Render(data export.Dataset, title string) ([]byte, error)
+	Render(data export.Dataset, title string, template *string) ([]byte, error)
 }
 
 // NewExportService constructs an ExportService.
@@ -101,7 +101,7 @@ func (s *ExportService) Generate(ctx context.Context, job *models.ReportJob) (*E
 	case models.ReportFormatCSV:
 		payload, err = s.csv.Render(dataset)
 	case models.ReportFormatPDF:
-		payload, err = s.pdf.Render(dataset, title)
+		payload, err = s.pdf.Render(dataset, title, job.Params.Template)
 	default:
 		err = fmt.Errorf("unsupported format %s", job.Params.Format)
 	}

@@ -162,3 +162,56 @@ func (h *MutationHandler) Review(c *gin.Context) {
 	}
 	response.JSON(c, http.StatusOK, mutation, nil)
 }
+
+// Approve godoc
+// @Summary Approve a mutation request
+// @Tags Mutations
+// @Accept json
+// @Produce json
+// @Param id path string true "Mutation ID"
+// @Param payload body dto.ApproveMutationRequest true "Approval comment"
+// @Success 200 {object} response.Envelope
+// @Router /mutations/{id}/approve [patch]
+func (h *MutationHandler) Approve(c *gin.Context) {
+	h.reviewWithStatus(c, models.MutationStatusApproved)
+}
+
+// Reject godoc
+// @Summary Reject a mutation request
+// @Tags Mutations
+// @Accept json
+// @Produce json
+// @Param id path string true "Mutation ID"
+// @Param payload body dto.ApproveMutationRequest true "Rejection comment"
+// @Success 200 {object} response.Envelope
+// @Router /mutations/{id}/reject [patch]
+func (h *MutationHandler) Reject(c *gin.Context) {
+	h.reviewWithStatus(c, models.MutationStatusRejected)
+}
+
+func (h *MutationHandler) reviewWithStatus(c *gin.Context, status models.MutationStatus) {
+	if h.service == nil {
+		response.Error(c, appErrors.Clone(appErrors.ErrInternal, "mutation service not configured"))
+		return
+	}
+	claims := claimsFromContext(c)
+	if claims == nil {
+		response.Error(c, appErrors.ErrUnauthorized)
+		return
+	}
+	var req dto.ApproveMutationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, appErrors.Clone(appErrors.ErrValidation, "invalid review payload"))
+		return
+	}
+	reviewReq := dto.ReviewMutationRequest{
+		Status: status,
+		Note:   req.Comment,
+	}
+	mutation, err := h.service.Review(c.Request.Context(), c.Param("id"), reviewReq, claims.UserID)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+	response.JSON(c, http.StatusOK, mutation, nil)
+}

@@ -630,6 +630,8 @@ func main() {
 		mutations.GET("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), mutationHandler.List)
 		mutations.GET("/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), mutationHandler.Get)
 		mutations.POST("/:id/review", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), mutationHandler.Review)
+		mutations.PATCH("/:id/approve", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), mutationHandler.Approve)
+		mutations.PATCH("/:id/reject", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), mutationHandler.Reject)
 	}
 
 	if archiveHandler != nil {

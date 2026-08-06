@@ -21,6 +21,11 @@ type ReviewMutationRequest struct {
 	Note   string                `json:"note"`
 }
 
+// ApproveMutationRequest captures approval/rejection comment for alias endpoints.
+type ApproveMutationRequest struct {
+	Comment string `json:"comment"`
+}
+
 // MutationQuery mirrors supported listing filters.
 type MutationQuery struct {
 	Status []models.MutationStatus

@@ -1689,11 +1689,89 @@ filtering, `format=xlsx`, and other query parameters are not supported.
 
 **Approve mutation**
 
+**Path Parameters:**
+- `id` (string): Mutation ID
+
+**Request Body:**
+```json
+{
+  "comment": "Mutation approved as student has completed transfer requirements"
+}
+```
+
+**Response (200):**
+```json
+{
+  "data": {
+    "id": "mutation_001",
+    "studentId": "stu_030",
+    "studentName": "Siswa Z",
+    "type": "TRANSFER_OUT",
+    "status": "APPROVED",
+    "fromClassId": "class_x_ipa_1",
+    "toClassId": null,
+    "reason": "Pindah sekolah ke Jakarta",
+    "effectiveDate": "2024-12-01",
+    "requestedBy": "user_123",
+    "approvedBy": "user_principal",
+    "approvedAt": "2024-11-05T10:00:00Z",
+    "auditTrail": [...],
+    "createdAt": "2024-11-01T08:00:00Z"
+  }
+}
+```
+
+**Error Responses:**
+- `400` - Invalid payload or mutation already reviewed
+- `401` - Unauthorized
+- `403` - Forbidden (requires SUPERADMIN)
+- `404` - Mutation not found
+- `409` - Conflict (mutation already processed)
+
 ---
 
 ### PATCH /api/v1/mutations/:id/reject
 
 **Reject mutation**
+
+**Path Parameters:**
+- `id` (string): Mutation ID
+
+**Request Body:**
+```json
+{
+  "comment": "Insufficient documentation for transfer"
+}
+```
+
+**Response (200):**
+```json
+{
+  "data": {
+    "id": "mutation_001",
+    "studentId": "stu_030",
+    "studentName": "Siswa Z",
+    "type": "TRANSFER_OUT",
+    "status": "REJECTED",
+    "fromClassId": "class_x_ipa_1",
+    "toClassId": null,
+    "reason": "Pindah sekolah ke Jakarta",
+    "effectiveDate": "2024-12-01",
+    "requestedBy": "user_123",
+    "approvedBy": null,
+    "approvedAt": null,
+    "auditTrail": [...],
+    "createdAt": "2024-11-01T08:00:00Z"
+  }
+}
+```
+
+**Error Responses:**
+- `400` - Invalid payload or mutation already reviewed
+- `401` - Unauthorized
+- `403` - Forbidden (requires SUPERADMIN)
+- `404` - Mutation not found
+- `409` - Conflict (mutation already processed)
 
 ---
 

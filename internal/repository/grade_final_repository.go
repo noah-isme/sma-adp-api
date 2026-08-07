@@ -148,3 +148,16 @@ func (r *GradeFinalRepository) ClassDistribution(ctx context.Context, classID, s
 	}
 	return &distribution, nil
 }
+
+// ListByStudentAndTerm returns all final grades for a student in a term.
+func (r *GradeFinalRepository) ListByStudentAndTerm(ctx context.Context, studentID, termID string) ([]models.GradeFinal, error) {
+	const query = `SELECT gf.id, gf.enrollment_id, gf.subject_id, gf.final_grade, gf.finalized, gf.calculated_at, gf.calculation_note
+	        FROM grade_finals gf
+	        JOIN enrollments e ON e.id = gf.enrollment_id
+	        WHERE e.student_id = $1 AND e.term_id = $2`
+	var finals []models.GradeFinal
+	if err := r.db.SelectContext(ctx, &finals, query, studentID, termID); err != nil {
+		return nil, fmt.Errorf("list student final grades by term: %w", err)
+	}
+	return finals, nil
+}

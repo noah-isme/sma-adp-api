@@ -171,3 +171,18 @@ func (r *GradeRepository) DeleteByConfig(ctx context.Context, enrollmentIDs []st
 	}
 	return nil
 }
+
+// ListByStudentAndTerm returns all grades for a student in a term.
+func (r *GradeRepository) ListByStudentAndTerm(ctx context.Context, studentID, termID string) ([]models.Grade, error) {
+	const query = `SELECT g.id, g.enrollment_id, g.subject_id, g.component_id, g.grade_value, g.created_at, g.updated_at, gc.code AS component_code
+	        FROM grades g
+	        JOIN grade_components gc ON gc.id = g.component_id
+	        JOIN enrollments e ON e.id = g.enrollment_id
+	        WHERE e.student_id = $1 AND e.term_id = $2 AND g.deleted_at IS NULL
+	        ORDER BY g.updated_at DESC`
+	var grades []models.Grade
+	if err := r.db.SelectContext(ctx, &grades, query, studentID, termID); err != nil {
+		return nil, fmt.Errorf("list student grades by term: %w", err)
+	}
+	return grades, nil
+}

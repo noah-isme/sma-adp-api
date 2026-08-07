@@ -58,6 +58,7 @@ var (
 	ErrInvalidWeights     = New("INVALID_WEIGHTS", http.StatusBadRequest, "invalid component weights")
 	ErrCacheMiss          = New("CACHE_MISS", http.StatusNotFound, "cache entry not found")
 	ErrStaleData          = New("STALE_DATA", http.StatusServiceUnavailable, "stale cached data detected")
+	ErrNotImplemented     = New("NOT_IMPLEMENTED", http.StatusNotImplemented, "feature not yet implemented")
 )
 
 // FromError normalises any error into an *Error.

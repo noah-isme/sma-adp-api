@@ -1,5 +1,10 @@
 basePath: /
 definitions:
+  github_com_noah-isme_sma-adp-api_internal_dto.ApproveMutationRequest:
+    properties:
+      comment:
+        type: string
+    type: object
   github_com_noah-isme_sma-adp-api_internal_dto.BulkUpdateConfigurationRequest:
     properties:
       items:
@@ -108,6 +113,8 @@ definitions:
         type: string
       format:
         $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.ReportFormat'
+      template:
+        type: string
       termId:
         type: string
       type:
@@ -3574,6 +3581,58 @@ paths:
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
       summary: Get mutation detail
+      tags:
+      - Mutations
+  /mutations/{id}/approve:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Mutation ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Approval comment
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.ApproveMutationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Approve a mutation request
+      tags:
+      - Mutations
+  /mutations/{id}/reject:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Mutation ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Rejection comment
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.ApproveMutationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Reject a mutation request
       tags:
       - Mutations
   /mutations/{id}/review:

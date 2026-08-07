@@ -3782,6 +3782,86 @@ const docTemplate = `{
                 }
             }
         },
+        "/mutations/{id}/approve": {
+            "patch": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Mutations"
+                ],
+                "summary": "Approve a mutation request",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Mutation ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Approval comment",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.ApproveMutationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/mutations/{id}/reject": {
+            "patch": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Mutations"
+                ],
+                "summary": "Reject a mutation request",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Mutation ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Rejection comment",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_dto.ApproveMutationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
         "/mutations/{id}/review": {
             "post": {
                 "consumes": [
@@ -5961,6 +6041,14 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "github_com_noah-isme_sma-adp-api_internal_dto.ApproveMutationRequest": {
+            "type": "object",
+            "properties": {
+                "comment": {
+                    "type": "string"
+                }
+            }
+        },
         "github_com_noah-isme_sma-adp-api_internal_dto.BulkUpdateConfigurationRequest": {
             "type": "object",
             "required": [
@@ -6120,6 +6208,9 @@ const docTemplate = `{
                 },
                 "format": {
                     "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.ReportFormat"
+                },
+                "template": {
+                    "type": "string"
                 },
                 "termId": {
                     "type": "string"

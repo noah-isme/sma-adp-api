@@ -243,3 +243,20 @@ GROUP BY da.status`
 	}
 	return summary, nil
 }
+
+// ListByStudentAndTerm returns all daily attendance records for a student in a term.
+func (r *DailyAttendanceRepository) ListByStudentAndTerm(ctx context.Context, studentID, termID string) ([]models.DailyAttendanceRecord, error) {
+	const query = `SELECT da.id, da.enrollment_id, da.date, da.status, da.notes, da.created_at, da.updated_at,
+	        e.student_id, s.full_name AS student_name, e.class_id, c.name AS class_name, e.term_id
+	        FROM daily_attendance da
+	        JOIN enrollments e ON e.id = da.enrollment_id
+	        JOIN students s ON s.id = e.student_id
+	        LEFT JOIN classes c ON c.id = e.class_id
+	        WHERE e.student_id = $1 AND e.term_id = $2
+	        ORDER BY da.date DESC`
+	var rows []models.DailyAttendanceRecord
+	if err := r.db.SelectContext(ctx, &rows, query, studentID, termID); err != nil {
+		return nil, fmt.Errorf("list student daily attendance by term: %w", err)
+	}
+	return rows, nil
+}

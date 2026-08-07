@@ -95,6 +95,11 @@ FROM announcements WHERE id = $1`
 	return &announcement, nil
 }
 
+// FindByID is an alias for GetByID to match the service interface.
+func (r *AnnouncementRepository) FindByID(ctx context.Context, id string) (*models.Announcement, error) {
+	return r.GetByID(ctx, id)
+}
+
 // Create inserts a new announcement.
 func (r *AnnouncementRepository) Create(ctx context.Context, announcement *models.Announcement) error {
 	if announcement.ID == "" {
@@ -136,4 +141,36 @@ func (r *AnnouncementRepository) Delete(ctx context.Context, id string) error {
 // pqStringArray helper ensures we pass string arrays consistently.
 func pqStringArray(values []string) interface{} {
 	return pq.Array(values)
+}
+
+// ListByStudentAndTerm returns announcements visible to a student in a term.
+func (r *AnnouncementRepository) ListByStudentAndTerm(ctx context.Context, studentID, termID string) ([]models.Announcement, error) {
+	// First get the student's class for this term
+	const studentClassQuery = `SELECT e.class_id FROM enrollments e WHERE e.student_id = $1 AND e.term_id = $2 AND e.status = $3 LIMIT 1`
+	var classID string
+	err := r.db.GetContext(ctx, &classID, studentClassQuery, studentID, termID, models.EnrollmentStatusActive)
+	if err != nil {
+		return nil, fmt.Errorf("get student class for term: %w", err)
+	}
+
+	// Now get announcements visible to this student (SISWA audience, CLASS for their class, or ALL)
+	const query = `SELECT id, title, content, audience, target_class_id, priority, is_pinned, published_at, expires_at, created_by, created_at, updated_at
+	FROM announcements
+	WHERE published_at <= NOW()
+	  AND (expires_at IS NULL OR expires_at > NOW())
+	  AND (
+	    audience = $1  -- SISWA
+	    OR audience = $2  -- ALL
+	    OR (audience = $3 AND target_class_id = $4)  -- CLASS for their class
+	  )
+	ORDER BY is_pinned DESC, priority DESC, published_at DESC`
+	var announcements []models.Announcement
+	if err := r.db.SelectContext(ctx, &announcements, query,
+		models.AnnouncementAudienceSiswa,
+		models.AnnouncementAudienceAll,
+		models.AnnouncementAudienceClass,
+		classID); err != nil {
+		return nil, fmt.Errorf("list student announcements by term: %w", err)
+	}
+	return announcements, nil
 }

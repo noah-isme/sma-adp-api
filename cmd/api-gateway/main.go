@@ -103,6 +103,28 @@ func main() {
 	})
 	authHandler := internalhandler.NewAuthHandler(authSvc)
 
+	// Initialize student repo early for portal auth
+	studentRepo := repository.NewStudentRepository(db)
+
+	// Portal repositories (needed for PortalLookup)
+	parentStudentRepo := repository.NewParentStudentRepository(db)
+	portalPreferencesRepo := repository.NewPortalPreferencesRepository(db)
+	deviceTokenRepo := repository.NewDeviceTokenRepository(db)
+
+	// Portal Lookup composite
+	portalLookup := repository.NewPortalLookup(studentRepo, parentStudentRepo, portalPreferencesRepo, deviceTokenRepo)
+
+	// Portal Auth Service
+	portalAuthConfig := service.PortalAuthConfig{
+		AccessTokenSecret:  cfg.JWT.Secret,
+		AccessTokenExpiry:  cfg.JWT.Expiration,
+		RefreshTokenExpiry: cfg.JWT.RefreshExpiration,
+		Issuer:             "sma-adp-api",
+		Audience:           []string{"sma-adp-clients"},
+	}
+	portalAuthSvc := service.NewPortalAuthService(authRepo, portalLookup, nil, logr, portalAuthConfig)
+	portalAuthHandler := internalhandler.NewPortalAuthHandler(portalAuthSvc)
+
 	authRoutes := api.Group("/auth")
 	authRoutes.POST("/login", authHandler.Login)
 	authRoutes.POST("/refresh", authHandler.Refresh)
@@ -114,6 +136,49 @@ func main() {
 	protectedAuth.POST("/logout", authHandler.Logout)
 	protectedAuth.POST("/change-password", authHandler.ChangePassword)
 
+	// Portal Auth Routes (public)
+	portalAuthRoutes := api.Group("/portal/auth")
+	portalAuthRoutes.POST("/login", portalAuthHandler.PortalLogin)
+	portalAuthRoutes.POST("/refresh", portalAuthHandler.PortalRefresh)
+	portalAuthRoutes.POST("/forgot-password", portalAuthHandler.PortalForgotPassword)
+	portalAuthRoutes.POST("/reset-password", portalAuthHandler.PortalResetPassword)
+
+	// Protected Portal Auth Routes
+	protectedPortalAuth := portalAuthRoutes.Group("")
+	protectedPortalAuth.Use(internalmiddleware.PortalJWT(portalAuthSvc))
+	protectedPortalAuth.GET("/me", portalAuthHandler.PortalMe)
+	protectedPortalAuth.POST("/logout", portalAuthHandler.PortalLogout)
+
+	// Portal Profile Routes (protected)
+	portalProfileRoutes := api.Group("/portal/profile")
+	portalProfileRoutes.Use(internalmiddleware.PortalJWT(portalAuthSvc))
+	portalProfileRoutes.GET("", portalAuthHandler.PortalProfile)
+	portalProfileRoutes.PUT("/preferences", portalAuthHandler.UpdatePortalPreferences)
+	portalProfileRoutes.POST("/device-tokens", portalAuthHandler.RegisterDeviceToken)
+	portalProfileRoutes.DELETE("/device-tokens/:tokenId", portalAuthHandler.UnregisterDeviceToken)
+
+	// Portal Parent-Student Link Routes (protected)
+	portalParentRoutes := api.Group("/portal/parent")
+	portalParentRoutes.Use(internalmiddleware.PortalJWT(portalAuthSvc))
+	portalParentRoutes.GET("/students", portalAuthHandler.GetLinkedStudents)
+	portalParentRoutes.POST("/students", portalAuthHandler.CreateParentStudentLink)
+	portalParentRoutes.PUT("/students/:linkId", portalAuthHandler.UpdateParentStudentLink)
+	portalParentRoutes.DELETE("/students/:linkId", portalAuthHandler.DeleteParentStudentLink)
+
+	// Portal Data Routes (protected) - registered after service initialization
+	// portalDataRoutes := api.Group("/portal")
+	// portalDataRoutes.Use(internalmiddleware.PortalJWT(portalAuthSvc))
+	// portalDataRoutes.GET("/grades", portalDataHandler.GetGrades)
+	// portalDataRoutes.GET("/grades/report-card", portalDataHandler.GetReportCard)
+	// portalDataRoutes.GET("/attendance", portalDataHandler.GetAttendance)
+	// portalDataRoutes.GET("/attendance/percentage", portalDataHandler.GetAttendanceStats)
+	// portalDataRoutes.GET("/announcements", portalDataHandler.GetAnnouncements)
+	// portalDataRoutes.GET("/announcements/:id", portalDataHandler.GetAnnouncementByID)
+	// portalDataRoutes.GET("/behavior-notes", portalDataHandler.GetBehaviorNotes)
+	// portalDataRoutes.GET("/behavior-notes/summary", portalDataHandler.GetBehaviorSummary)
+	// portalDataRoutes.GET("/calendar", portalDataHandler.GetCalendarEvents)
+	// portalDataRoutes.GET("/calendar/upcoming", portalDataHandler.GetUpcomingEvents)
+
 	classRepo := repository.NewClassRepository(db)
 	classSubjectRepo := repository.NewClassSubjectRepository(db)
 	subjectRepo := repository.NewSubjectRepository(db)
@@ -124,7 +189,6 @@ func main() {
 	preferenceRepo := repository.NewTeacherPreferenceRepository(db)
 	calendarRepo := repository.NewCalendarRepository(db)
 	enrollmentRepo := repository.NewEnrollmentRepository(db)
-	studentRepo := repository.NewStudentRepository(db)
 	gradeRepo := repository.NewGradeRepository(db)
 	gradeFinalRepo := repository.NewGradeFinalRepository(db)
 	gradeConfigRepo := repository.NewGradeConfigRepository(db)
@@ -135,6 +199,37 @@ func main() {
 	semesterSlotRepo := repository.NewSemesterScheduleSlotRepository(db)
 	configurationRepo := repository.NewConfigurationRepository(db)
 	auditRepo := repository.NewAuditRepository(db)
+
+	// Initialize portal data repositories
+	dailyAttendanceRepo := repository.NewDailyAttendanceRepository(db)
+
+	// Portal Data Services
+	portalGradesSvc := service.NewPortalGradesService(enrollmentRepo, gradeFinalRepo, studentRepo, nil, logr)
+	portalAttendanceSvc := service.NewPortalAttendanceService(dailyAttendanceRepo, enrollmentRepo, studentRepo, nil, logr)
+	portalAnnouncementsSvc := service.NewPortalAnnouncementsService(announcementRepo, enrollmentRepo, studentRepo, nil, logr)
+	portalBehaviorSvc := service.NewPortalBehaviorService(behaviorRepo, enrollmentRepo, studentRepo, nil, logr)
+	portalCalendarSvc := service.NewPortalCalendarService(calendarRepo, enrollmentRepo, studentRepo, nil, logr)
+	portalDataHandler := internalhandler.NewPortalDataHandler(
+		portalGradesSvc,
+		portalAttendanceSvc,
+		portalAnnouncementsSvc,
+		portalBehaviorSvc,
+		portalCalendarSvc,
+	)
+
+	// Register Portal Data Routes
+	portalDataRoutes := api.Group("/portal")
+	portalDataRoutes.Use(internalmiddleware.PortalJWT(portalAuthSvc))
+	portalDataRoutes.GET("/grades", portalDataHandler.GetGrades)
+	portalDataRoutes.GET("/grades/report-card", portalDataHandler.GetReportCard)
+	portalDataRoutes.GET("/attendance", portalDataHandler.GetAttendance)
+	portalDataRoutes.GET("/attendance/percentage", portalDataHandler.GetAttendanceStats)
+	portalDataRoutes.GET("/announcements", portalDataHandler.GetAnnouncements)
+	portalDataRoutes.GET("/announcements/:id", portalDataHandler.GetAnnouncementByID)
+	portalDataRoutes.GET("/behavior-notes", portalDataHandler.GetBehaviorNotes)
+	portalDataRoutes.GET("/behavior-notes/summary", portalDataHandler.GetBehaviorSummary)
+	portalDataRoutes.GET("/calendar", portalDataHandler.GetCalendarEvents)
+	portalDataRoutes.GET("/calendar/upcoming", portalDataHandler.GetUpcomingEvents)
 
 	userSvc := service.NewUserService(authRepo, nil, logr)
 	userHandler := internalhandler.NewUserHandler(userSvc)

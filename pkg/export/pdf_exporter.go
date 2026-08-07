@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/jung-kurt/gofpdf"
 )
@@ -35,7 +36,7 @@ func (e *PDFExporter) Render(data Dataset, title string, template *string) ([]by
 	// Apply template-specific formatting
 	switch deref(template) {
 	case "landscape":
-		pdf.SetOrientation("L")
+		pdf = gofpdf.New("L", "mm", "A4", "")
 		pdf.SetMargins(15, 10, 15)
 		pdf.AddPage()
 	case "detailed":
@@ -73,7 +74,8 @@ func (e *PDFExporter) Render(data Dataset, title string, template *string) ([]by
 
 func getPageWidth(pdf *gofpdf.Fpdf) float64 {
 	_, pageWidth := pdf.GetPageSize()
-	return pageWidth - pdf.GetMargins().Left - pdf.GetMargins().Right
+	left, _, right, _ := pdf.GetMargins()
+	return pageWidth - left - right
 }
 
 func deref(ptr *string) string {

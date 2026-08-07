@@ -131,3 +131,17 @@ WHERE student_id = $1`
 	}
 	return &summary, nil
 }
+
+// ListByStudentAndTerm returns behavior notes for a student in a term.
+func (r *BehaviorRepository) ListByStudentAndTerm(ctx context.Context, studentID, termID string) ([]models.BehaviorNote, error) {
+	const query = `SELECT bn.id, bn.student_id, bn.date, bn.note_type, bn.points, bn.description, bn.created_by, bn.created_at, bn.updated_at
+	        FROM behavior_notes bn
+	        JOIN enrollments e ON e.student_id = bn.student_id
+	        WHERE bn.student_id = $1 AND e.term_id = $2 AND e.status = $3
+	        ORDER BY bn.date DESC, bn.created_at DESC`
+	var notes []models.BehaviorNote
+	if err := r.db.SelectContext(ctx, &notes, query, studentID, termID, models.EnrollmentStatusActive); err != nil {
+		return nil, fmt.Errorf("list student behavior notes by term: %w", err)
+	}
+	return notes, nil
+}

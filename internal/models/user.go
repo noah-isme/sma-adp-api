@@ -51,3 +51,6 @@ type Pagination struct {
 	PageSize   int `json:"page_size"`
 	TotalCount int `json:"total_count"`
 }
+
+// PaginationMeta is an alias for Pagination for portal API responses.
+type PaginationMeta = Pagination

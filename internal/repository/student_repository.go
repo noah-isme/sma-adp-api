@@ -157,3 +157,24 @@ func (r *StudentRepository) Deactivate(ctx context.Context, id string) error {
 	}
 	return nil
 }
+
+// FindByUserID fetches a student by the linked user ID.
+func (r *StudentRepository) FindByUserID(ctx context.Context, userID string) (*models.StudentDetail, error) {
+	query := `
+		SELECT s.id, s.nis, s.full_name, s.gender, s.birth_date, s.address, s.phone, s.active, s.created_at, s.updated_at,
+		       e.class_id AS current_class_id, c.name AS current_class_name, e.term_id AS current_term_id, e.joined_at
+		FROM students s
+		LEFT JOIN enrollments e ON e.student_id = s.id AND e.status = $2
+		LEFT JOIN classes c ON c.id = e.class_id
+		WHERE s.id = (
+			SELECT student_id FROM users WHERE id = $1 AND student_id IS NOT NULL
+		)`
+	var detail models.StudentDetail
+	if err := r.db.GetContext(ctx, &detail, query, userID, models.EnrollmentStatusActive); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, err
+		}
+		return nil, fmt.Errorf("find student by user id: %w", err)
+	}
+	return &detail, nil
+}

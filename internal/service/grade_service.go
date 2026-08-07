@@ -30,11 +30,14 @@ type gradeFinalRepo interface {
 	ReportCard(ctx context.Context, studentID, termID string) ([]models.GradeReportSubject, error)
 	ClassReportRows(ctx context.Context, classID, subjectID, termID string) ([]models.GradeFinalReportRow, error)
 	ClassDistribution(ctx context.Context, classID, subjectID, termID string) (*models.ClassGradeDistribution, error)
+	ListByStudentAndTerm(ctx context.Context, studentID, termID string) ([]models.GradeFinal, error)
 }
 
 type enrollmentReader interface {
 	FindByID(ctx context.Context, id string) (*models.Enrollment, error)
 	ListByClassAndTerm(ctx context.Context, classID, termID string) ([]models.Enrollment, error)
+	ListByStudentAndTerm(ctx context.Context, studentID, termID string) ([]models.EnrollmentDetail, error)
+	ListByStudent(ctx context.Context, studentID string) ([]models.EnrollmentDetail, error)
 }
 
 type gradeConfigReader interface {
@@ -44,6 +47,25 @@ type gradeConfigReader interface {
 type gradeComponentFetcher interface {
 	FindByCode(ctx context.Context, code string) (*models.GradeComponent, error)
 	FindByID(ctx context.Context, id string) (*models.GradeComponent, error)
+}
+
+type dailyAttendanceReader interface {
+	ListByStudentAndTerm(ctx context.Context, studentID, termID string) ([]models.DailyAttendanceRecord, error)
+	StudentSummary(ctx context.Context, studentID, termID string) (*models.DailyAttendanceSummary, error)
+}
+
+type announcementReader interface {
+	ListByStudentAndTerm(ctx context.Context, studentID, termID string) ([]models.Announcement, error)
+	FindByID(ctx context.Context, id string) (*models.Announcement, error)
+}
+
+type behaviorReader interface {
+	ListByStudentAndTerm(ctx context.Context, studentID, termID string) ([]models.BehaviorNote, error)
+	Summary(ctx context.Context, studentID string) (*models.BehaviorSummary, error)
+}
+
+type calendarReader interface {
+	ListByStudentAndTerm(ctx context.Context, studentID, termID string) ([]models.CalendarEvent, error)
 }
 
 // UpsertGradeRequest represents a single grade entry payload.

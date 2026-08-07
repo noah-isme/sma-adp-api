@@ -246,3 +246,49 @@ func (r *EnrollmentRepository) ValidateBulkIDs(ctx context.Context, enrollmentID
 	}
 	return existing, nil
 }
+
+// ListByStudentAndTerm returns enrollments with detail for a student in a term.
+func (r *EnrollmentRepository) ListByStudentAndTerm(ctx context.Context, studentID, termID string) ([]models.EnrollmentDetail, error) {
+	const query = `SELECT e.id, e.student_id, e.class_id, e.term_id, e.joined_at, e.left_at, e.status,
+	        s.full_name AS student_name, s.nis AS student_nis, c.name AS class_name, t.name AS term_name,
+	        sub.id AS subject_id, sub.code AS subject_code, sub.name AS subject_name,
+	        u.full_name AS teacher_name
+	        FROM enrollments e
+	        LEFT JOIN students s ON s.id = e.student_id
+	        LEFT JOIN classes c ON c.id = e.class_id
+	        LEFT JOIN terms t ON t.id = e.term_id
+	        LEFT JOIN class_subjects cs ON cs.class_id = e.class_id
+	        LEFT JOIN subjects sub ON sub.id = cs.subject_id
+	        LEFT JOIN teacher_assignments ta ON ta.class_subject_id = cs.id AND ta.term_id = e.term_id
+	        LEFT JOIN teachers tch ON tch.id = ta.teacher_id
+	        LEFT JOIN users u ON u.id = tch.user_id
+	        WHERE e.student_id = $1 AND e.term_id = $2 AND e.status = $3`
+	var enrollments []models.EnrollmentDetail
+	if err := r.db.SelectContext(ctx, &enrollments, query, studentID, termID, models.EnrollmentStatusActive); err != nil {
+		return nil, fmt.Errorf("list student enrollments by term: %w", err)
+	}
+	return enrollments, nil
+}
+
+// ListByStudent returns all active enrollments with detail for a student.
+func (r *EnrollmentRepository) ListByStudent(ctx context.Context, studentID string) ([]models.EnrollmentDetail, error) {
+	const query = `SELECT e.id, e.student_id, e.class_id, e.term_id, e.joined_at, e.left_at, e.status,
+	        s.full_name AS student_name, s.nis AS student_nis, c.name AS class_name, t.name AS term_name,
+	        sub.id AS subject_id, sub.code AS subject_code, sub.name AS subject_name,
+	        u.full_name AS teacher_name
+	        FROM enrollments e
+	        LEFT JOIN students s ON s.id = e.student_id
+	        LEFT JOIN classes c ON c.id = e.class_id
+	        LEFT JOIN terms t ON t.id = e.term_id
+	        LEFT JOIN class_subjects cs ON cs.class_id = e.class_id
+	        LEFT JOIN subjects sub ON sub.id = cs.subject_id
+	        LEFT JOIN teacher_assignments ta ON ta.class_subject_id = cs.id AND ta.term_id = e.term_id
+	        LEFT JOIN teachers tch ON tch.id = ta.teacher_id
+	        LEFT JOIN users u ON u.id = tch.user_id
+	        WHERE e.student_id = $1 AND e.status = $2`
+	var enrollments []models.EnrollmentDetail
+	if err := r.db.SelectContext(ctx, &enrollments, query, studentID, models.EnrollmentStatusActive); err != nil {
+		return nil, fmt.Errorf("list student enrollments: %w", err)
+	}
+	return enrollments, nil
+}

@@ -26,10 +26,14 @@ type Enrollment struct {
 // EnrollmentDetail enriches Enrollment with student and class info.
 type EnrollmentDetail struct {
 	Enrollment
-	StudentName string `db:"student_name" json:"student_name"`
-	StudentNIS  string `db:"student_nis" json:"student_nis"`
-	ClassName   string `db:"class_name" json:"class_name"`
-	TermName    string `db:"term_name" json:"term_name"`
+	StudentName   string  `db:"student_name" json:"student_name"`
+	StudentNIS    string  `db:"student_nis" json:"student_nis"`
+	ClassName     string  `db:"class_name" json:"class_name"`
+	TermName      string  `db:"term_name" json:"term_name"`
+	SubjectID     *string `db:"subject_id" json:"subject_id,omitempty"`
+	SubjectCode   *string `db:"subject_code" json:"subject_code,omitempty"`
+	SubjectName   *string `db:"subject_name" json:"subject_name,omitempty"`
+	TeacherName   *string `db:"teacher_name" json:"teacher_name,omitempty"`
 }
 
 // EnrollmentFilter provides filters for listing enrollments.

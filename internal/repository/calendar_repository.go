@@ -122,3 +122,34 @@ func (r *CalendarRepository) Delete(ctx context.Context, id string) error {
 	}
 	return nil
 }
+
+// ListByStudentAndTerm returns calendar events visible to a student in a term.
+func (r *CalendarRepository) ListByStudentAndTerm(ctx context.Context, studentID, termID string) ([]models.CalendarEvent, error) {
+	// First get the student's class for this term
+	const studentClassQuery = `SELECT e.class_id FROM enrollments e WHERE e.student_id = $1 AND e.term_id = $2 AND e.status = $3 LIMIT 1`
+	var classID string
+	err := r.db.GetContext(ctx, &classID, studentClassQuery, studentID, termID, models.EnrollmentStatusActive)
+	if err != nil {
+		return nil, fmt.Errorf("get student class for term: %w", err)
+	}
+
+	// Now get calendar events visible to this student (SISWA audience, CLASS for their class, or ALL)
+	const query = `SELECT id, title, description, event_type, start_date, end_date, start_time, end_time, audience, target_class_id, location, created_by, created_at, updated_at
+	FROM calendar_events
+	WHERE end_date >= CURRENT_DATE
+	  AND (
+	    audience = $1  -- SISWA
+	    OR audience = $2  -- ALL
+	    OR (audience = $3 AND target_class_id = $4)  -- CLASS for their class
+	  )
+	ORDER BY start_date ASC, start_time ASC NULLS FIRST`
+	var events []models.CalendarEvent
+	if err := r.db.SelectContext(ctx, &events, query,
+		models.AnnouncementAudienceSiswa,
+		models.AnnouncementAudienceAll,
+		models.AnnouncementAudienceClass,
+		classID); err != nil {
+		return nil, fmt.Errorf("list student calendar events by term: %w", err)
+	}
+	return events, nil
+}

@@ -122,6 +122,10 @@ func (m *mockGradeFinalRepo) ClassDistribution(ctx context.Context, classID, sub
 	return &models.ClassGradeDistribution{SubjectID: subjectID, TermID: termID, Min: ptrFloat(70), Max: ptrFloat(95), Average: ptrFloat(85)}, nil
 }
 
+func (m *mockGradeFinalRepo) ListByStudentAndTerm(ctx context.Context, studentID, termID string) ([]models.GradeFinal, error) {
+	return []models.GradeFinal{}, nil
+}
+
 type mockEnrollmentReader struct {
 	enrollments map[string]*models.Enrollment
 }
@@ -138,6 +142,30 @@ func (m *mockEnrollmentReader) ListByClassAndTerm(ctx context.Context, classID, 
 	for _, e := range m.enrollments {
 		if e.ClassID == classID && e.TermID == termID {
 			list = append(list, *e)
+		}
+	}
+	return list, nil
+}
+
+func (m *mockEnrollmentReader) ListByStudentAndTerm(ctx context.Context, studentID, termID string) ([]models.EnrollmentDetail, error) {
+	var list []models.EnrollmentDetail
+	for _, e := range m.enrollments {
+		if e.StudentID == studentID && e.TermID == termID {
+			list = append(list, models.EnrollmentDetail{
+				Enrollment: *e,
+			})
+		}
+	}
+	return list, nil
+}
+
+func (m *mockEnrollmentReader) ListByStudent(ctx context.Context, studentID string) ([]models.EnrollmentDetail, error) {
+	var list []models.EnrollmentDetail
+	for _, e := range m.enrollments {
+		if e.StudentID == studentID {
+			list = append(list, models.EnrollmentDetail{
+				Enrollment: *e,
+			})
 		}
 	}
 	return list, nil

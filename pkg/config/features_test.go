@@ -98,3 +98,36 @@ func TestFeaturesOnNilConfigIsSafe(t *testing.T) {
 		assert.Empty(t, payload.APIPrefix)
 	})
 }
+
+func TestFeaturesReflectsAllOnMode(t *testing.T) {
+	cfg := &Config{}
+	// Simulate ENABLE_ALL_FEATURES=true by enabling all flags
+	// Since ENABLE_ALL_FEATURES is handled in Load(), we test the equivalent
+	// by manually setting all flags to true
+	cfg.Analytics.Enabled = true
+	cfg.Dashboard.Enabled = true
+	cfg.Scheduler.Enabled = true
+	cfg.Reports.Enabled = true
+	cfg.Mutations.Enabled = true
+	cfg.Archives.Enabled = true
+	cfg.Homerooms.Enabled = true
+	cfg.Configuration.Enabled = true
+	cfg.Aliases.CalendarEnabled = true
+	cfg.Aliases.AttendanceEnabled = true
+
+	features := cfg.Features()
+
+	assert.True(t, features.Analytics)
+	assert.True(t, features.Dashboard)
+	assert.True(t, features.Scheduler)
+	assert.True(t, features.Reports)
+	assert.True(t, features.Mutations)
+	assert.True(t, features.Archives)
+	assert.True(t, features.Documents)
+	assert.True(t, features.Homerooms)
+	assert.True(t, features.Configuration)
+	assert.True(t, features.CalendarAlias)
+	assert.True(t, features.AttendanceAlias)
+	assert.True(t, features.LessonAttendance)
+	assert.True(t, features.Audit)
+}

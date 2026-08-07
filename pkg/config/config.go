@@ -200,18 +200,21 @@ func Load() (*Config, error) {
 		Format: v.GetString("LOG_FORMAT"),
 	}
 
+	// ENABLE_ALL_FEATURES overrides individual feature flags for production "all-on" mode.
+	enableAll := v.GetBool("ENABLE_ALL_FEATURES")
+
 	cfg.Analytics = AnalyticsConfig{
-		Enabled:  v.GetBool("ENABLE_ANALYTICS"),
+		Enabled:  enableAll || v.GetBool("ENABLE_ANALYTICS"),
 		CacheTTL: parseDuration(v.GetString("ANALYTICS_CACHE_TTL"), 10*time.Minute),
 	}
 
 	cfg.Dashboard = DashboardConfig{
-		Enabled:  v.GetBool("ENABLE_DASHBOARD"),
+		Enabled:  enableAll || v.GetBool("ENABLE_DASHBOARD"),
 		CacheTTL: parseDuration(v.GetString("DASHBOARD_CACHE_TTL"), 5*time.Minute),
 	}
 
 	cfg.Scheduler = SchedulerConfig{
-		Enabled:     v.GetBool("ENABLE_SCHEDULER"),
+		Enabled:     enableAll || v.GetBool("ENABLE_SCHEDULER"),
 		ProposalTTL: parseDuration(v.GetString("SCHEDULER_PROPOSAL_TTL"), 30*time.Minute),
 	}
 
@@ -228,7 +231,7 @@ func Load() (*Config, error) {
 	}
 
 	cfg.Reports = ReportsConfig{
-		Enabled:           v.GetBool("ENABLE_REPORTS"),
+		Enabled:           enableAll || v.GetBool("ENABLE_REPORTS"),
 		StorageDir:        v.GetString("REPORTS_STORAGE_DIR"),
 		SignedURLSecret:   v.GetString("REPORTS_SIGNED_URL_SECRET"),
 		SignedURLTTL:      parseDuration(v.GetString("REPORTS_SIGNED_URL_TTL"), 24*time.Hour),
@@ -238,7 +241,7 @@ func Load() (*Config, error) {
 	}
 
 	cfg.Mutations = MutationsConfig{
-		Enabled: v.GetBool("ENABLE_MUTATIONS"),
+		Enabled: enableAll || v.GetBool("ENABLE_MUTATIONS"),
 	}
 
 	maxArchiveSize := v.GetInt64("ARCHIVES_MAX_FILE_SIZE")
@@ -246,7 +249,7 @@ func Load() (*Config, error) {
 		maxArchiveSize = 10 * 1024 * 1024
 	}
 	cfg.Archives = ArchivesConfig{
-		Enabled:          v.GetBool("ENABLE_ARCHIVES"),
+		Enabled:          enableAll || v.GetBool("ENABLE_ARCHIVES"),
 		StorageDir:       v.GetString("ARCHIVES_STORAGE_DIR"),
 		SignedURLSecret:  v.GetString("ARCHIVES_SIGNED_URL_SECRET"),
 		SignedURLTTL:     parseDuration(v.GetString("ARCHIVES_SIGNED_URL_TTL"), 30*time.Minute),
@@ -255,16 +258,16 @@ func Load() (*Config, error) {
 	}
 
 	cfg.Homerooms = HomeroomConfig{
-		Enabled: v.GetBool("ENABLE_HOMEROOMS"),
+		Enabled: enableAll || v.GetBool("ENABLE_HOMEROOMS"),
 	}
 
 	cfg.Aliases = AliasConfig{
-		CalendarEnabled:   v.GetBool("ENABLE_CALENDAR_ALIAS"),
-		AttendanceEnabled: v.GetBool("ENABLE_ATTENDANCE_ALIAS"),
+		CalendarEnabled:   enableAll || v.GetBool("ENABLE_CALENDAR_ALIAS"),
+		AttendanceEnabled: enableAll || v.GetBool("ENABLE_ATTENDANCE_ALIAS"),
 	}
 
 	cfg.Configuration = ConfigurationAPIConfig{
-		Enabled:                v.GetBool("ENABLE_CONFIGURATION_API"),
+		Enabled:                enableAll || v.GetBool("ENABLE_CONFIGURATION_API"),
 		ActiveTermID:           v.GetString("CONFIG_ACTIVE_TERM_ID"),
 		DefaultDashboardTermID: v.GetString("CONFIG_DEFAULT_DASHBOARD_TERM_ID"),
 		DefaultCalendarTermID:  v.GetString("CONFIG_DEFAULT_CALENDAR_TERM_ID"),
@@ -337,6 +340,7 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("ENABLE_CALENDAR_ALIAS", false)
 	v.SetDefault("ENABLE_ATTENDANCE_ALIAS", false)
 	v.SetDefault("ENABLE_CONFIGURATION_API", false)
+	v.SetDefault("ENABLE_ALL_FEATURES", false)
 	v.SetDefault("CONFIG_ACTIVE_TERM_ID", "")
 	v.SetDefault("CONFIG_DEFAULT_DASHBOARD_TERM_ID", "")
 	v.SetDefault("CONFIG_DEFAULT_CALENDAR_TERM_ID", "")

@@ -19,6 +19,7 @@ type PortalDataHandler struct {
 	announcementsService *service.PortalAnnouncementsService
 	behaviorService    *service.PortalBehaviorService
 	calendarService    *service.PortalCalendarService
+	homeroomService    *service.PortalHomeroomService
 }
 
 // NewPortalDataHandler creates a new handler.
@@ -28,13 +29,15 @@ func NewPortalDataHandler(
 	announcementsService *service.PortalAnnouncementsService,
 	behaviorService *service.PortalBehaviorService,
 	calendarService *service.PortalCalendarService,
+	homeroomService *service.PortalHomeroomService,
 ) *PortalDataHandler {
 	return &PortalDataHandler{
-		gradesService:      gradesService,
-		attendanceService:  attendanceService,
+		gradesService:       gradesService,
+		attendanceService:   attendanceService,
 		announcementsService: announcementsService,
-		behaviorService:    behaviorService,
-		calendarService:    calendarService,
+		behaviorService:     behaviorService,
+		calendarService:     calendarService,
+		homeroomService:     homeroomService,
 	}
 }
 
@@ -477,6 +480,49 @@ func (h *PortalDataHandler) GetUpcomingEvents(c *gin.Context) {
 	}
 
 	res, err := h.calendarService.GetUpcomingEvents(c.Request.Context(), studentID)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	response.JSON(c, http.StatusOK, res, nil)
+}
+
+// GetHomeroom godoc
+// @Summary Get homeroom information for student
+// @Description Get homeroom teacher and class information for a student in a term
+// @Tags Portal Homeroom
+// @Produce json
+// @Security BearerAuth
+// @Param termId query string false "Term ID"
+// @Param studentId query string false "Student ID (parent only)"
+// @Success 200 {object} response.Envelope{data=service.PortalHomeroomResponse}
+// @Failure 400 {object} response.Envelope
+// @Failure 401 {object} response.Envelope
+// @Failure 403 {object} response.Envelope
+// @Failure 404 {object} response.Envelope
+// @Router /portal/homeroom [get]
+func (h *PortalDataHandler) GetHomeroom(c *gin.Context) {
+	jwtClaims, err := h.getPortalContext(c)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	studentID, err := h.getStudentIDForRequest(c, jwtClaims)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	termID := c.DefaultQuery("termId", "")
+
+	req := service.PortalHomeroomRequest{
+		StudentID: studentID,
+		TermID:    termID,
+	}
+
+	res, err := h.homeroomService.GetHomeroom(c.Request.Context(), req)
 	if err != nil {
 		response.Error(c, err)
 		return

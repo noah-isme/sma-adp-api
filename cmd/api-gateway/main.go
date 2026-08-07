@@ -209,12 +209,14 @@ func main() {
 	portalAnnouncementsSvc := service.NewPortalAnnouncementsService(announcementRepo, enrollmentRepo, studentRepo, nil, logr)
 	portalBehaviorSvc := service.NewPortalBehaviorService(behaviorRepo, enrollmentRepo, studentRepo, nil, logr)
 	portalCalendarSvc := service.NewPortalCalendarService(calendarRepo, enrollmentRepo, studentRepo, nil, logr)
+	portalHomeroomSvc := service.NewPortalHomeroomService(homeroomRepo, enrollmentRepo, studentRepo, termRepo, nil, logr)
 	portalDataHandler := internalhandler.NewPortalDataHandler(
 		portalGradesSvc,
 		portalAttendanceSvc,
 		portalAnnouncementsSvc,
 		portalBehaviorSvc,
 		portalCalendarSvc,
+		portalHomeroomSvc,
 	)
 
 	// Register Portal Data Routes
@@ -230,6 +232,7 @@ func main() {
 	portalDataRoutes.GET("/behavior-notes/summary", portalDataHandler.GetBehaviorSummary)
 	portalDataRoutes.GET("/calendar", portalDataHandler.GetCalendarEvents)
 	portalDataRoutes.GET("/calendar/upcoming", portalDataHandler.GetUpcomingEvents)
+	portalDataRoutes.GET("/homeroom", portalDataHandler.GetHomeroom)
 
 	userSvc := service.NewUserService(authRepo, nil, logr)
 	userHandler := internalhandler.NewUserHandler(userSvc)

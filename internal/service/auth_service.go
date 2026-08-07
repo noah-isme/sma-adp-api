@@ -347,6 +347,11 @@ func (s *AuthService) ResetPassword(ctx context.Context, req models.ConfirmReset
 }
 
 func (s *AuthService) resolveTeacherID(ctx context.Context, user *models.User) string {
+	// resolveTeacherID finds the teacher ID linked to a user.
+	// Returns empty string if user is not a teacher or lookup fails.
+	// This is called at login/refresh to populate the TeacherID claim in JWT.
+	// Services should use claims.TeacherID directly; fallback to UserID is temporary
+	// for backward compatibility with tokens issued before migration 000014.
 	if user.Role != models.RoleTeacher || s.teacherLookup == nil {
 		return ""
 	}

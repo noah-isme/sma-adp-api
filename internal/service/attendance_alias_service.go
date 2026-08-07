@@ -88,6 +88,8 @@ func (s *AttendanceAliasService) ListDaily(ctx context.Context, req dto.Attendan
 		}
 		teacherID := claims.TeacherID
 		if teacherID == "" {
+			// FALLBACK: For backward compatibility with tokens issued before migration 000014
+			// which added TeacherID claim. Remove after all old tokens expire.
 			teacherID = claims.UserID
 		}
 		if err := s.assertClassAccess(ctx, teacherID, req.ClassID, req.TermID); err != nil {
@@ -129,6 +131,8 @@ func (s *AttendanceAliasService) Summary(ctx context.Context, req dto.Attendance
 	if claims.Role == models.RoleTeacher {
 		teacherID := claims.TeacherID
 		if teacherID == "" {
+			// FALLBACK: For backward compatibility with tokens issued before migration 000014
+			// which added TeacherID claim. Remove after all old tokens expire.
 			teacherID = claims.UserID
 		}
 		classSet, err := s.teacherClasses(ctx, teacherID, req.TermID)
@@ -152,6 +156,8 @@ func (s *AttendanceAliasService) Summary(ctx context.Context, req dto.Attendance
 	if req.StudentID != "" && claims.Role == models.RoleTeacher {
 		teacherID := claims.TeacherID
 		if teacherID == "" {
+			// FALLBACK: For backward compatibility with tokens issued before migration 000014
+			// which added TeacherID claim. Remove after all old tokens expire.
 			teacherID = claims.UserID
 		}
 		if err := s.ensureTeacherCanSeeStudent(ctx, teacherID, req.StudentID, req.TermID); err != nil {

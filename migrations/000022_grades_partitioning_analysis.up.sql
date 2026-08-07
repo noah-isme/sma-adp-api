@@ -1,0 +1,129 @@
+-- Migration 000022: Grades table partitioning by term (Design/Analysis)
+-- This migration documents the approach for partitioning grades and grade_finals by term
+-- IMPORTANT: This is a design document. Actual implementation requires careful data migration.
+-- Run this only after thorough testing in staging with production-scale data.
+
+-- ============================================================
+-- APPROACH: Partition grades and grade_finals by term_id
+-- ============================================================
+-- Benefits:
+--   - Faster queries for specific terms (partition pruning)
+--   - Easier data lifecycle management (drop old term partitions)
+--   - Better index efficiency (smaller per-partition indexes)
+--   - Parallel query execution across partitions
+--
+-- Trade-offs:
+--   - More complex schema management
+--   - Foreign keys to partitioned tables have limitations
+--   - INSERT requires explicit partition routing (or trigger)
+--   - Unique constraints must include partition key
+--
+-- Recommendation: Implement when:
+--   - grades table > 10M rows
+--   - Term-specific queries are slow despite indexes
+--   - Need to archive old terms efficiently
+-- ============================================================
+
+-- Step 1: Create partitioned grades table (new structure)
+-- NOTE: This requires enrollment_id to be in the partition key or we need to join enrollments
+-- Since grades don't have term_id directly, we partition by enrollment_id and rely on
+-- enrollment -> term_id relationship. Alternatively, denormalize term_id into grades.
+
+-- Option A: Partition grades by term_id (requires adding term_id column)
+-- CREATE TABLE IF NOT EXISTS grades_partitioned (
+--     id VARCHAR(36) NOT NULL,
+--     enrollment_id VARCHAR(36) NOT NULL REFERENCES enrollments(id) ON DELETE CASCADE,
+--     subject_id VARCHAR(36) NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+--     component_id VARCHAR(36) NOT NULL REFERENCES grade_components(id) ON DELETE CASCADE,
+--     grade_value DECIMAL(6,2) NOT NULL,
+--     term_id VARCHAR(36) NOT NULL,  -- Denormalized for partitioning
+--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     deleted_at TIMESTAMP,
+--     UNIQUE(enrollment_id, subject_id, component_id, term_id)
+-- ) PARTITION BY LIST (term_id);
+
+-- Option B: Partition by hash of enrollment_id (simpler, no denormalization)
+-- CREATE TABLE IF NOT EXISTS grades_partitioned (
+--     id VARCHAR(36) NOT NULL,
+--     enrollment_id VARCHAR(36) NOT NULL REFERENCES enrollments(id) ON DELETE CASCADE,
+--     subject_id VARCHAR(36) NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+--     component_id VARCHAR(36) NOT NULL REFERENCES grade_components(id) ON DELETE CASCADE,
+--     grade_value DECIMAL(6,2) NOT NULL,
+--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     deleted_at TIMESTAMP,
+--     UNIQUE(enrollment_id, subject_id, component_id)
+-- ) PARTITION BY HASH (enrollment_id);
+
+-- For term-based partitioning (Option A), create partitions per active term:
+-- CREATE TABLE grades_term_001 PARTITION OF grades_partitioned FOR VALUES IN ('term_001');
+-- CREATE TABLE grades_term_002 PARTITION OF grades_partitioned FOR VALUES IN ('term_002');
+-- CREATE TABLE grades_default PARTITION OF grades_partitioned DEFAULT;
+
+-- Step 2: Create partitioned grade_finals table
+-- CREATE TABLE IF NOT EXISTS grade_finals_partitioned (
+--     id VARCHAR(36) NOT NULL,
+--     enrollment_id VARCHAR(36) NOT NULL REFERENCES enrollments(id) ON DELETE CASCADE,
+--     subject_id VARCHAR(36) NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+--     final_grade DECIMAL(6,2) NOT NULL,
+--     finalized BOOLEAN DEFAULT FALSE,
+--     calculated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     calculation_note TEXT,
+--     term_id VARCHAR(36) NOT NULL,  -- Denormalized for partitioning
+--     UNIQUE(enrollment_id, subject_id, term_id)
+-- ) PARTITION BY LIST (term_id);
+
+-- Step 3: Data migration strategy (run in transaction)
+-- 1. Add term_id column to existing grades/grade_finals (populated via enrollment join)
+-- 2. Create partitioned tables
+-- 3. Create partitions for each existing term
+-- 4. Migrate data: INSERT INTO grades_partitioned SELECT ..., e.term_id FROM grades g JOIN enrollments e ON e.id = g.enrollment_id
+-- 5. Create indexes on partitions
+-- 6. Swap tables (rename old, rename new)
+-- 7. Drop old tables after verification
+
+-- Step 4: Maintenance - Add new term partition when term is created
+-- This could be automated via trigger on terms table or application code
+-- CREATE TABLE grades_term_XXX PARTITION OF grades_partitioned FOR VALUES IN ('term_XXX');
+
+-- Step 5: Archiving old terms
+-- ALTER TABLE grades_partitioned DETACH PARTITION grades_term_OLD;
+-- CREATE TABLE grades_archive_OLD (LIKE grades_term_OLD INCLUDING ALL);
+-- INSERT INTO grades_archive_OLD SELECT * FROM grades_term_OLD;
+-- DROP TABLE grades_term_OLD;
+
+-- ============================================================
+-- ALTERNATIVE: Native Partitioning on enrollments table
+-- ============================================================
+-- Since grades reference enrollments, partitioning enrollments by term_id
+-- and using partition-wise joins could also work:
+--
+-- ALTER TABLE enrollments PARTITION BY LIST (term_id);
+-- CREATE TABLE enrollments_term_001 PARTITION OF enrollments FOR VALUES IN ('term_001');
+--
+-- Then queries joining grades -> enrollments can benefit from partition-wise joins
+-- if both tables are partitioned identically.
+--
+-- This approach is cleaner as it doesn't require denormalization.
+
+-- ============================================================
+-- INDEXES FOR PARTITIONED TABLES
+-- ============================================================
+-- Per-partition indexes (created automatically on each partition):
+-- CREATE INDEX ON grades_term_XXX (enrollment_id);
+-- CREATE INDEX ON grades_term_XXX (subject_id);
+-- CREATE INDEX ON grades_term_XXX (created_at);
+--
+-- Global indexes (not partitioned, span all partitions):
+-- Not supported for unique constraints in PG < 15, limited in PG 15+
+
+-- ============================================================
+-- DECISION: Postpone implementation until performance data justifies it
+-- ============================================================
+-- Current grades table size: ~[check with pg_total_relation_size]
+-- Current query patterns: Mostly term-filtered via enrollment join
+-- Current indexes: idx_grades_enrollment, idx_grade_finals_enrollment
+--
+-- Recommended: Monitor query performance with EXPLAIN ANALYZE on production data
+-- before implementing partitioning.

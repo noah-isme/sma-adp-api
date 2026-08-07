@@ -861,6 +861,47 @@ Authorization: Bearer <access_token>
 
 ---
 
+## Homeroom Endpoints
+
+### GET /portal/homeroom
+
+Get homeroom teacher and class information for a student in a term.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Query Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| termId | string | No | Term ID (defaults to active term) |
+| studentId | string | No | **Parent only** - Specific student |
+
+**Response (200):**
+```json
+{
+  "studentId": "std_001",
+  "studentName": "Ahmad Fauzi",
+  "termId": "term_001",
+  "termName": "Semester 1 2024/2025",
+  "classId": "cls_001",
+  "className": "X IPA 1",
+  "homeroomTeacher": {
+    "id": "tch_001",
+    "name": "Siti Aminah, S.Pd"
+  }
+}
+```
+
+**Error Responses:**
+- `400` - Invalid request
+- `401` - Unauthorized
+- `403` - Not a parent/student or student not linked
+- `404` - Student/enrollment/homeroom not found
+
+---
+
 ## Preferences Endpoints
 
 ### GET /portal/preferences
@@ -1044,3 +1085,5 @@ Breaking changes will increment version: `/api/v2/portal`
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0.0 | 2024-10-XX | Initial release |
+| 1.1.0 | 2024-XX-XX | Added Parent-Student Link Management endpoints (GET/POST/PUT/DELETE /portal/parent/students), Report Card, Announcement Detail, Upcoming Events |
+| 1.2.0 | 2024-XX-XX | Added Homeroom endpoint (GET /portal/homeroom) for students and parents |

@@ -1,0 +1,3 @@
+-- Migration 000022: Grades partitioning analysis - Down migration (no-op, documentation only)
+-- This migration is documentation only and does not modify the database.
+-- No down migration needed.

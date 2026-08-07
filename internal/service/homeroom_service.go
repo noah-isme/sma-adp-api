@@ -103,6 +103,8 @@ func (s *HomeroomService) List(ctx context.Context, filter dto.HomeroomFilter, c
 		if claims.Role == models.RoleTeacher {
 			teacherID := claims.TeacherID
 			if teacherID == "" {
+				// FALLBACK: For backward compatibility with tokens issued before migration 000014
+				// which added TeacherID claim. Remove after all old tokens expire.
 				teacherID = claims.UserID
 			}
 			allowed, err := s.assignments.HasClassAccess(ctx, teacherID, filter.ClassID, termID)
@@ -125,6 +127,8 @@ func (s *HomeroomService) List(ctx context.Context, filter dto.HomeroomFilter, c
 	case models.RoleTeacher:
 		teacherID := claims.TeacherID
 		if teacherID == "" {
+			// FALLBACK: For backward compatibility with tokens issued before migration 000014
+			// which added TeacherID claim. Remove after all old tokens expire.
 			teacherID = claims.UserID
 		}
 		items, err := s.repo.ListForTeacher(ctx, teacherID, filter)
@@ -156,6 +160,8 @@ func (s *HomeroomService) Get(ctx context.Context, classID, termID string, claim
 	if claims.Role == models.RoleTeacher {
 		teacherID := claims.TeacherID
 		if teacherID == "" {
+			// FALLBACK: For backward compatibility with tokens issued before migration 000014
+			// which added TeacherID claim. Remove after all old tokens expire.
 			teacherID = claims.UserID
 		}
 		allowed, err := s.assignments.HasClassAccess(ctx, teacherID, classID, resolvedTermID)

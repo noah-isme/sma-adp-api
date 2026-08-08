@@ -277,16 +277,17 @@
 ### 4. Feature Flag Dependencies
 | Frontend Page | Required Backend Flag | Required Frontend Flag |
 |---------------|----------------------|------------------------|
-| Dashboard | `ENABLE_DASHBOARD` + `ENABLE_ANALYTICS` | `VITE_ENABLE_DASHBOARD` |
+| Dashboard | `ENABLE_DASHBOARD` + `ENABLE_ANALYTICS` | `VITE_ENABLE_DASHBOARD` + `VITE_ENABLE_ANALYTICS` |
 | Schedule Generator | `ENABLE_SCHEDULER` | `VITE_ENABLE_SCHEDULER` |
 | Reports | `ENABLE_REPORTS` | `VITE_ENABLE_REPORTS` |
 | Mutations | `ENABLE_MUTATIONS` | `VITE_ENABLE_MUTATIONS` |
 | Archives | `ENABLE_ARCHIVES` | `VITE_ENABLE_ARCHIVES` |
 | Attendance (legacy) | `ENABLE_ATTENDANCE_ALIAS` | `VITE_ENABLE_ATTENDANCE_ALIAS` |
 | Calendar (compat) | `ENABLE_CALENDAR_ALIAS` | `VITE_ENABLE_CALENDAR_ALIAS` |
-| Attendance Analytics (server) | `ENABLE_ANALYTICS` | `VITE_ENABLE_ATTENDANCE_ALIAS` (page gate) |
+| Attendance Analytics (server) | `ENABLE_ANALYTICS` | `VITE_ENABLE_ANALYTICS` (page gate) |
+| Analytics API | `ENABLE_ANALYTICS` | `VITE_ENABLE_ANALYTICS` |
 
-**Note:** `ENABLE_ANALYTICS` has no standalone Vite flag - it's a backend dependency for dashboard analytics. Attendance analytics page is gated by `VITE_ENABLE_ATTENDANCE_ALIAS`.
+**Note:** `ENABLE_ANALYTICS` now has a standalone Vite flag: `VITE_ENABLE_ANALYTICS`. Dashboard requires both `ENABLE_DASHBOARD` + `ENABLE_ANALYTICS` / `VITE_ENABLE_DASHBOARD` + `VITE_ENABLE_ANALYTICS`. Attendance analytics page requires `ENABLE_ATTENDANCE_ALIAS` + `ENABLE_ANALYTICS` / `VITE_ENABLE_ATTENDANCE_ALIAS` + `VITE_ENABLE_ANALYTICS`.
 
 ### 5. Export Limitations
 - Frontend "Cetak Laporan" (export tab) uses local `downloadCsv()` on currently loaded rows
@@ -325,7 +326,7 @@ When deploying with specific modules enabled, verify BOTH sides:
 ```bash
 # Backend (sma-adp-api)
 ENABLE_DASHBOARD=true
-ENABLE_ANALYTICS=true        # Required for dashboard analytics + attendance analytics server
+ENABLE_ANALYTICS=true        # Required for dashboard analytics + attendance analytics server + analytics API
 ENABLE_SCHEDULER=true        # Schedule generator + semester-schedule
 ENABLE_REPORTS=true          # Async report generation
 ENABLE_MUTATIONS=true        # Student mutations
@@ -337,6 +338,7 @@ ENABLE_ATTENDANCE_ALIAS=true # /attendance compatibility + attendance pages
 
 # Frontend (admin-panel-sma)
 VITE_ENABLE_DASHBOARD=true
+VITE_ENABLE_ANALYTICS=true   # Required for dashboard + attendance analytics + analytics API
 VITE_ENABLE_SCHEDULER=true
 VITE_ENABLE_REPORTS=true
 VITE_ENABLE_MUTATIONS=true
@@ -344,7 +346,7 @@ VITE_ENABLE_ARCHIVES=true
 VITE_ENABLE_HOMEROOMS=true
 VITE_ENABLE_CONFIGURATION_API=true
 VITE_ENABLE_CALENDAR_ALIAS=true
-VITE_ENABLE_ATTENDANCE_ALIAS=true  # Gates attendance-daily, attendance-lesson, attendance-analytics
+VITE_ENABLE_ATTENDANCE_ALIAS=true  # Gates attendance-daily, attendance-lesson
 ```
 
 **Critical:** `VITE_ENABLE_ATTENDANCE_ALIAS` gates the entire attendance module (3 pages). `ENABLE_ATTENDANCE_ALIAS` gates the legacy compatibility endpoints. They must be toggled together.
@@ -363,12 +365,12 @@ VITE_ENABLE_ATTENDANCE_ALIAS=true  # Gates attendance-daily, attendance-lesson, 
 | grades | grades, grade-components, grade-configs | `GET /grades/report`, `GET/POST/PUT/DELETE /grades`, `/grade-components`, `/grade-configs` | Always-on |
 | attendance-daily | attendance | `POST/PUT/PATCH /attendance` (compat) | `ENABLE_ATTENDANCE_ALIAS` / `VITE_ENABLE_ATTENDANCE_ALIAS` |
 | attendance-lesson | attendance | `POST/PUT/PATCH /attendance` (compat) | `ENABLE_ATTENDANCE_ALIAS` / `VITE_ENABLE_ATTENDANCE_ALIAS` |
-| attendance-analytics | attendance + analytics | `GET /attendance` (client), `GET /analytics/attendance` (server) | `VITE_ENABLE_ATTENDANCE_ALIAS` + `ENABLE_ANALYTICS` (server) |
+| attendance-analytics | attendance + analytics | `GET /attendance` (client), `GET /analytics/attendance` (server) | `ENABLE_ATTENDANCE_ALIAS` + `ENABLE_ANALYTICS` / `VITE_ENABLE_ATTENDANCE_ALIAS` + `VITE_ENABLE_ANALYTICS` |
 | schedule-generator | schedules, semester-schedule, teacher-preferences | `POST /schedules/generator`, `POST /schedule/save`, `GET /semester-schedule` | `ENABLE_SCHEDULER` / `VITE_ENABLE_SCHEDULER` |
 | reports | reports | `POST /reports/generate`, `GET /reports/status/:id`, `GET /export/:token` | `ENABLE_REPORTS` / `VITE_ENABLE_REPORTS` |
 | mutations | mutations | `GET/POST /mutations`, `PATCH /mutations/:id/review` | `ENABLE_MUTATIONS` / `VITE_ENABLE_MUTATIONS` |
 | archives | archives | `GET/POST /archives`, `GET /archives/:id/download`, `DELETE /archives/:id` | `ENABLE_ARCHIVES` / `VITE_ENABLE_ARCHIVES` |
-| dashboard | dashboard, analytics | `GET /dashboard`, `GET /analytics/*` | `ENABLE_DASHBOARD` + `ENABLE_ANALYTICS` / `VITE_ENABLE_DASHBOARD` |
+| dashboard | dashboard, analytics | `GET /dashboard`, `GET /analytics/*` | `ENABLE_DASHBOARD` + `ENABLE_ANALYTICS` / `VITE_ENABLE_DASHBOARD` + `VITE_ENABLE_ANALYTICS` |
 | configuration | settings | `GET/POST /configuration` | `ENABLE_CONFIGURATION_API` / `VITE_ENABLE_CONFIGURATION_API` |
 | homerooms | homerooms | `GET/POST /homerooms` | `ENABLE_HOMEROOMS` / `VITE_ENABLE_HOMEROOMS` |
 

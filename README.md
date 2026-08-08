@@ -109,10 +109,7 @@ Notes:
 
 ### Admin panel counterparts
 
-The admin has no standalone `VITE_ENABLE_ANALYTICS`; dashboard analytics are
-gated by `VITE_ENABLE_DASHBOARD`, while attendance analytics follow
-`VITE_ENABLE_ATTENDANCE_ALIAS`. Where possible prefer reading `/features` at
-runtime over duplicating flags in the frontend build.
+The admin now has `VITE_ENABLE_ANALYTICS` to match `ENABLE_ANALYTICS`. Dashboard requires both `VITE_ENABLE_DASHBOARD` + `VITE_ENABLE_ANALYTICS`, and attendance analytics requires `VITE_ENABLE_ATTENDANCE_ALIAS` + `VITE_ENABLE_ANALYTICS`. Where possible prefer reading `/features` at runtime over duplicating flags in the frontend build.
 
 Detail status per fase ada di [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md).
 The latest seeded HTTP verification and per-route smoke evidence are recorded in

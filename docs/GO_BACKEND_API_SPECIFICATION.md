@@ -369,7 +369,8 @@ Optional API capabilities are disabled by default. The frontend must expose a pa
 
 | Go API flag | Admin flag | Capability |
 | --- | --- | --- |
-| `ENABLE_DASHBOARD` | `VITE_ENABLE_DASHBOARD` | Dashboard endpoints (including dashboard analytics sections) |
+| `ENABLE_DASHBOARD` + `ENABLE_ANALYTICS` | `VITE_ENABLE_DASHBOARD` + `VITE_ENABLE_ANALYTICS` | Dashboard endpoints (including dashboard analytics sections) |
+| `ENABLE_ANALYTICS` | `VITE_ENABLE_ANALYTICS` | Standalone `/analytics/*` API (attendance, grades, behavior, system) |
 | `ENABLE_SCHEDULER` | `VITE_ENABLE_SCHEDULER` | Schedule generator and preferences UI |
 | `ENABLE_REPORTS` | `VITE_ENABLE_REPORTS` | Report generation/export endpoints |
 | `ENABLE_MUTATIONS` | `VITE_ENABLE_MUTATIONS` | Student mutation workflows |
@@ -379,15 +380,9 @@ Optional API capabilities are disabled by default. The frontend must expose a pa
 | `ENABLE_CALENDAR_ALIAS` | `VITE_ENABLE_CALENDAR_ALIAS` | `/calendar` compatibility alias |
 | `ENABLE_ATTENDANCE_ALIAS` | `VITE_ENABLE_ATTENDANCE_ALIAS` | Attendance routes and compatibility aliases (daily, subject, generic writes, and summary) |
 
-`ENABLE_ANALYTICS` controls the standalone `/analytics/*` API. There is no standalone
-`VITE_ENABLE_ANALYTICS` page flag: the admin dashboard is gated by
-`VITE_ENABLE_DASHBOARD`, while the attendance analytics screen is gated by
-`VITE_ENABLE_ATTENDANCE_ALIAS` and reads the attendance resource. When dashboard
-analytics are enabled, set `ENABLE_ANALYTICS` alongside `ENABLE_DASHBOARD` for the
-cached analytics service; the dashboard has a repository fallback when only
-`ENABLE_DASHBOARD` is enabled.
+`ENABLE_ANALYTICS` now has a corresponding `VITE_ENABLE_ANALYTICS` flag. The admin dashboard requires both `VITE_ENABLE_DASHBOARD` + `VITE_ENABLE_ANALYTICS`. The attendance analytics screen requires `VITE_ENABLE_ATTENDANCE_ALIAS` + `VITE_ENABLE_ANALYTICS`. When enabling dashboard analytics, set both `ENABLE_DASHBOARD` + `ENABLE_ANALYTICS` in the backend and both `VITE_ENABLE_DASHBOARD` + `VITE_ENABLE_ANALYTICS` in the frontend.
 
-Set both flags to `true` when enabling a paired capability. `ENABLE_ANALYTICS` is the exception: it has no separate Vite flag and is a backend dependency/optimization for dashboard analytics. Omitting a flag is equivalent to `false`; canonical resources that are always registered (for example `/schedules`) remain available independently.
+Set both flags to `true` when enabling a paired capability. Omitting a flag is equivalent to `false`; canonical resources that are always registered (for example `/schedules`) remain available independently.
 
 ---
 

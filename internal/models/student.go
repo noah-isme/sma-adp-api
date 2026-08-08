@@ -18,13 +18,18 @@ type Student struct {
 
 // StudentFilter encapsulates allowed search parameters for listing students.
 type StudentFilter struct {
-	Search    string
-	ClassID   string
-	Active    *bool
-	Page      int
-	PageSize  int
-	SortBy    string
-	SortOrder string
+	Search       string
+	ClassID      string
+	Active       *bool
+	Gender       string
+	Track        string
+	Guardian     string
+	BirthYearStart *int
+	BirthYearEnd   *int
+	Page         int
+	PageSize     int
+	SortBy       string
+	SortOrder    string
 }
 
 // StudentDetail contains student information with enrollment context.

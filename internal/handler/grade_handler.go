@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -103,25 +104,165 @@ func (h *GradeHandler) Delete(c *gin.Context) {
 // @Param subjectId query string false "Subject ID"
 // @Param componentId query string false "Component ID"
 // @Param teacherId query string false "Teacher ID"
+// @Param status query string false "Status filter"
+// @Param scoreMin query float64 false "Minimum score"
+// @Param scoreMax query float64 false "Maximum score"
+// @Param search query string false "Search term"
+// @Param sortField query string false "Sort field"
+// @Param sortOrder query string false "Sort order"
+// @Param page query int false "Page number"
+// @Param perPage query int false "Page size"
 // @Success 200 {object} response.Envelope
 // @Router /grades/report [get]
 func (h *GradeHandler) Report(c *gin.Context) {
-	grades, err := h.grades.List(c.Request.Context(), models.GradeFilter{SubjectID: c.Query("subjectId"), ComponentID: c.Query("componentId")})
+	page := 1
+	if p, err := strconv.Atoi(c.DefaultQuery("page", "1")); err == nil {
+		page = p
+	}
+	perPage := 20
+	if p, err := strconv.Atoi(c.DefaultQuery("perPage", "20")); err == nil {
+		perPage = p
+	}
+	
+	scoreMin := c.Query("scoreMin")
+	scoreMax := c.Query("scoreMax")
+	var minScore, maxScore *float64
+	if scoreMin != "" {
+		if v, err := strconv.ParseFloat(scoreMin, 64); err == nil {
+			minScore = &v
+		}
+	}
+	if scoreMax != "" {
+		if v, err := strconv.ParseFloat(scoreMax, 64); err == nil {
+			maxScore = &v
+		}
+	}
+	
+	filter := models.GradeFilter{
+		TermID:       c.Query("termId"),
+		ClassID:      c.Query("classId"),
+		SubjectID:    c.Query("subjectId"),
+		ComponentID:  c.Query("componentId"),
+		TeacherID:    c.Query("teacherId"),
+		Status:       c.Query("status"),
+		ScoreMin:     minScore,
+		ScoreMax:     maxScore,
+		Search:       c.Query("search"),
+		SortBy:       c.Query("sortField"),
+		SortOrder:    c.Query("sortOrder"),
+		Page:         page,
+		PageSize:     perPage,
+	}
+	
+	grades, err := h.grades.List(c.Request.Context(), filter)
 	if err != nil {
 		response.Error(c, err)
 		return
 	}
+	
 	rows := make([]gin.H, 0, len(grades))
 	total := 0.0
 	for _, grade := range grades {
 		total += grade.GradeValue
-		rows = append(rows, gin.H{"id": grade.ID, "studentId": grade.EnrollmentID, "studentName": grade.EnrollmentID, "studentNis": "", "classId": c.Query("classId"), "className": "", "subjectId": grade.SubjectID, "subjectName": grade.SubjectID, "componentId": grade.ComponentID, "componentName": grade.ComponentCode, "componentCategory": "", "componentWeight": 0, "score": grade.GradeValue, "kkm": 0, "status": gin.H{"code": "PASS", "label": "Tuntas", "description": "", "tone": "success", "icon": "check"}, "teacherId": c.Query("teacherId"), "teacherName": "", "recordedAt": grade.CreatedAt, "lastUpdated": grade.UpdatedAt, "termId": c.Query("termId"), "termName": "", "termLabel": ""})
+		status := "PASS"
+		tone := "success"
+		icon := "check"
+		label := "Tuntas"
+		if grade.GradeValue < 75 {
+			status = "FAIL"
+			tone = "danger"
+			icon = "x"
+			label = "Tidak Tuntas"
+		} else if grade.GradeValue < 85 {
+			status = "REMEDIAL"
+			tone = "warning"
+			icon = "alert"
+			label = "Remedial"
+		}
+		rows = append(rows, gin.H{
+			"id": grade.ID,
+			"studentId": grade.EnrollmentID,
+			"studentName": grade.EnrollmentID,
+			"studentNis": "",
+			"classId": filter.ClassID,
+			"className": "",
+			"subjectId": grade.SubjectID,
+			"subjectName": grade.SubjectID,
+			"componentId": grade.ComponentID,
+			"componentName": grade.ComponentCode,
+			"componentCategory": "",
+			"componentWeight": 0,
+			"score": grade.GradeValue,
+			"kkm": 75,
+			"status": gin.H{"code": status, "label": label, "description": "", "tone": tone, "icon": icon},
+			"teacherId": filter.TeacherID,
+			"teacherName": "",
+			"recordedAt": grade.CreatedAt,
+			"lastUpdated": grade.UpdatedAt,
+			"termId": filter.TermID,
+			"termName": "",
+			"termLabel": "",
+		})
 	}
 	average := 0.0
 	if len(grades) > 0 {
 		average = total / float64(len(grades))
 	}
-	response.JSON(c, http.StatusOK, gin.H{"context": gin.H{"termId": c.Query("termId"), "classId": c.Query("classId"), "subjectId": c.Query("subjectId")}, "summary": gin.H{"averageScore": average, "belowKkmCount": 0, "componentCount": 0, "remedialCount": 0, "statusBreakdown": []gin.H{}, "distribution": []gin.H{}}, "filters": gin.H{"terms": []gin.H{}, "classes": []gin.H{}, "subjects": []gin.H{}, "components": []gin.H{}, "teachers": []gin.H{}, "statuses": []gin.H{}}, "rows": rows, "pagination": gin.H{"page": 1, "perPage": len(rows), "total": len(rows), "totalPages": 1}, "appliedFilters": gin.H{}}, nil)
+	
+	// Count below KKM
+	belowKkmCount := 0
+	remedialCount := 0
+	for _, grade := range grades {
+		if grade.GradeValue < 75 {
+			belowKkmCount++
+		} else if grade.GradeValue < 85 {
+			remedialCount++
+		}
+	}
+	
+	response.JSON(c, http.StatusOK, gin.H{
+		"context": gin.H{
+			"termId": filter.TermID,
+			"classId": filter.ClassID,
+			"subjectId": filter.SubjectID,
+		},
+		"summary": gin.H{
+			"averageScore": average,
+			"belowKkmCount": belowKkmCount,
+			"componentCount": 0,
+			"remedialCount": remedialCount,
+			"statusBreakdown": []gin.H{},
+			"distribution": []gin.H{},
+		},
+		"filters": gin.H{
+			"terms": []gin.H{},
+			"classes": []gin.H{},
+			"subjects": []gin.H{},
+			"components": []gin.H{},
+			"teachers": []gin.H{},
+			"statuses": []gin.H{},
+		},
+		"rows": rows,
+		"pagination": gin.H{
+			"page": page,
+			"perPage": perPage,
+			"total": len(rows),
+			"totalPages": 1,
+		},
+		"appliedFilters": gin.H{
+			"termId": filter.TermID,
+			"classId": filter.ClassID,
+			"subjectId": filter.SubjectID,
+			"componentId": filter.ComponentID,
+			"teacherId": filter.TeacherID,
+			"status": filter.Status,
+			"scoreMin": filter.ScoreMin,
+			"scoreMax": filter.ScoreMax,
+			"search": filter.Search,
+			"sortField": filter.SortBy,
+			"sortOrder": filter.SortOrder,
+		},
+	}, nil)
 }
 
 // Bulk godoc

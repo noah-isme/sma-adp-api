@@ -325,10 +325,10 @@ The Go API keeps the existing admin-panel contracts available while the frontend
 | Enrollment edit | `PUT /enrollments/:id` | Accepts `class_id` (or legacy `target_class_id`) and performs the validated transfer workflow. |
 | Attendance write | `POST /attendance`, `PUT/PATCH /attendance/:id` | Compatibility upsert mapped to daily attendance. Canonical bulk and subject routes remain available under `/attendance/daily` and `/attendance/subject`. |
 | Teacher preferences | `POST /teacher-preferences`, `PUT /teacher-preferences/:id` | Compatibility upsert; per-teacher canonical route is `PUT /teachers/:id/preferences`. |
-| Student/teacher rosters | `GET /students/roster`, `GET /teachers/roster` | Admin-compatible roster responses; canonical list resources remain available. |
-| Grade report/edit/delete | `GET /grades/report`, `PUT/PATCH /grades/:id`, `DELETE /grades/:id` | Admin-compatible grade-list view; PUT/PATCH uses the validated grade upsert payload. DELETE soft-deletes the entry, recalculates its non-finalized final grade, and is rejected after finalization. |
+| Student/teacher rosters | `GET /students/roster`, `GET /teachers/roster` | Admin-compatible roster responses with full filter support (gender, track, guardian, birthYearStart/End for students; subjectId, track, availability, homeroomClassId for teachers); canonical list resources remain available. |
+| Grade report/edit/delete | `GET /grades/report`, `PUT/PATCH /grades/:id`, `DELETE /grades/:id` | Admin-compatible grade-list view with full filter support (termId, classId, subjectId, componentId, teacherId, status, scoreMin, scoreMax, search, sortField, sortOrder); PUT/PATCH uses the validated grade upsert payload. DELETE soft-deletes the entry, recalculates its non-finalized final grade, and is rejected after finalization. |
 | Grade component edit/delete | `PUT/DELETE /grade-components/:id` | Updates an active component; DELETE soft-deletes it so historical grade/config references remain intact. |
-| Browser CSV exports | `GET /export/students`, `/export/grades`, `/export/attendance` | Direct CSV downloads; report-job token downloads remain under `/export/{token}`. |
+| Browser CSV exports | `GET /export/students`, `/export/grades`, `/export/attendance` | Direct CSV downloads with filter support (classId, active, gender for students; classId, subjectId, componentId, status for grades; classId, dateFrom, dateTo for attendance); report-job token downloads remain under `/export/{token}`. |
 | CSV imports | `POST /students/import`, `POST /teachers/import` | Row-level validation summary; see `FE_BE_MAPPING.md` for required columns. |
 
 The admin data provider unwraps `data` from the response envelope and converts browser camelCase fields to the API's snake_case fields. New integrations should use the canonical snake_case contract directly.
@@ -456,17 +456,23 @@ Set both flags to `true` when enabling a paired capability. `ENABLE_ANALYTICS` i
 
 ### GET /api/v1/students/roster
 
-**Get students roster (partial compatibility contract)**
+**Get students roster**
 
-The current compatibility handler supports `search`, `classId`, `active`, `page`/`perPage`, `sort`, and `order`. The documented `gender`, `track`, `guardian`, `birthYearStart`, and `birthYearEnd` filters are not implemented yet and must not be treated as production-supported filters.
+The handler supports all documented filters: `search`, `classId`, `active`, `gender`, `track`, `guardian`, `birthYearStart`, `birthYearEnd`, `page`/`perPage`, `sort`, `order`.
 
 **Query Parameters:**
 
 - `page`, `perPage`
 - `classId` (string): Filter by class
-- `search` (string)
-- `active` (bool)
-- `sort`, `order`
+- `search` (string): Search by name or NIS
+- `active` (bool): Filter by active state
+- `gender` (string): Filter by gender (M, F)
+- `track` (string): Filter by track/program
+- `guardian` (string): Filter by guardian name/phone
+- `birthYearStart` (int): Filter by birth year start
+- `birthYearEnd` (int): Filter by birth year end
+- `sort` (string): Sort field (fullName, nis, birthDate, createdAt, gender)
+- `order` (string): Sort order (asc, desc)
 
 **Response (200):**
 
@@ -529,8 +535,15 @@ The current compatibility handler supports `search`, `classId`, `active`, `page`
   "appliedFilters": {
     "classId": "class_x_ipa_1",
     "status": "active",
+    "gender": "M",
+    "track": "IPA",
+    "guardian": "Ayah",
+    "birthYearStart": 2008,
+    "birthYearEnd": 2009,
     "page": 1,
-    "perPage": 20
+    "perPage": 20,
+    "sort": "fullName",
+    "order": "asc"
   }
 }
 ```
@@ -612,16 +625,21 @@ The current compatibility handler supports `search`, `classId`, `active`, `page`
 
 ### GET /api/v1/teachers/roster
 
-**Get teachers roster (partial compatibility contract)**
+**Get teachers roster**
 
-The current compatibility handler supports `search`, `active`, `page`/`perPage`, `sort`, and `order`. Subject, track, availability, and homeroom filters are not implemented yet.
+The handler supports all documented filters: `search`, `active`, `subjectId`, `track`, `availability`, `homeroomClassId`, `page`/`perPage`, `sort`, `order`.
 
 **Query Parameters:**
 
 - `page`, `perPage`
-- `search` (string)
-- `active` (bool)
-- `sort`, `order`
+- `search` (string): Search by name, email, or NIP
+- `active` (bool): Filter by active state
+- `subjectId` (string): Filter by subject/expertise
+- `track` (string): Filter by track/program
+- `availability` (string): Filter by availability (HIGH, MEDIUM, LOW)
+- `homeroomClassId` (string): Filter by homeroom class
+- `sort` (string): Sort field (fullName, email, createdAt, updatedAt)
+- `order` (string): Sort order (asc, desc)
 
 **Response (200):**
 
@@ -665,7 +683,18 @@ The current compatibility handler supports `search`, `active`, `page`/`perPage`,
     }
   ],
   "pagination": {...},
-  "appliedFilters": {...}
+  "appliedFilters": {
+    "search": "budi",
+    "active": true,
+    "subjectId": "subject_mat",
+    "track": "IPA",
+    "availability": "HIGH",
+    "homeroomClassId": "class_x_ipa_1",
+    "page": 1,
+    "perPage": 20,
+    "sort": "fullName",
+    "order": "asc"
+  }
 }
 ```
 
@@ -830,14 +859,25 @@ The current compatibility handler supports `search`, `active`, `page`/`perPage`,
 
 ### GET /api/v1/grades/report
 
-**Get partial grade report compatibility view**
+**Get grade report compatibility view**
 
-The current handler supports `subjectId` and `componentId` filtering and calculates average score from returned grade entries. Term, class, teacher, status, score-range, search, sorting, and rich filter metadata are not implemented by this compatibility view. Use `/reports/students/{id}` and `/reports/classes/{id}` for canonical report-card data.
+The handler now supports all frontend filters: `termId`, `classId`, `subjectId`, `componentId`, `teacherId`, `status`, `scoreMin`, `scoreMax`, `search`, `sortField`, `sortOrder`, `page`, `perPage`.
 
 **Query Parameters:**
 
-- `subjectId` (string)
-- `componentId` (string)
+- `termId` (string): Filter by term
+- `classId` (string): Filter by class
+- `subjectId` (string): Filter by subject
+- `componentId` (string): Filter by component
+- `teacherId` (string): Filter by teacher
+- `status` (string): Filter by status (PASS, REMEDIAL, FAIL)
+- `scoreMin` (number): Minimum score
+- `scoreMax` (number): Maximum score
+- `search` (string): Search by student name/NIS/component
+- `sortField` (string): Sort field (score, studentName, subjectName, componentName, lastUpdated)
+- `sortOrder` (string): Sort order (ascend, descend)
+- `page` (int): Page number (default: 1)
+- `perPage` (int): Page size (default: 20)
 
 **Response (200):**
 
@@ -845,30 +885,11 @@ The current handler supports `subjectId` and `componentId` filtering and calcula
 {
   "context": {
     "termId": "term_2024_1",
-    "termName": "Tahun Pelajaran 2024/2025 Semester 1",
-    "termLabel": "2024/2025 • Semester 1",
     "classId": "class_x_ipa_1",
-    "className": "Kelas X IPA-1",
-    "subjectId": "subject_mat",
-    "subjectName": "Matematika",
-    "teacherId": "teacher_001",
-    "teacherName": "Pak Budi Santoso"
+    "subjectId": "subject_mat"
   },
   "summary": {
     "averageScore": 78.5,
-    "highestScore": {
-      "score": 95,
-      "studentId": "stu_001",
-      "studentName": "Siswa A",
-      "componentName": "UTS",
-      "componentCategory": "UTS"
-    },
-    "lowestScore": {
-      "score": 55,
-      "studentId": "stu_030",
-      "studentName": "Siswa Z",
-      "componentName": "UH 1"
-    },
     "belowKkmCount": 8,
     "componentCount": 5,
     "remedialCount": 5,
@@ -935,6 +956,15 @@ The current handler supports `subjectId` and `componentId` filtering and calcula
   "appliedFilters": {
     "termId": "term_2024_1",
     "classId": "class_x_ipa_1",
+    "subjectId": "subject_mat",
+    "componentId": "comp_uts_mat_xipa1",
+    "teacherId": "teacher_001",
+    "status": "PASS",
+    "scoreMin": 70,
+    "scoreMax": 100,
+    "search": "aditya",
+    "sortField": "score",
+    "sortOrder": "descend",
     "page": 1,
     "perPage": 25
   }
@@ -1463,33 +1493,50 @@ for historical reporting.
 
 ### GET /api/v1/export/students
 
-**Export students data (unfiltered CSV compatibility download)**
+**Export students data (CSV with optional filters)**
 
-This browser-compatibility endpoint always streams the complete students table as
-`text/csv`. Query parameters such as `format`, `classId`, and `status` are not
-implemented and are ignored; XLSX output is not supported. Use the asynchronous
-report flow under `/reports/generate` and `/export/{token}` when filtered or
-non-CSV output is required.
+This browser-compatibility endpoint streams students as `text/csv` with optional query filters. For non-CSV output or complex reports, use the asynchronous report flow under `/reports/generate` and `/export/{token}`.
 
-**Response (200):** Returns an unfiltered CSV file download.
+**Query Parameters:**
+
+- `classId` (string): Filter by class
+- `active` (bool): Filter by active state
+- `gender` (string): Filter by gender
+
+**Response (200):** Returns a CSV file download.
 
 ---
 
 ### GET /api/v1/export/grades
 
-**Export grades data (unfiltered CSV compatibility download)**
+**Export grades data (CSV with optional filters)**
 
-The endpoint always streams the complete grades table as `text/csv`; filtering,
-`format=xlsx`, and other query parameters are not supported.
+The endpoint streams grades as `text/csv` with optional query filters.
+
+**Query Parameters:**
+
+- `classId` (string): Filter by class
+- `subjectId` (string): Filter by subject
+- `componentId` (string): Filter by component
+- `status` (string): Filter by status
+
+**Response (200):** Returns a CSV file download.
 
 ---
 
 ### GET /api/v1/export/attendance
 
-**Export attendance data (unfiltered CSV compatibility download)**
+**Export attendance data (CSV with optional filters)**
 
-The endpoint always streams the complete daily attendance table as `text/csv`;
-filtering, `format=xlsx`, and other query parameters are not supported.
+The endpoint streams daily attendance as `text/csv` with optional query filters.
+
+**Query Parameters:**
+
+- `classId` (string): Filter by class
+- `dateFrom` (string): Filter by date from (RFC3339)
+- `dateTo` (string): Filter by date to (RFC3339)
+
+**Response (200):** Returns a CSV file download.
 
 ---
 
@@ -2051,6 +2098,6 @@ GET /api/v1/students?search=aditya
 
 **Total Endpoints: 100+**
 
-**Last Updated:** 2026-08-02
-**Document Version:** 1.1.0
+**Last Updated:** 2026-08-08
+**Document Version:** 1.2.0
 **Maintained By:** Development Team

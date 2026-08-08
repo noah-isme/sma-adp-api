@@ -18,10 +18,14 @@ type Teacher struct {
 
 // TeacherFilter captures filtering options for listing teachers.
 type TeacherFilter struct {
-	Search    string
-	Active    *bool
-	Page      int
-	PageSize  int
-	SortBy    string
-	SortOrder string
+	Search       string
+	Active       *bool
+	SubjectID    string
+	Track        string
+	Availability string
+	HomeroomClassID string
+	Page         int
+	PageSize     int
+	SortBy       string
+	SortOrder    string
 }

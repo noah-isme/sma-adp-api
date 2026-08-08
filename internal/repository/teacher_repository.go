@@ -38,6 +38,22 @@ func (r *TeacherRepository) List(ctx context.Context, filter models.TeacherFilte
 		conditions = append(conditions, fmt.Sprintf("(LOWER(full_name) LIKE $%d OR LOWER(email) LIKE $%d OR LOWER(COALESCE(nip, '')) LIKE $%d)", len(args)+1, len(args)+1, len(args)+1))
 		args = append(args, search)
 	}
+	if filter.SubjectID != "" {
+		conditions = append(conditions, fmt.Sprintf("expertise ILIKE $%d", len(args)+1))
+		args = append(args, "%"+filter.SubjectID+"%")
+	}
+	if filter.Track != "" {
+		conditions = append(conditions, fmt.Sprintf("expertise ILIKE $%d", len(args)+1))
+		args = append(args, "%"+filter.Track+"%")
+	}
+	if filter.Availability != "" {
+		conditions = append(conditions, fmt.Sprintf("expertise ILIKE $%d", len(args)+1))
+		args = append(args, "%"+filter.Availability+"%")
+	}
+	if filter.HomeroomClassID != "" {
+		conditions = append(conditions, fmt.Sprintf("id IN (SELECT teacher_id FROM classes WHERE id = $%d)", len(args)+1))
+		args = append(args, filter.HomeroomClassID)
+	}
 
 	if len(conditions) > 0 {
 		base += " AND " + strings.Join(conditions, " AND ")

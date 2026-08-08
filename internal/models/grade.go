@@ -71,10 +71,21 @@ type GradeFinal struct {
 
 // GradeFilter allows querying of grade entries.
 type GradeFilter struct {
-	ID           string
-	EnrollmentID string
-	SubjectID    string
-	ComponentID  string
+	ID            string
+	EnrollmentID  string
+	SubjectID     string
+	ComponentID   string
+	TermID        string
+	ClassID       string
+	TeacherID     string
+	Status        string
+	ScoreMin      *float64
+	ScoreMax      *float64
+	Search        string
+	SortBy        string
+	SortOrder     string
+	Page          int
+	PageSize      int
 }
 
 // FinalGradeFilter scopes recalculation/finalisation queries.

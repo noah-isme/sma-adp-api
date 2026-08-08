@@ -37,6 +37,26 @@ func (r *StudentRepository) List(ctx context.Context, filter models.StudentFilte
 		conditions = append(conditions, fmt.Sprintf("s.active = $%d", len(args)+1))
 		args = append(args, *filter.Active)
 	}
+	if filter.Gender != "" {
+		conditions = append(conditions, fmt.Sprintf("s.gender = $%d", len(args)+1))
+		args = append(args, filter.Gender)
+	}
+	if filter.Track != "" {
+		conditions = append(conditions, fmt.Sprintf("c.track = $%d", len(args)+1))
+		args = append(args, filter.Track)
+	}
+	if filter.Guardian != "" {
+		conditions = append(conditions, fmt.Sprintf("(LOWER(s.address) LIKE $%d OR LOWER(s.phone) LIKE $%d)", len(args)+1, len(args)+1))
+		args = append(args, "%"+strings.ToLower(filter.Guardian)+"%")
+	}
+	if filter.BirthYearStart != nil {
+		conditions = append(conditions, fmt.Sprintf("EXTRACT(YEAR FROM s.birth_date) >= $%d", len(args)+1))
+		args = append(args, *filter.BirthYearStart)
+	}
+	if filter.BirthYearEnd != nil {
+		conditions = append(conditions, fmt.Sprintf("EXTRACT(YEAR FROM s.birth_date) <= $%d", len(args)+1))
+		args = append(args, *filter.BirthYearEnd)
+	}
 	if filter.Search != "" {
 		conditions = append(conditions, fmt.Sprintf("(LOWER(s.full_name) LIKE $%d OR LOWER(s.nis) LIKE $%d)", len(args)+1, len(args)+1))
 		args = append(args, "%"+strings.ToLower(filter.Search)+"%")
@@ -48,7 +68,9 @@ func (r *StudentRepository) List(ctx context.Context, filter models.StudentFilte
 	allowedSorts := map[string]string{
 		"full_name":  "s.full_name",
 		"nis":        "s.nis",
+		"birth_date": "s.birth_date",
 		"created_at": "s.created_at",
+		"gender":     "s.gender",
 	}
 	if sortBy == "" {
 		sortBy = "created_at"
@@ -72,8 +94,8 @@ func (r *StudentRepository) List(ctx context.Context, filter models.StudentFilte
 	offset := (page - 1) * size
 
 	query := fmt.Sprintf(`SELECT s.id, s.nis, s.full_name, s.gender, s.birth_date, s.address, s.phone, s.active, s.created_at, s.updated_at,
-        e.class_id AS current_class_id, c.name AS current_class_name, e.term_id AS current_term_id, e.joined_at
-        %s ORDER BY %s %s LIMIT %d OFFSET %d`, base, column, order, size, offset)
+	        e.class_id AS current_class_id, c.name AS current_class_name, e.term_id AS current_term_id, e.joined_at
+	        %s ORDER BY %s %s LIMIT %d OFFSET %d`, base, column, order, size, offset)
 
 	var students []models.StudentDetail
 	if err := r.db.SelectContext(ctx, &students, query, args...); err != nil {
@@ -91,11 +113,11 @@ func (r *StudentRepository) List(ctx context.Context, filter models.StudentFilte
 // FindByID fetches a student detail by ID.
 func (r *StudentRepository) FindByID(ctx context.Context, id string) (*models.StudentDetail, error) {
 	query := `SELECT s.id, s.nis, s.full_name, s.gender, s.birth_date, s.address, s.phone, s.active, s.created_at, s.updated_at,
-        e.class_id AS current_class_id, c.name AS current_class_name, e.term_id AS current_term_id, e.joined_at
-        FROM students s
-        LEFT JOIN enrollments e ON e.student_id = s.id AND e.status = $2
-        LEFT JOIN classes c ON c.id = e.class_id
-        WHERE s.id = $1`
+	        e.class_id AS current_class_id, c.name AS current_class_name, e.term_id AS current_term_id, e.joined_at
+	        FROM students s
+	        LEFT JOIN enrollments e ON e.student_id = s.id AND e.status = $2
+	        LEFT JOIN classes c ON c.id = e.class_id
+	        WHERE s.id = $1`
 	var detail models.StudentDetail
 	if err := r.db.GetContext(ctx, &detail, query, id, models.EnrollmentStatusActive); err != nil {
 		return nil, err
@@ -132,7 +154,7 @@ func (r *StudentRepository) Create(ctx context.Context, student *models.Student)
 	}
 	student.UpdatedAt = now
 	const query = `INSERT INTO students (id, nis, full_name, gender, birth_date, address, phone, active, created_at, updated_at)
-        VALUES (:id, :nis, :full_name, :gender, :birth_date, :address, :phone, :active, :created_at, :updated_at)`
+	        VALUES (:id, :nis, :full_name, :gender, :birth_date, :address, :phone, :active, :created_at, :updated_at)`
 	if _, err := r.db.NamedExecContext(ctx, query, student); err != nil {
 		return fmt.Errorf("create student: %w", err)
 	}

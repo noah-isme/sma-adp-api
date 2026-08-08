@@ -103,6 +103,11 @@ func (h *StudentHandler) List(c *gin.Context) {
 // @Param search query string false "Search by name or NIS"
 // @Param classId query string false "Filter by class"
 // @Param active query bool false "Filter by active state"
+// @Param gender query string false "Filter by gender"
+// @Param track query string false "Filter by track"
+// @Param guardian query string false "Filter by guardian"
+// @Param birthYearStart query int false "Birth year start"
+// @Param birthYearEnd query int false "Birth year end"
 // @Param page query int false "Page"
 // @Param perPage query int false "Page size"
 // @Param sort query string false "Sort field"
@@ -133,14 +138,32 @@ func (h *StudentHandler) Roster(c *gin.Context) {
 		}
 		rows = append(rows, gin.H{"id": student.ID, "nis": student.NIS, "fullName": student.FullName, "gender": student.Gender, "birthDate": student.BirthDate, "classId": classID, "className": className, "status": status, "address": student.Address, "lastUpdated": student.UpdatedAt, "createdAt": student.CreatedAt})
 	}
-	response.JSON(c, http.StatusOK, gin.H{"summary": gin.H{"totalStudents": pagination.TotalCount, "activeStudents": activeCount, "inactiveStudents": len(students) - activeCount, "alumniStudents": 0, "activeRate": percent(activeCount, len(students)), "genderBreakdown": []gin.H{}, "classDistribution": []gin.H{}, "statusBreakdown": []gin.H{}}, "filters": gin.H{"classes": []gin.H{}, "statuses": []gin.H{}, "genders": []gin.H{}, "guardians": []gin.H{}, "birthYears": []gin.H{}, "tracks": []gin.H{}}, "rows": rows, "pagination": gin.H{"page": pagination.Page, "perPage": pagination.PageSize, "total": pagination.TotalCount, "totalPages": pageCount(pagination.TotalCount, pagination.PageSize)}, "appliedFilters": gin.H{"page": pagination.Page, "perPage": pagination.PageSize, "search": filter.Search, "classId": filter.ClassID}}, nil)
+	response.JSON(c, http.StatusOK, gin.H{"summary": gin.H{"totalStudents": pagination.TotalCount, "activeStudents": activeCount, "inactiveStudents": len(students) - activeCount, "alumniStudents": 0, "activeRate": percent(activeCount, len(students)), "genderBreakdown": []gin.H{}, "classDistribution": []gin.H{}, "statusBreakdown": []gin.H{}}, "filters": gin.H{"classes": []gin.H{}, "statuses": []gin.H{}, "genders": []gin.H{}, "guardians": []gin.H{}, "birthYears": []gin.H{}, "tracks": []gin.H{}}, "rows": rows, "pagination": gin.H{"page": pagination.Page, "perPage": pagination.PageSize, "total": pagination.TotalCount, "totalPages": pageCount(pagination.TotalCount, pagination.PageSize)}, "appliedFilters": gin.H{"page": pagination.Page, "perPage": pagination.PageSize, "search": filter.Search, "classId": filter.ClassID, "active": filter.Active, "gender": filter.Gender, "track": filter.Track, "guardian": filter.Guardian, "birthYearStart": filter.BirthYearStart, "birthYearEnd": filter.BirthYearEnd, "sort": filter.SortBy, "order": filter.SortOrder}}, nil)
 }
 
 func studentFilter(c *gin.Context) models.StudentFilter {
-	filter := models.StudentFilter{Search: strings.TrimSpace(c.Query("search")), ClassID: c.Query("classId"), SortBy: c.Query("sort"), SortOrder: c.Query("order")}
+	filter := models.StudentFilter{
+		Search:         strings.TrimSpace(c.Query("search")),
+		ClassID:        c.Query("classId"),
+		Gender:         c.Query("gender"),
+		Track:          c.Query("track"),
+		Guardian:       c.Query("guardian"),
+		SortBy:         c.Query("sort"),
+		SortOrder:      c.Query("order"),
+	}
 	if active := c.Query("active"); active != "" {
 		v := active == "true"
 		filter.Active = &v
+	}
+	if birthYearStart := c.Query("birthYearStart"); birthYearStart != "" {
+		if v, err := strconv.Atoi(birthYearStart); err == nil {
+			filter.BirthYearStart = &v
+		}
+	}
+	if birthYearEnd := c.Query("birthYearEnd"); birthYearEnd != "" {
+		if v, err := strconv.Atoi(birthYearEnd); err == nil {
+			filter.BirthYearEnd = &v
+		}
 	}
 	if page, err := strconv.Atoi(c.DefaultQuery("page", "1")); err == nil {
 		filter.Page = page

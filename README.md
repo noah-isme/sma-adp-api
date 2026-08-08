@@ -94,7 +94,7 @@ gated screen. Set the flags for the modules you intend to run.
 | `ENABLE_HOMEROOMS` | `false` | `GET /homerooms`, `GET /homerooms/{classId}`, `POST /homerooms` | `homeroom-assignments` | none |
 | `ENABLE_CONFIGURATION_API` | `false` | `GET /configuration`, `GET /configuration/{key}`, `PUT /configuration/{key}`, `PUT /configuration/bulk` | `configuration` | `CONFIG_ACTIVE_TERM_ID`, `CONFIG_DEFAULT_DASHBOARD_TERM_ID`, `CONFIG_DEFAULT_CALENDAR_TERM_ID` seed defaults |
 | `ENABLE_CALENDAR_ALIAS` | `false` | `GET /calendar` | `calendar` | none |
-| `ENABLE_ATTENDANCE_ALIAS` | `false` | `GET /attendance`, `GET /attendance/daily`, `POST /attendance/daily`, `POST /attendance/daily/bulk`, `POST /attendance/subject`, `POST /attendance/subject/bulk`, `GET /attendance/subject`, `GET /attendance/subject/summary`, `GET /attendance/subject/{id}`, `DELETE /attendance/subject/{id}`, and the `POST/PUT/PATCH /attendance` compatibility routes | `attendance-daily`, `attendance-lesson`, `attendance-create`, `attendance-edit`, `attendance-analytics` | none |
+| `ENABLE_ATTENDANCE_ALIAS` | `false` | `GET /attendance`, `GET /attendance/daily`, `POST /attendance/daily`, `POST /attendance/daily/bulk`, `POST /attendance/subject`, `POST /attendance/subject/bulk`, `GET /attendance/subject`, `GET /attendance/subject/summary`, `GET /attendance/subject/{id}`, `DELETE /attendance/subject/{id}`, and the `POST/PUT/PATCH /attendance` compatibility routes | `attendance-daily`, `attendance-lesson`, `attendance-create`, `attendance-edit` | none |
 
 Notes:
 

@@ -51,7 +51,7 @@ func (r *TeacherRepository) List(ctx context.Context, filter models.TeacherFilte
 		args = append(args, "%"+filter.Availability+"%")
 	}
 	if filter.HomeroomClassID != "" {
-		conditions = append(conditions, fmt.Sprintf("id IN (SELECT teacher_id FROM classes WHERE id = $%d)", len(args)+1))
+		conditions = append(conditions, fmt.Sprintf("id IN (SELECT homeroom_teacher_id FROM classes WHERE id = $%d)", len(args)+1))
 		args = append(args, filter.HomeroomClassID)
 	}
 
@@ -64,18 +64,26 @@ func (r *TeacherRepository) List(ctx context.Context, filter models.TeacherFilte
 		sortBy = "created_at"
 	}
 	allowedSorts := map[string]string{
-		"full_name":  "full_name",
-		"email":      "email",
-		"created_at": "created_at",
-		"updated_at": "updated_at",
+		"full_name":       "full_name",
+		"fullName":        "full_name",
+		"email":           "email",
+		"created_at":      "created_at",
+		"updated_at":      "updated_at",
+		"lastUpdated":     "updated_at",
+		"mainSubjectName": "expertise",
+		"status":          "active",
+		"availability":    "expertise",
 	}
 	column, ok := allowedSorts[sortBy]
 	if !ok {
 		column = "created_at"
 	}
 
-	order := strings.ToUpper(filter.SortOrder)
-	if order != "ASC" && order != "DESC" {
+	order := "DESC"
+	switch strings.ToLower(strings.TrimSpace(filter.SortOrder)) {
+	case "asc", "ascend":
+		order = "ASC"
+	case "desc", "descend":
 		order = "DESC"
 	}
 

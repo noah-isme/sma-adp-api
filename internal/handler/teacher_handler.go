@@ -89,6 +89,9 @@ func NewTeacherHandler(teachers *service.TeacherService, assignments *service.Te
 // @Success 200 {object} response.Envelope
 // @Router /teachers [get]
 func (h *TeacherHandler) List(c *gin.Context) {
+	if !validateRosterStatus(c) {
+		return
+	}
 	filter := teacherFilter(c)
 
 	teachers, pagination, err := h.teachers.List(c.Request.Context(), filter)
@@ -105,18 +108,24 @@ func (h *TeacherHandler) List(c *gin.Context) {
 // @Tags Teachers
 // @Produce json
 // @Param search query string false "Search by name, email, or NIP"
-// @Param active query bool false "Filter by active state"
+// @Param status query string false "Filter by status (active or inactive)"
+// @Param active query bool false "Legacy alias for status"
 // @Param subjectId query string false "Filter by subject"
 // @Param track query string false "Filter by track"
 // @Param availability query string false "Filter by availability"
 // @Param homeroomClassId query string false "Filter by homeroom class"
 // @Param page query int false "Page"
 // @Param perPage query int false "Page size"
-// @Param sort query string false "Sort field"
-// @Param order query string false "Sort order"
+// @Param sortField query string false "Sort field"
+// @Param sortOrder query string false "Sort order (ascend or descend)"
+// @Param sort query string false "Legacy alias for sortField"
+// @Param order query string false "Legacy alias for sortOrder"
 // @Success 200 {object} response.Envelope
 // @Router /teachers/roster [get]
 func (h *TeacherHandler) Roster(c *gin.Context) {
+	if !validateRosterStatus(c) {
+		return
+	}
 	filter := teacherFilter(c)
 	teachers, pagination, err := h.teachers.List(c.Request.Context(), filter)
 	if err != nil {
@@ -140,7 +149,7 @@ func (h *TeacherHandler) Roster(c *gin.Context) {
 		}
 		rows = append(rows, gin.H{"id": teacher.ID, "fullName": teacher.FullName, "nip": nip, "email": teacher.Email, "phone": phone, "status": status, "tracks": []string{}, "assignmentCount": 0, "availability": "MEDIUM", "lastUpdated": teacher.UpdatedAt, "createdAt": teacher.CreatedAt})
 	}
-	response.JSON(c, http.StatusOK, gin.H{"summary": gin.H{"totalTeachers": pagination.TotalCount, "activeTeachers": activeCount, "inactiveTeachers": len(teachers) - activeCount, "homeroomTeachers": 0, "activeRate": rosterPercent(activeCount, len(teachers)), "subjectDistribution": []gin.H{}, "trackDistribution": []gin.H{}, "availabilityBreakdown": []gin.H{}}, "filters": gin.H{"subjects": []gin.H{}, "statuses": []gin.H{}, "tracks": []gin.H{}, "availabilities": []gin.H{}, "homerooms": []gin.H{}}, "rows": rows, "pagination": gin.H{"page": pagination.Page, "perPage": pagination.PageSize, "total": pagination.TotalCount, "totalPages": teacherPageCount(pagination.TotalCount, pagination.PageSize)}, "appliedFilters": gin.H{"page": pagination.Page, "perPage": pagination.PageSize, "search": filter.Search, "active": filter.Active, "subjectId": filter.SubjectID, "track": filter.Track, "availability": filter.Availability, "homeroomClassId": filter.HomeroomClassID, "sort": filter.SortBy, "order": filter.SortOrder}}, nil)
+	response.JSON(c, http.StatusOK, gin.H{"summary": gin.H{"totalTeachers": pagination.TotalCount, "activeTeachers": activeCount, "inactiveTeachers": len(teachers) - activeCount, "homeroomTeachers": 0, "activeRate": rosterPercent(activeCount, len(teachers)), "subjectDistribution": []gin.H{}, "trackDistribution": []gin.H{}, "availabilityBreakdown": []gin.H{}}, "filters": gin.H{"subjects": []gin.H{}, "statuses": []gin.H{{"value": "active", "label": "Aktif"}, {"value": "inactive", "label": "Tidak aktif"}}, "tracks": []gin.H{}, "availabilities": []gin.H{}, "homerooms": []gin.H{}}, "rows": rows, "pagination": gin.H{"page": pagination.Page, "perPage": pagination.PageSize, "total": pagination.TotalCount, "totalPages": teacherPageCount(pagination.TotalCount, pagination.PageSize)}, "appliedFilters": gin.H{"page": pagination.Page, "perPage": pagination.PageSize, "search": filter.Search, "status": rosterStatusValue(c), "active": filter.Active, "subjectId": filter.SubjectID, "track": filter.Track, "availability": filter.Availability, "homeroomClassId": filter.HomeroomClassID, "sortField": filter.SortBy, "sortOrder": filter.SortOrder}}, nil)
 }
 
 func teacherFilter(c *gin.Context) models.TeacherFilter {
@@ -153,16 +162,16 @@ func teacherFilter(c *gin.Context) models.TeacherFilter {
 		homeroomClassID = c.Query("homeroom")
 	}
 	filter := models.TeacherFilter{
-		Search:         strings.TrimSpace(c.Query("search")),
-		SubjectID:      subjectID,
-		Track:          c.Query("track"),
-		Availability:   c.Query("availability"),
+		Search:          strings.TrimSpace(c.Query("search")),
+		SubjectID:       subjectID,
+		Track:           c.Query("track"),
+		Availability:    c.Query("availability"),
 		HomeroomClassID: homeroomClassID,
-		SortBy:         c.Query("sort"),
-		SortOrder:      c.Query("order"),
+		SortBy:          firstQuery(c, "sortField", "sort"),
+		SortOrder:       firstQuery(c, "sortOrder", "order"),
 	}
-	if active := c.Query("active"); active != "" {
-		v := strings.EqualFold(active, "true")
+	if active := firstQuery(c, "status", "active"); active != "" {
+		v := strings.EqualFold(active, "true") || strings.EqualFold(active, "active")
 		filter.Active = &v
 	}
 	if page, err := strconv.Atoi(c.DefaultQuery("page", "1")); err == nil {

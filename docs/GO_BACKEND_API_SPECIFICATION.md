@@ -2,7 +2,7 @@
 
 > **Admin Panel SMA - Complete API Endpoints Documentation**  
 > Version: 1.2.0
-> Last Updated: 2026-08-02
+> Last Updated: 2026-08-09
 > Target: Go + Fiber/Gin + PostgreSQL + Redis
 
 ---
@@ -164,14 +164,16 @@ Authorization: Bearer {accessToken}
 Authorization: Bearer {accessToken}
 ```
 
-**Response (200):**
+**Request:**
 
 ```json
 {
-  "success": true,
-  "message": "Logged out successfully"
+  "refresh_token": "eyJhbGciOiJIUzI1NiIs..."
 }
 ```
+
+**Response (204):** No content. The refresh token is revoked for the
+authenticated user; a later refresh attempt with that token is rejected.
 
 ---
 
@@ -325,10 +327,10 @@ The Go API keeps the existing admin-panel contracts available while the frontend
 | Enrollment edit | `PUT /enrollments/:id` | Accepts `class_id` (or legacy `target_class_id`) and performs the validated transfer workflow. |
 | Attendance write | `POST /attendance`, `PUT/PATCH /attendance/:id` | Compatibility upsert mapped to daily attendance. Canonical bulk and subject routes remain available under `/attendance/daily` and `/attendance/subject`. |
 | Teacher preferences | `POST /teacher-preferences`, `PUT /teacher-preferences/:id` | Compatibility upsert; per-teacher canonical route is `PUT /teachers/:id/preferences`. |
-| Student/teacher rosters | `GET /students/roster`, `GET /teachers/roster` | Admin-compatible roster responses with full filter support (gender, track, guardian, birthYearStart/End for students; subjectId, track, availability, homeroomClassId for teachers); canonical list resources remain available. |
-| Grade report/edit/delete | `GET /grades/report`, `PUT/PATCH /grades/:id`, `DELETE /grades/:id` | Admin-compatible grade-list view with full filter support (termId, classId, subjectId, componentId, teacherId, status, scoreMin, scoreMax, search, sortField, sortOrder); PUT/PATCH uses the validated grade upsert payload. DELETE soft-deletes the entry, recalculates its non-finalized final grade, and is rejected after finalization. |
+| Student/teacher rosters | `GET /students/roster`, `GET /teachers/roster` | Admin-compatible roster responses. `status`, `sortField`, and `sortOrder` are accepted with `active`, `sort`, and `order` kept as legacy aliases. Student demographic/guardian filters and teacher subject/track/availability/homeroom filters are applied; aggregate metadata and some teacher row fields remain compatibility placeholders. |
+| Grade report/edit/delete | `GET /grades/report`, `PUT/PATCH /grades/:id`, `DELETE /grades/:id` | Report filters, frontend sort aliases, status predicates, enriched display joins, and database-backed pagination totals are implemented. Filter option metadata and score distribution remain partial; KKM is the shared compatibility threshold of 75 until the schema stores a per-configuration KKM. PUT/PATCH uses the validated grade upsert payload. DELETE soft-deletes the entry, recalculates its non-finalized final grade, and is rejected after finalization. |
 | Grade component edit/delete | `PUT/DELETE /grade-components/:id` | Updates an active component; DELETE soft-deletes it so historical grade/config references remain intact. |
-| Browser CSV exports | `GET /export/students`, `/export/grades`, `/export/attendance` | Direct CSV downloads with filter support (classId, active, gender for students; classId, subjectId, componentId, status for grades; classId, dateFrom, dateTo for attendance); report-job token downloads remain under `/export/{token}`. |
+| Browser CSV exports | `GET /export/students`, `/export/grades`, `/export/attendance` | Direct CSV downloads with filter support (classId, status/active, gender for students; classId, subjectId, componentId, status for grades; classId, dateFrom, dateTo for attendance); grade status uses PASS/REMEDIAL/FAIL with KKM 75 and report-job token downloads remain under `/export/{token}`. |
 | CSV imports | `POST /students/import`, `POST /teachers/import` | Row-level validation summary; see `FE_BE_MAPPING.md` for required columns. |
 
 The admin data provider unwraps `data` from the response envelope and converts browser camelCase fields to the API's snake_case fields. New integrations should use the canonical snake_case contract directly.
@@ -453,21 +455,23 @@ Set both flags to `true` when enabling a paired capability. Omitting a flag is e
 
 **Get students roster**
 
-The handler supports all documented filters: `search`, `classId`, `active`, `gender`, `track`, `guardian`, `birthYearStart`, `birthYearEnd`, `page`/`perPage`, `sort`, `order`.
+The handler accepts `search`, `classId`, `status` (active/inactive), the legacy `active` alias, `gender`, `track`, `guardian`, `birthYearStart`, `birthYearEnd`, `page`/`perPage`, `sortField`, `sortOrder`, and the legacy `sort`/`order` aliases. The summary distribution and filter catalog remain compatibility-level placeholders.
 
 **Query Parameters:**
 
 - `page`, `perPage`
 - `classId` (string): Filter by class
 - `search` (string): Search by name or NIS
-- `active` (bool): Filter by active state
+- `status` (string): Filter by `active` or `inactive`
+- `active` (bool): Legacy alias for `status`
 - `gender` (string): Filter by gender (M, F)
 - `track` (string): Filter by track/program
 - `guardian` (string): Filter by guardian name/phone
 - `birthYearStart` (int): Filter by birth year start
 - `birthYearEnd` (int): Filter by birth year end
-- `sort` (string): Sort field (fullName, nis, birthDate, createdAt, gender)
-- `order` (string): Sort order (asc, desc)
+- `sortField` (string): Sort field (`fullName`, `className`, `status`, `nis`, `lastUpdated`)
+- `sortOrder` (string): Sort order (`ascend`, `descend`)
+- `sort`, `order`: Legacy aliases for `sortField`, `sortOrder`
 
 **Response (200):**
 
@@ -622,19 +626,21 @@ The handler supports all documented filters: `search`, `classId`, `active`, `gen
 
 **Get teachers roster**
 
-The handler supports all documented filters: `search`, `active`, `subjectId`, `track`, `availability`, `homeroomClassId`, `page`/`perPage`, `sort`, `order`.
+The handler accepts `search`, `status` (active/inactive), the legacy `active` alias, `subjectId`, `track`, `availability`, `homeroomClassId`, `page`/`perPage`, `sortField`, `sortOrder`, and the legacy `sort`/`order` aliases. Assignment counts, distributions, and some availability/subject metadata remain compatibility-level placeholders.
 
 **Query Parameters:**
 
 - `page`, `perPage`
 - `search` (string): Search by name, email, or NIP
-- `active` (bool): Filter by active state
+- `status` (string): Filter by `active` or `inactive`
+- `active` (bool): Legacy alias for `status`
 - `subjectId` (string): Filter by subject/expertise
 - `track` (string): Filter by track/program
 - `availability` (string): Filter by availability (HIGH, MEDIUM, LOW)
 - `homeroomClassId` (string): Filter by homeroom class
-- `sort` (string): Sort field (fullName, email, createdAt, updatedAt)
-- `order` (string): Sort order (asc, desc)
+- `sortField` (string): Sort field (`fullName`, `mainSubjectName`, `status`, `availability`, `lastUpdated`)
+- `sortOrder` (string): Sort order (`ascend`, `descend`)
+- `sort`, `order`: Legacy aliases for `sortField`, `sortOrder`
 
 **Response (200):**
 
@@ -856,7 +862,7 @@ The handler supports all documented filters: `search`, `active`, `subjectId`, `t
 
 **Get grade report compatibility view**
 
-The handler now supports all frontend filters: `termId`, `classId`, `subjectId`, `componentId`, `teacherId`, `status`, `scoreMin`, `scoreMax`, `search`, `sortField`, `sortOrder`, `page`, `perPage`.
+The handler applies all frontend filters: `termId`, `classId`, `subjectId`, `componentId`, `teacherId`, `status`, `scoreMin`, `scoreMax`, `search`, `sortField`, `sortOrder`, `page`, and `perPage`. Status values are `PASS`, `REMEDIAL`, or `FAIL`; `CAUTION` is accepted only as a legacy read alias for `REMEDIAL`. Filter option metadata and score distribution are still partial.
 
 **Query Parameters:**
 
@@ -890,8 +896,8 @@ The handler now supports all frontend filters: `termId`, `classId`, `subjectId`,
     "remedialCount": 5,
     "statusBreakdown": [
       { "code": "PASS", "label": "✅ Lulus", "count": 22 },
-      { "code": "CAUTION", "label": "⚠️ Perlu perhatian", "count": 3 },
-      { "code": "REMEDIAL", "label": "❌ Remedial", "count": 5 }
+      { "code": "REMEDIAL", "label": "⚠️ Remedial", "count": 3 },
+      { "code": "FAIL", "label": "❌ Tidak tuntas", "count": 5 }
     ],
     "distribution": [
       { "bucket": "90-100", "from": 90, "to": 100, "count": 5 },
@@ -1495,7 +1501,8 @@ This browser-compatibility endpoint streams students as `text/csv` with optional
 **Query Parameters:**
 
 - `classId` (string): Filter by class
-- `active` (bool): Filter by active state
+- `status` (string): Filter by `active` or `inactive`
+- `active` (bool): Legacy alias for `status`
 - `gender` (string): Filter by gender
 
 **Response (200):** Returns a CSV file download.
@@ -1513,7 +1520,7 @@ The endpoint streams grades as `text/csv` with optional query filters.
 - `classId` (string): Filter by class
 - `subjectId` (string): Filter by subject
 - `componentId` (string): Filter by component
-- `status` (string): Filter by status
+- `status` (string): Filter by `PASS`, `REMEDIAL`, or `FAIL` (`CAUTION` is a legacy alias)
 
 **Response (200):** Returns a CSV file download.
 
@@ -1926,7 +1933,12 @@ termId: term_2024_1
 
 ## 🔐 Authentication
 
-All endpoints (except `/auth/login`) require JWT token:
+Health/readiness, Swagger (outside production), feature discovery, and the public
+authentication entry points do not require JWT. Public authentication routes are
+`/auth/login`, `/auth/refresh`, `/auth/forgot-password`, `/auth/reset-password`, and
+the corresponding `/portal/auth/*` login/refresh/reset routes. Authenticated routes
+such as `/auth/me`, `/auth/logout`, `/auth/change-password`, portal profile/link
+routes, and resource APIs require the appropriate JWT middleware:
 
 ```http
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
@@ -1936,9 +1948,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 ## 🎯 Rate Limiting
 
-- **Anonymous**: 100 requests/hour
-- **Authenticated**: 1000 requests/hour
-- **Admin**: 5000 requests/hour
+The Go application does not currently enforce application-level rate limits or
+login lockout. The API reserves `429 Too Many Requests` for a deployment gateway,
+WAF, or middleware that owns those controls. Production runbooks must name that
+owner and record the configured limits; this specification does not claim fixed
+anonymous/authenticated/admin quotas.
 
 ---
 

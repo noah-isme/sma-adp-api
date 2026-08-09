@@ -152,6 +152,19 @@ func TestAuthServiceRefreshToken(t *testing.T) {
 	assert.True(t, repo.refreshTokens["token"].Revoked)
 }
 
+func TestAuthServiceLogoutRevokesRefreshToken(t *testing.T) {
+	repo := &mockAuthRepo{refreshTokens: make(map[string]*models.RefreshToken)}
+	repo.refreshTokens["token"] = &models.RefreshToken{ID: "rt1", UserID: "u1", Token: "token", ExpiresAt: time.Now().Add(time.Hour)}
+	svc := NewAuthService(repo, nil, validator.New(), zap.NewNop(), AuthConfig{AccessTokenSecret: "secret", AccessTokenExpiry: time.Hour, RefreshTokenExpiry: time.Hour})
+
+	require.NoError(t, svc.Logout(context.Background(), "token", "u1", models.LoginRequest{}))
+	assert.True(t, repo.refreshTokens["token"].Revoked)
+
+	_, err := svc.RefreshToken(context.Background(), models.RefreshTokenRequest{RefreshToken: "token"})
+	require.Error(t, err)
+	assert.Equal(t, appErrors.ErrUnauthorized.Code, appErrors.FromError(err).Code)
+}
+
 func TestAuthServiceChangePassword(t *testing.T) {
 	oldHash, _ := bcrypt.GenerateFromPassword([]byte("old"), bcrypt.DefaultCost)
 	repo := &mockAuthRepo{userByEmail: &models.User{ID: "u1", PasswordHash: string(oldHash), Active: true}}

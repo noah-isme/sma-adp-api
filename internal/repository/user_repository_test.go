@@ -63,6 +63,33 @@ func TestCreateRefreshToken(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
+func TestCreateAuditLogAllowsEmptyJSONColumns(t *testing.T) {
+	db, mock, cleanup := newMock(t)
+	defer cleanup()
+	repo := NewUserRepository(db)
+	now := time.Now()
+
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO audit_logs (id, user_id, action, resource, resource_id, old_values, new_values, ip_address, user_agent, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)")).
+		WithArgs("audit-1", "user-1", "LOGIN", "auth", "user-1", nil, "{\"status\":\"success\"}", "127.0.0.1", "test", now).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	userID := "user-1"
+	resourceID := "user-1"
+	err := repo.CreateAuditLog(context.Background(), &models.AuditLog{
+		ID:         "audit-1",
+		UserID:     &userID,
+		Action:     models.AuditActionLogin,
+		Resource:   "auth",
+		ResourceID: &resourceID,
+		NewValues:  []byte("{\"status\":\"success\"}"),
+		IPAddress:  "127.0.0.1",
+		UserAgent:  "test",
+		CreatedAt:  now,
+	})
+	require.NoError(t, err)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
 func TestListUsers(t *testing.T) {
 	db, mock, cleanup := newMock(t)
 	defer cleanup()

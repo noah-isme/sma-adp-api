@@ -5,9 +5,12 @@ import (
 	"encoding/csv"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
+
+	"github.com/noah-isme/sma-adp-api/internal/models"
 )
 
 // ExportCompatibilityHandler serves the legacy browser-download routes. They
@@ -25,22 +28,27 @@ func NewExportCompatibilityHandler(db *sqlx.DB) *ExportCompatibilityHandler {
 // @Description Streams students as text/csv with optional filters.
 // @Produce text/csv
 // @Param classId query string false "Filter by class"
-// @Param active query bool false "Filter by active state"
+// @Param status query string false "Filter by status (active or inactive)"
+// @Param active query bool false "Legacy alias for status"
 // @Param gender query string false "Filter by gender"
 // @Success 200 {file} binary
 // @Router /export/students [get]
 func (h *ExportCompatibilityHandler) Students(c *gin.Context) {
 	query := `SELECT s.id, s.nis, s.full_name, s.gender, s.active FROM students s WHERE 1=1`
 	var args []interface{}
-	
+
 	if classId := c.Query("classId"); classId != "" {
-		query += " AND s.id IN (SELECT student_id FROM enrollments WHERE class_id = $1 AND status = 'active')"
+		query += " AND s.id IN (SELECT student_id FROM enrollments WHERE class_id = $1 AND status = 'ACTIVE')"
 		args = append(args, classId)
 	}
-	if active := c.Query("active"); active != "" {
+	if active := firstQuery(c, "status", "active"); active != "" {
+		if !strings.EqualFold(active, "true") && !strings.EqualFold(active, "false") && !strings.EqualFold(active, "active") && !strings.EqualFold(active, "inactive") {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "status must be active or inactive"})
+			return
+		}
 		argIdx := len(args) + 1
 		query += fmt.Sprintf(" AND s.active = $%d", argIdx)
-		args = append(args, active == "true")
+		args = append(args, strings.EqualFold(active, "true") || strings.EqualFold(active, "active"))
 	}
 	if gender := c.Query("gender"); gender != "" {
 		argIdx := len(args) + 1
@@ -48,7 +56,7 @@ func (h *ExportCompatibilityHandler) Students(c *gin.Context) {
 		args = append(args, gender)
 	}
 	query += " ORDER BY s.full_name"
-	
+
 	h.write(c, "students.csv", []string{"id", "nis", "full_name", "gender", "active"}, query, args...)
 }
 
@@ -69,7 +77,7 @@ func (h *ExportCompatibilityHandler) Grades(c *gin.Context) {
 		JOIN enrollments e ON e.id = g.enrollment_id
 		WHERE 1=1 AND g.deleted_at IS NULL`
 	var args []interface{}
-	
+
 	if classId := c.Query("classId"); classId != "" {
 		query += fmt.Sprintf(" AND e.class_id = $%d", len(args)+1)
 		args = append(args, classId)
@@ -82,12 +90,21 @@ func (h *ExportCompatibilityHandler) Grades(c *gin.Context) {
 		query += fmt.Sprintf(" AND g.component_id = $%d", len(args)+1)
 		args = append(args, componentId)
 	}
-	if status := c.Query("status"); status != "" {
-		// Status would need KKM comparison logic - simplified here
-		query += " AND 1=1" // placeholder
+	if status := strings.ToUpper(strings.TrimSpace(c.Query("status"))); status != "" {
+		switch status {
+		case "PASS":
+			query += fmt.Sprintf(" AND g.grade_value >= %v", models.DefaultGradePassMark)
+		case "REMEDIAL", "CAUTION":
+			query += fmt.Sprintf(" AND g.grade_value >= %v AND g.grade_value < %v", models.DefaultGradeKKM, models.DefaultGradePassMark)
+		case "FAIL":
+			query += fmt.Sprintf(" AND g.grade_value < %v", models.DefaultGradeKKM)
+		default:
+			c.JSON(http.StatusBadRequest, gin.H{"error": "status must be PASS, REMEDIAL, or FAIL"})
+			return
+		}
 	}
 	query += " ORDER BY g.updated_at DESC"
-	
+
 	h.write(c, "grades.csv", []string{"id", "enrollment_id", "subject_id", "component_id", "grade_value", "updated_at"}, query, args...)
 }
 
@@ -107,7 +124,7 @@ func (h *ExportCompatibilityHandler) Attendance(c *gin.Context) {
 		JOIN enrollments e ON e.id = da.enrollment_id
 		WHERE 1=1`
 	var args []interface{}
-	
+
 	if classId := c.Query("classId"); classId != "" {
 		query += fmt.Sprintf(" AND e.class_id = $%d", len(args)+1)
 		args = append(args, classId)
@@ -121,7 +138,7 @@ func (h *ExportCompatibilityHandler) Attendance(c *gin.Context) {
 		args = append(args, dateTo)
 	}
 	query += " ORDER BY da.date DESC"
-	
+
 	h.write(c, "attendance.csv", []string{"id", "enrollment_id", "date", "status", "notes", "updated_at"}, query, args...)
 }
 

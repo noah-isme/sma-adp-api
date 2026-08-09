@@ -23,76 +23,126 @@ func NewGradeRepository(db *sqlx.DB) *GradeRepository {
 	return &GradeRepository{db: db}
 }
 
-// List returns grade entries matching the filter.
-func (r *GradeRepository) List(ctx context.Context, filter models.GradeFilter) ([]models.Grade, error) {
-	query := `SELECT g.id, g.enrollment_id, g.subject_id, g.component_id, g.grade_value, g.created_at, g.updated_at, gc.code AS component_code
-	        FROM grades g
-	        JOIN grade_components gc ON gc.id = g.component_id
-	        JOIN enrollments e ON e.id = g.enrollment_id
-	        JOIN classes c ON c.id = e.class_id
-	        JOIN students s ON s.id = e.student_id
-	        WHERE 1=1`
+// gradeReportFromClause centralizes the report joins so list/count/status
+// queries cannot silently diverge. The joins also provide the display fields
+// consumed by the admin report instead of returning IDs as placeholders.
+const gradeReportFromClause = `
+        FROM grades g
+        JOIN grade_components gc ON gc.id = g.component_id
+        JOIN enrollments e ON e.id = g.enrollment_id
+        JOIN classes c ON c.id = e.class_id
+        JOIN students s ON s.id = e.student_id
+        JOIN subjects sub ON sub.id = g.subject_id
+        JOIN terms t ON t.id = e.term_id
+        LEFT JOIN class_subjects cs ON cs.class_id = e.class_id AND cs.subject_id = g.subject_id
+        LEFT JOIN teachers tr ON tr.id = cs.teacher_id
+        LEFT JOIN grade_configs gcfg ON gcfg.class_id = e.class_id AND gcfg.subject_id = g.subject_id AND gcfg.term_id = e.term_id
+        LEFT JOIN grade_config_components gcc ON gcc.grade_config_id = gcfg.id AND gcc.component_id = g.component_id`
+
+func gradeReportSelect() string {
+	return `SELECT g.id, g.enrollment_id, e.student_id, s.full_name AS student_name,
+        s.nis AS student_nis, e.class_id, c.name AS class_name, e.term_id,
+        t.name AS term_name, g.subject_id, sub.name AS subject_name,
+        g.component_id, gc.code AS component_code, gc.name AS component_name,
+        COALESCE(gc.description, '') AS component_description,
+        COALESCE(gcc.weight, 0) AS component_weight,
+        COALESCE(cs.teacher_id, '') AS teacher_id, COALESCE(tr.full_name, '') AS teacher_name,
+        g.grade_value, g.created_at, g.updated_at`
+}
+
+func (r *GradeRepository) gradeReportWhere(filter models.GradeFilter) (string, []interface{}) {
+	where := " WHERE g.deleted_at IS NULL"
 	var args []interface{}
 	if filter.ID != "" {
-		query += fmt.Sprintf(" AND g.id = $%d", len(args)+1)
+		where += fmt.Sprintf(" AND g.id = $%d", len(args)+1)
 		args = append(args, filter.ID)
 	}
 	if filter.EnrollmentID != "" {
-		query += fmt.Sprintf(" AND g.enrollment_id = $%d", len(args)+1)
+		where += fmt.Sprintf(" AND g.enrollment_id = $%d", len(args)+1)
 		args = append(args, filter.EnrollmentID)
 	}
 	if filter.SubjectID != "" {
-		query += fmt.Sprintf(" AND g.subject_id = $%d", len(args)+1)
+		where += fmt.Sprintf(" AND g.subject_id = $%d", len(args)+1)
 		args = append(args, filter.SubjectID)
 	}
 	if filter.ComponentID != "" {
-		query += fmt.Sprintf(" AND g.component_id = $%d", len(args)+1)
+		where += fmt.Sprintf(" AND g.component_id = $%d", len(args)+1)
 		args = append(args, filter.ComponentID)
 	}
 	if filter.TermID != "" {
-		query += fmt.Sprintf(" AND e.term_id = $%d", len(args)+1)
+		where += fmt.Sprintf(" AND e.term_id = $%d", len(args)+1)
 		args = append(args, filter.TermID)
 	}
 	if filter.ClassID != "" {
-		query += fmt.Sprintf(" AND e.class_id = $%d", len(args)+1)
+		where += fmt.Sprintf(" AND e.class_id = $%d", len(args)+1)
 		args = append(args, filter.ClassID)
 	}
 	if filter.TeacherID != "" {
-		query += fmt.Sprintf(" AND c.teacher_id = $%d", len(args)+1)
+		where += fmt.Sprintf(" AND cs.teacher_id = $%d", len(args)+1)
 		args = append(args, filter.TeacherID)
 	}
 	if filter.ScoreMin != nil {
-		query += fmt.Sprintf(" AND g.grade_value >= $%d", len(args)+1)
+		where += fmt.Sprintf(" AND g.grade_value >= $%d", len(args)+1)
 		args = append(args, *filter.ScoreMin)
 	}
 	if filter.ScoreMax != nil {
-		query += fmt.Sprintf(" AND g.grade_value <= $%d", len(args)+1)
+		where += fmt.Sprintf(" AND g.grade_value <= $%d", len(args)+1)
 		args = append(args, *filter.ScoreMax)
 	}
 	if filter.Search != "" {
-		query += fmt.Sprintf(" AND (LOWER(s.full_name) LIKE $%d OR LOWER(s.nis) LIKE $%d OR LOWER(gc.code) LIKE $%d)", len(args)+1, len(args)+1, len(args)+1)
+		where += fmt.Sprintf(" AND (LOWER(s.full_name) LIKE $%d OR LOWER(s.nis) LIKE $%d OR LOWER(gc.code) LIKE $%d OR LOWER(gc.name) LIKE $%d OR LOWER(sub.name) LIKE $%d)", len(args)+1, len(args)+1, len(args)+1, len(args)+1, len(args)+1)
 		args = append(args, "%"+strings.ToLower(filter.Search)+"%")
 	}
-	query += " AND g.deleted_at IS NULL"
+	// The schema does not yet persist a per-config KKM, so report and CSV
+	// compatibility use the shared model thresholds.
+	switch strings.ToUpper(strings.TrimSpace(filter.Status)) {
+	case "PASS":
+		where += fmt.Sprintf(" AND g.grade_value >= %v", models.DefaultGradePassMark)
+	case "REMEDIAL", "CAUTION":
+		where += fmt.Sprintf(" AND g.grade_value >= %v AND g.grade_value < %v", models.DefaultGradeKKM, models.DefaultGradePassMark)
+	case "FAIL":
+		where += fmt.Sprintf(" AND g.grade_value < %v", models.DefaultGradeKKM)
+	}
+	return where, args
+}
 
+func gradeReportSort(filter models.GradeFilter) (string, string) {
 	sortBy := filter.SortBy
 	allowedSorts := map[string]string{
+		"score":          "g.grade_value",
 		"grade_value":    "g.grade_value",
-		"component_code": "gc.code",
+		"studentName":    "s.full_name",
 		"student_name":   "s.full_name",
+		"subjectName":    "sub.name",
+		"subject_name":   "sub.name",
+		"componentName":  "gc.name",
+		"component_name": "gc.name",
+		"lastUpdated":    "g.updated_at",
 		"updated_at":     "g.updated_at",
 	}
 	if sortBy == "" {
-		sortBy = "updated_at"
+		sortBy = "lastUpdated"
 	}
 	column, ok := allowedSorts[sortBy]
 	if !ok {
 		column = "g.updated_at"
 	}
-	order := strings.ToUpper(filter.SortOrder)
-	if order != "ASC" && order != "DESC" {
+	order := "DESC"
+	switch strings.ToLower(strings.TrimSpace(filter.SortOrder)) {
+	case "asc", "ascend":
+		order = "ASC"
+	case "desc", "descend":
 		order = "DESC"
 	}
+	return column, order
+}
+
+// List returns grade entries matching the filter.
+func (r *GradeRepository) List(ctx context.Context, filter models.GradeFilter) ([]models.Grade, error) {
+	where, args := r.gradeReportWhere(filter)
+	column, order := gradeReportSort(filter)
+	query := gradeReportSelect() + gradeReportFromClause + where
+
 	query += fmt.Sprintf(" ORDER BY %s %s", column, order)
 
 	page := filter.Page
@@ -111,6 +161,18 @@ func (r *GradeRepository) List(ctx context.Context, filter models.GradeFilter) (
 		return nil, fmt.Errorf("list grades: %w", err)
 	}
 	return grades, nil
+}
+
+// Count returns the number of rows matching the same report filter without
+// pagination. It keeps the admin pagination contract truthful.
+func (r *GradeRepository) Count(ctx context.Context, filter models.GradeFilter) (int, error) {
+	where, args := r.gradeReportWhere(filter)
+	var total int
+	query := "SELECT COUNT(*)" + gradeReportFromClause + where
+	if err := r.db.GetContext(ctx, &total, query, args...); err != nil {
+		return 0, fmt.Errorf("count grades: %w", err)
+	}
+	return total, nil
 }
 
 // Upsert inserts or updates a grade entry.

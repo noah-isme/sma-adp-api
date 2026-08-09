@@ -1231,6 +1231,11 @@ const docTemplate = `{
         },
         "/auth/change-password": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Change password for current user",
                 "consumes": [
                     "application/json"
@@ -1363,6 +1368,11 @@ const docTemplate = `{
         },
         "/auth/logout": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Revoke refresh token",
                 "consumes": [
                     "application/json"
@@ -1406,6 +1416,11 @@ const docTemplate = `{
         },
         "/auth/me": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Returns the authenticated user's info",
                 "produces": [
                     "application/json"
@@ -3063,8 +3078,14 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "type": "string",
+                        "description": "Filter by status (active or inactive)",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
                         "type": "boolean",
-                        "description": "Filter by active state",
+                        "description": "Legacy alias for status",
                         "name": "active",
                         "in": "query"
                     },
@@ -4518,6 +4539,11 @@ const docTemplate = `{
         },
         "/portal/auth/logout": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Revoke refresh token",
                 "consumes": [
                     "application/json"
@@ -4558,6 +4584,11 @@ const docTemplate = `{
         },
         "/portal/auth/me": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Returns the authenticated portal user's info",
                 "produces": [
                     "application/json"
@@ -6263,8 +6294,14 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "type": "string",
+                        "description": "Filter by status (active or inactive)",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
                         "type": "boolean",
-                        "description": "Filter by active state",
+                        "description": "Legacy alias for status",
                         "name": "active",
                         "in": "query"
                     },
@@ -6384,8 +6421,14 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "type": "string",
+                        "description": "Filter by status (active or inactive)",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
                         "type": "boolean",
-                        "description": "Filter by active state",
+                        "description": "Legacy alias for status",
                         "name": "active",
                         "in": "query"
                     },
@@ -6434,12 +6477,24 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Sort field",
+                        "name": "sortField",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort order (ascend or descend)",
+                        "name": "sortOrder",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Legacy alias for sortField",
                         "name": "sort",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Sort order",
+                        "description": "Legacy alias for sortOrder",
                         "name": "order",
                         "in": "query"
                     }
@@ -7020,8 +7075,14 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "type": "string",
+                        "description": "Filter by status (active or inactive)",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
                         "type": "boolean",
-                        "description": "Filter by active state",
+                        "description": "Legacy alias for status",
                         "name": "active",
                         "in": "query"
                     },
@@ -7064,12 +7125,24 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Sort field",
+                        "name": "sortField",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort order (ascend or descend)",
+                        "name": "sortOrder",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Legacy alias for sortField",
                         "name": "sort",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Sort order",
+                        "description": "Legacy alias for sortOrder",
                         "name": "order",
                         "in": "query"
                     }

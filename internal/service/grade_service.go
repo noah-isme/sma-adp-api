@@ -17,6 +17,7 @@ import (
 
 type gradeRepo interface {
 	List(ctx context.Context, filter models.GradeFilter) ([]models.Grade, error)
+	Count(ctx context.Context, filter models.GradeFilter) (int, error)
 	Upsert(ctx context.Context, grade *models.Grade) error
 	BulkUpsert(ctx context.Context, grades []models.Grade) error
 	FetchByEnrollments(ctx context.Context, enrollmentIDs []string, subjectID string) (map[string][]models.Grade, error)
@@ -154,6 +155,15 @@ func (s *GradeService) List(ctx context.Context, filter models.GradeFilter) ([]m
 		return nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to list grades")
 	}
 	return grades, nil
+}
+
+// Count returns the number of grade entries matching a report filter.
+func (s *GradeService) Count(ctx context.Context, filter models.GradeFilter) (int, error) {
+	total, err := s.grades.Count(ctx, filter)
+	if err != nil {
+		return 0, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to count grades")
+	}
+	return total, nil
 }
 
 // Delete soft-deletes a grade entry and recalculates its non-finalized final grade.

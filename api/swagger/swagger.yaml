@@ -2495,6 +2495,8 @@ paths:
           description: Unauthorized
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Change password
       tags:
       - Authentication
@@ -2579,6 +2581,8 @@ paths:
           description: Unauthorized
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Logout current session
       tags:
       - Authentication
@@ -2596,6 +2600,8 @@ paths:
           description: Unauthorized
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Get current user
       tags:
       - Authentication
@@ -3675,7 +3681,11 @@ paths:
         in: query
         name: classId
         type: string
-      - description: Filter by active state
+      - description: Filter by status (active or inactive)
+        in: query
+        name: status
+        type: string
+      - description: Legacy alias for status
         in: query
         name: active
         type: boolean
@@ -4610,6 +4620,8 @@ paths:
           description: Unauthorized
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Logout portal session
       tags:
       - Portal Authentication
@@ -4632,6 +4644,8 @@ paths:
           description: Unauthorized
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Get current portal user
       tags:
       - Portal Authentication
@@ -5679,7 +5693,11 @@ paths:
         in: query
         name: classId
         type: string
-      - description: Filter by active state
+      - description: Filter by status (active or inactive)
+        in: query
+        name: status
+        type: string
+      - description: Legacy alias for status
         in: query
         name: active
         type: boolean
@@ -5860,7 +5878,11 @@ paths:
         in: query
         name: classId
         type: string
-      - description: Filter by active state
+      - description: Filter by status (active or inactive)
+        in: query
+        name: status
+        type: string
+      - description: Legacy alias for status
         in: query
         name: active
         type: boolean
@@ -5894,9 +5916,17 @@ paths:
         type: integer
       - description: Sort field
         in: query
+        name: sortField
+        type: string
+      - description: Sort order (ascend or descend)
+        in: query
+        name: sortOrder
+        type: string
+      - description: Legacy alias for sortField
+        in: query
         name: sort
         type: string
-      - description: Sort order
+      - description: Legacy alias for sortOrder
         in: query
         name: order
         type: string
@@ -6376,7 +6406,11 @@ paths:
         in: query
         name: search
         type: string
-      - description: Filter by active state
+      - description: Filter by status (active or inactive)
+        in: query
+        name: status
+        type: string
+      - description: Legacy alias for status
         in: query
         name: active
         type: boolean
@@ -6406,9 +6440,17 @@ paths:
         type: integer
       - description: Sort field
         in: query
+        name: sortField
+        type: string
+      - description: Sort order (ascend or descend)
+        in: query
+        name: sortOrder
+        type: string
+      - description: Legacy alias for sortField
+        in: query
         name: sort
         type: string
-      - description: Sort order
+      - description: Legacy alias for sortOrder
         in: query
         name: order
         type: string

@@ -15,37 +15,26 @@ Sumber kebenaran teknis:
 - Cutover/rollback: `docs/operations.md`
 - Decommission: `docs/decommission.md`
 
-### Latest compatibility verification (2026-08-06)
+### Latest compatibility verification (2026-08-09)
 
-- `python3 scripts/validate_swagger_routes.py` passed (101 generated paths cover
+- `python3 scripts/validate_swagger_routes.py` passed (135 generated paths cover
   all gateway routes).
 - `python3 scripts/compatibility_smoke.py` passed its static check (22 required
-  compatibility operations are present in both gateway and Swagger).
-- **Extended compatibility matrix** with 13 new rows covering:
-  - Attendance analytics server aggregation (`/analytics/attendance`)
-  - Reports template selection (`POST /reports/generate` with template field)
-  - Schedule generator preview (`/schedules/generator`) with conflicts & stats
-  - Schedule generator legacy (`/schedule/generate`) - deprecated
-  - Schedule save by proposal (`POST /schedule/save` with proposalId)
-  - Auth token refresh (`POST /auth/refresh`) - single refresh mechanism
-  - Feature discovery (`GET /features`) - runtime feature flags
-  - Mutations list & approve/reject (`GET/PATCH /mutations`)
-  - Archives list, upload, download (`GET/POST /archives`, `GET /archives/:id/download`)
-- Seeded runtime verification passed with Postgres, Redis, migrations 15–18,
-  `scripts/seed.sql`, and all compatibility feature flags enabled. The suite
-  covered roster/report reads, CSV exports, grade and component edit/delete,
-  student and teacher CSV import replay, attendance POST/PATCH, teacher
-  preference POST/PUT, exam-event CRUD, enrollment transfer/restore, dashboard,
-  analytics, and the asynchronous report job/status/download flow. Every
-  compatibility matrix row now records its actual result or explicitly notes
-  that it is browser-only.
-- The seeded run also exposed a non-fatal audit persistence warning on login
-  (`audit_logs` JSON encoding); authentication and all HTTP smoke assertions
-  still returned their expected 2xx responses. Treat audit-log persistence as a
-  follow-up before production sign-off.
-- Go package tests remain blocked by the environment's module-cache/disk quota;
-  no current Go test or vet pass is claimed here. The runtime verification above
-  is an HTTP-level result against the seeded gateway.
+  compatibility operations are present in both gateway and Swagger). Seeded
+  compatibility smoke was not run (`RUN_COMPATIBILITY_SMOKE=1` is required).
+- Regenerated `api/swagger` after adding security annotations and the corrected
+  roster/export query contracts.
+- Focused Go tests passed for `internal/handler`, `internal/repository`, and
+  `internal/service`, including refresh-token revocation.
+- The prior seeded run on 2026-08-06 remains historical evidence only; its
+  non-fatal audit JSON persistence warning and all seeded claims must be rerun
+  before production sign-off.
+- The current compatibility matrix records which rows are implemented, partial,
+  browser-only, or awaiting seeded runtime verification.
+
+> The milestone and contract-test history below is retained for traceability.
+> Dates before 2026-08-09 describe historical runs and do not constitute current
+> release verification; use the latest section above and the release checklist.
 
 ## Status Per Fase
 
@@ -243,8 +232,8 @@ Feature-flagged:
 ## Pekerjaan Berikutnya
 
 1. ~~Jalankan contract test dengan API Go yang hidup~~ — **SELESAI** (12 Jul 2026).
-2. ~~Jalankan folder `Seeded Core Smoke` setelah seed ID tersedia~~ — **SELESAI**.
-3. ~~Jalankan folder `Gated Feature Smoke` setelah feature flag aktif~~ — **SELESAI**.
+2. ~~Jalankan folder `Seeded Core Smoke` setelah seed ID tersedia~~ — **historical evidence from 12 Jul 2026; rerun pending**.
+3. ~~Jalankan folder `Gated Feature Smoke` setelah feature flag aktif~~ — **historical evidence from 12 Jul 2026; rerun pending**.
 4. ~~Perbaiki design issue Dashboard Academics~~ — **SELESAI** (migrasi 000014 + JWT TeacherID).
 5. ~~Validasi smoke test RBAC untuk role `SUPERADMIN`, `ADMIN`, dan `TEACHER`~~ — **SELESAI**.
 6. ~~Rollback drill tabletop~~ — **SELESAI** (lihat `docs/decommission.md`).

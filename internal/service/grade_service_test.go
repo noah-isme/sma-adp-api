@@ -37,6 +37,11 @@ func (m *mockGradeRepo) List(ctx context.Context, filter models.GradeFilter) ([]
 	return result, nil
 }
 
+func (m *mockGradeRepo) Count(ctx context.Context, filter models.GradeFilter) (int, error) {
+	grades, err := m.List(ctx, filter)
+	return len(grades), err
+}
+
 func (m *mockGradeRepo) Upsert(ctx context.Context, grade *models.Grade) error {
 	if m.storedGrades == nil {
 		m.storedGrades = make(map[string]models.Grade)

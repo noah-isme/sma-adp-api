@@ -226,8 +226,15 @@ func (r *UserRepository) CreateAuditLog(ctx context.Context, log *models.AuditLo
 	if log.CreatedAt.IsZero() {
 		log.CreatedAt = time.Now().UTC()
 	}
-	const query = `INSERT INTO audit_logs (id, user_id, action, resource, resource_id, old_values, new_values, ip_address, user_agent, created_at) VALUES (:id, :user_id, :action, :resource, :resource_id, :old_values, :new_values, :ip_address, :user_agent, :created_at)`
-	if _, err := r.db.NamedExecContext(ctx, query, log); err != nil {
+	const query = "INSERT INTO audit_logs (id, user_id, action, resource, resource_id, old_values, new_values, ip_address, user_agent, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"
+	var oldValues, newValues interface{}
+	if len(log.OldValues) > 0 {
+		oldValues = string(log.OldValues)
+	}
+	if len(log.NewValues) > 0 {
+		newValues = string(log.NewValues)
+	}
+	if _, err := r.db.ExecContext(ctx, query, log.ID, log.UserID, log.Action, log.Resource, log.ResourceID, oldValues, newValues, log.IPAddress, log.UserAgent, log.CreatedAt); err != nil {
 		return fmt.Errorf("create audit log: %w", err)
 	}
 	return nil

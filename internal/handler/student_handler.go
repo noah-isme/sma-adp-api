@@ -78,12 +78,16 @@ func NewStudentHandler(students *service.StudentService, stores ...importRunStor
 // @Produce json
 // @Param search query string false "Search by name or NIS"
 // @Param classId query string false "Filter by class"
-// @Param active query bool false "Filter by active state"
+// @Param status query string false "Filter by status (active or inactive)"
+// @Param active query bool false "Legacy alias for status"
 // @Param page query int false "Page"
 // @Param limit query int false "Page size"
 // @Success 200 {object} response.Envelope
 // @Router /students [get]
 func (h *StudentHandler) List(c *gin.Context) {
+	if !validateRosterStatus(c) {
+		return
+	}
 	filter := studentFilter(c)
 
 	students, pagination, err := h.students.List(c.Request.Context(), filter)
@@ -102,7 +106,8 @@ func (h *StudentHandler) List(c *gin.Context) {
 // @Produce json
 // @Param search query string false "Search by name or NIS"
 // @Param classId query string false "Filter by class"
-// @Param active query bool false "Filter by active state"
+// @Param status query string false "Filter by status (active or inactive)"
+// @Param active query bool false "Legacy alias for status"
 // @Param gender query string false "Filter by gender"
 // @Param track query string false "Filter by track"
 // @Param guardian query string false "Filter by guardian"
@@ -110,11 +115,16 @@ func (h *StudentHandler) List(c *gin.Context) {
 // @Param birthYearEnd query int false "Birth year end"
 // @Param page query int false "Page"
 // @Param perPage query int false "Page size"
-// @Param sort query string false "Sort field"
-// @Param order query string false "Sort order"
+// @Param sortField query string false "Sort field"
+// @Param sortOrder query string false "Sort order (ascend or descend)"
+// @Param sort query string false "Legacy alias for sortField"
+// @Param order query string false "Legacy alias for sortOrder"
 // @Success 200 {object} response.Envelope
 // @Router /students/roster [get]
 func (h *StudentHandler) Roster(c *gin.Context) {
+	if !validateRosterStatus(c) {
+		return
+	}
 	filter := studentFilter(c)
 	students, pagination, err := h.students.List(c.Request.Context(), filter)
 	if err != nil {
@@ -138,21 +148,21 @@ func (h *StudentHandler) Roster(c *gin.Context) {
 		}
 		rows = append(rows, gin.H{"id": student.ID, "nis": student.NIS, "fullName": student.FullName, "gender": student.Gender, "birthDate": student.BirthDate, "classId": classID, "className": className, "status": status, "address": student.Address, "lastUpdated": student.UpdatedAt, "createdAt": student.CreatedAt})
 	}
-	response.JSON(c, http.StatusOK, gin.H{"summary": gin.H{"totalStudents": pagination.TotalCount, "activeStudents": activeCount, "inactiveStudents": len(students) - activeCount, "alumniStudents": 0, "activeRate": percent(activeCount, len(students)), "genderBreakdown": []gin.H{}, "classDistribution": []gin.H{}, "statusBreakdown": []gin.H{}}, "filters": gin.H{"classes": []gin.H{}, "statuses": []gin.H{}, "genders": []gin.H{}, "guardians": []gin.H{}, "birthYears": []gin.H{}, "tracks": []gin.H{}}, "rows": rows, "pagination": gin.H{"page": pagination.Page, "perPage": pagination.PageSize, "total": pagination.TotalCount, "totalPages": pageCount(pagination.TotalCount, pagination.PageSize)}, "appliedFilters": gin.H{"page": pagination.Page, "perPage": pagination.PageSize, "search": filter.Search, "classId": filter.ClassID, "active": filter.Active, "gender": filter.Gender, "track": filter.Track, "guardian": filter.Guardian, "birthYearStart": filter.BirthYearStart, "birthYearEnd": filter.BirthYearEnd, "sort": filter.SortBy, "order": filter.SortOrder}}, nil)
+	response.JSON(c, http.StatusOK, gin.H{"summary": gin.H{"totalStudents": pagination.TotalCount, "activeStudents": activeCount, "inactiveStudents": len(students) - activeCount, "alumniStudents": 0, "activeRate": percent(activeCount, len(students)), "genderBreakdown": []gin.H{}, "classDistribution": []gin.H{}, "statusBreakdown": []gin.H{}}, "filters": gin.H{"classes": []gin.H{}, "statuses": []gin.H{{"value": "active", "label": "Aktif"}, {"value": "inactive", "label": "Tidak aktif"}}, "genders": []gin.H{}, "guardians": []gin.H{}, "birthYears": []gin.H{}, "tracks": []gin.H{}}, "rows": rows, "pagination": gin.H{"page": pagination.Page, "perPage": pagination.PageSize, "total": pagination.TotalCount, "totalPages": pageCount(pagination.TotalCount, pagination.PageSize)}, "appliedFilters": gin.H{"page": pagination.Page, "perPage": pagination.PageSize, "search": filter.Search, "classId": filter.ClassID, "status": rosterStatusValue(c), "active": filter.Active, "gender": filter.Gender, "track": filter.Track, "guardian": filter.Guardian, "birthYearStart": filter.BirthYearStart, "birthYearEnd": filter.BirthYearEnd, "sortField": filter.SortBy, "sortOrder": filter.SortOrder}}, nil)
 }
 
 func studentFilter(c *gin.Context) models.StudentFilter {
 	filter := models.StudentFilter{
-		Search:         strings.TrimSpace(c.Query("search")),
-		ClassID:        c.Query("classId"),
-		Gender:         c.Query("gender"),
-		Track:          c.Query("track"),
-		Guardian:       c.Query("guardian"),
-		SortBy:         c.Query("sort"),
-		SortOrder:      c.Query("order"),
+		Search:    strings.TrimSpace(c.Query("search")),
+		ClassID:   c.Query("classId"),
+		Gender:    c.Query("gender"),
+		Track:     c.Query("track"),
+		Guardian:  c.Query("guardian"),
+		SortBy:    firstQuery(c, "sortField", "sort"),
+		SortOrder: firstQuery(c, "sortOrder", "order"),
 	}
-	if active := c.Query("active"); active != "" {
-		v := active == "true"
+	if active := firstQuery(c, "status", "active"); active != "" {
+		v := strings.EqualFold(active, "true") || strings.EqualFold(active, "active")
 		filter.Active = &v
 	}
 	if birthYearStart := c.Query("birthYearStart"); birthYearStart != "" {
@@ -183,6 +193,37 @@ func studentFilter(c *gin.Context) models.StudentFilter {
 		filter.PageSize = size
 	}
 	return filter
+}
+
+func firstQuery(c *gin.Context, keys ...string) string {
+	for _, key := range keys {
+		if value := strings.TrimSpace(c.Query(key)); value != "" {
+			return value
+		}
+	}
+	return ""
+}
+
+func rosterStatusValue(c *gin.Context) string {
+	status := strings.ToLower(firstQuery(c, "status", "active"))
+	switch status {
+	case "true":
+		return "active"
+	case "false":
+		return "inactive"
+	default:
+		return status
+	}
+}
+
+func validateRosterStatus(c *gin.Context) bool {
+	switch strings.ToLower(firstQuery(c, "status", "active")) {
+	case "", "true", "false", "active", "inactive":
+		return true
+	default:
+		response.Error(c, appErrors.Clone(appErrors.ErrValidation, "status must be active or inactive"))
+		return false
+	}
 }
 
 func percent(n, total int) float64 {

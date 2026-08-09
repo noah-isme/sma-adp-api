@@ -87,6 +87,7 @@ func (h *PortalAuthHandler) PortalRefresh(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param payload body models.PortalLogoutRequest true "Refresh token"
+// @Security BearerAuth
 // @Success 204 {object} response.Envelope
 // @Failure 401 {object} response.Envelope
 // @Router /portal/auth/logout [post]
@@ -168,6 +169,7 @@ func (h *PortalAuthHandler) PortalResetPassword(c *gin.Context) {
 // @Description Returns the authenticated portal user's info
 // @Tags Portal Authentication
 // @Produce json
+// @Security BearerAuth
 // @Success 200 {object} response.Envelope{data=models.PortalUserInfo}
 // @Failure 401 {object} response.Envelope
 // @Router /portal/auth/me [get]
@@ -179,7 +181,7 @@ func (h *PortalAuthHandler) PortalMe(c *gin.Context) {
 	}
 
 	jwtClaims := claims.(*models.JWTClaims)
-	
+
 	// Get full profile from service
 	profile, err := h.service.GetPortalProfile(c.Request.Context(), jwtClaims.UserID)
 	if err != nil {
@@ -206,7 +208,7 @@ func (h *PortalAuthHandler) PortalProfile(c *gin.Context) {
 	}
 
 	jwtClaims := claims.(*models.JWTClaims)
-	
+
 	profile, err := h.service.GetPortalProfile(c.Request.Context(), jwtClaims.UserID)
 	if err != nil {
 		response.Error(c, err)

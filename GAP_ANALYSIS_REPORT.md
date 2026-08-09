@@ -4,9 +4,29 @@
 **Scope:** Comparison of `admin-panel-sma` (React Admin) frontend expectations vs `sma-adp-api` (Go) backend implementation  
 **Sources:** GO_BACKEND_API_SPECIFICATION.md, COMPATIBILITY_CONTRACT_MATRIX.md, backend handlers, frontend pages, data provider, features provider, custom hooks
 
+> **Historical snapshot.** This report predates the 2026-08-09 contract
+> reconciliation. Use the repository-root
+> [SMA_ADMIN_API_DOCUMENTATION_GAP_REPORT.md](../SMA_ADMIN_API_DOCUMENTATION_GAP_REPORT.md)
+> for the current findings and resolution status. In particular, the auth,
+> roster, grade-report, and filtered-export entries below are no longer an
+> accurate description of the current implementation.
+
+## Current status (2026-08-09)
+
+The current contract status is maintained in the repository-root
+`SMA_ADMIN_API_DOCUMENTATION_GAP_REPORT.md`, the canonical API specification, and
+the compatibility matrix. The focused auth, roster, grade-report, export, and
+feature-flag gaps identified in this historical report have been reconciled. The
+remaining release gates are seeded runtime verification, full-suite evidence,
+production gateway security ownership, rollback/alerting evidence, and incomplete
+portal capabilities.
+
+The remainder of this file is retained as an archived 2026-08-06 comparison and
+should not be used to infer current route or readiness status.
+
 ---
 
-## Executive Summary
+## Archived executive summary
 
 | Category | Frontend Pages | Backend Endpoints | Status |
 |----------|---------------|-------------------|--------|
@@ -111,9 +131,9 @@
 | Attendance summary | `GET /attendance/summary` | ✅ Implemented | |
 | Daily attendance (canonical) | `POST/GET /attendance/daily`, `/attendance/daily/bulk` | ✅ Implemented | |
 | Subject attendance (canonical) | `POST/GET /attendance/subject`, `/attendance/subject/bulk`, `/attendance/subject/summary` | ✅ Implemented | |
-| Legacy upsert (compat) | `POST/PUT/PATCH /attendance`, `/attendance/:id` | ⚠️ Feature-flagged | Requires `ENABLE_ATTENDANCE_ALIAS` |
+| Legacy upsert (compat) | `POST/PUT/PATCH /attendance`, `/attendance/:id` | ✅ Implemented | Always-on |
 
-**Gap:** The legacy compatibility endpoints (`/attendance`, `/attendance/:id`) are feature-flagged. Frontend pages (attendance-daily, attendance-lesson) use the `attendance` resource via data provider which maps to these endpoints. If `ENABLE_ATTENDANCE_ALIAS=false`, these pages will 404.
+**Gap:** None - the legacy compatibility endpoints (`/attendance`, `/attendance/:id`) are now always-on core routes.
 
 ---
 

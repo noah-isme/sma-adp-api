@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -123,7 +124,24 @@ func (h *GradeHandler) Report(c *gin.Context) {
 	if p, err := strconv.Atoi(c.DefaultQuery("perPage", "20")); err == nil {
 		perPage = p
 	}
-	
+	if page < 1 {
+		page = 1
+	}
+	if perPage <= 0 || perPage > 100 {
+		perPage = 20
+	}
+
+	status := strings.ToUpper(strings.TrimSpace(c.Query("status")))
+	if status == "CAUTION" {
+		// CAUTION was used by an early frontend mock. Keep it as a read alias
+		// while the published contract uses REMEDIAL.
+		status = "REMEDIAL"
+	}
+	if status != "" && status != "PASS" && status != "REMEDIAL" && status != "FAIL" {
+		response.Error(c, appErrors.Clone(appErrors.ErrValidation, "status must be PASS, REMEDIAL, or FAIL"))
+		return
+	}
+
 	scoreMin := c.Query("scoreMin")
 	scoreMax := c.Query("scoreMax")
 	var minScore, maxScore *float64
@@ -137,132 +155,214 @@ func (h *GradeHandler) Report(c *gin.Context) {
 			maxScore = &v
 		}
 	}
-	
+
 	filter := models.GradeFilter{
-		TermID:       c.Query("termId"),
-		ClassID:      c.Query("classId"),
-		SubjectID:    c.Query("subjectId"),
-		ComponentID:  c.Query("componentId"),
-		TeacherID:    c.Query("teacherId"),
-		Status:       c.Query("status"),
-		ScoreMin:     minScore,
-		ScoreMax:     maxScore,
-		Search:       c.Query("search"),
-		SortBy:       c.Query("sortField"),
-		SortOrder:    c.Query("sortOrder"),
-		Page:         page,
-		PageSize:     perPage,
+		TermID:      c.Query("termId"),
+		ClassID:     c.Query("classId"),
+		SubjectID:   c.Query("subjectId"),
+		ComponentID: c.Query("componentId"),
+		TeacherID:   c.Query("teacherId"),
+		Status:      status,
+		ScoreMin:    minScore,
+		ScoreMax:    maxScore,
+		Search:      c.Query("search"),
+		SortBy:      c.Query("sortField"),
+		SortOrder:   c.Query("sortOrder"),
+		Page:        page,
+		PageSize:    perPage,
 	}
-	
+
 	grades, err := h.grades.List(c.Request.Context(), filter)
 	if err != nil {
 		response.Error(c, err)
 		return
 	}
-	
+	totalCount, err := h.grades.Count(c.Request.Context(), filter)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
 	rows := make([]gin.H, 0, len(grades))
 	total := 0.0
+	statusCounts := map[string]int{"PASS": 0, "REMEDIAL": 0, "FAIL": 0}
+	componentIDs := make(map[string]struct{})
 	for _, grade := range grades {
 		total += grade.GradeValue
-		status := "PASS"
-		tone := "success"
-		icon := "check"
-		label := "Tuntas"
-		if grade.GradeValue < 75 {
-			status = "FAIL"
-			tone = "danger"
-			icon = "x"
-			label = "Tidak Tuntas"
-		} else if grade.GradeValue < 85 {
-			status = "REMEDIAL"
-			tone = "warning"
-			icon = "alert"
-			label = "Remedial"
+		rowStatus, tone, icon, label := gradeStatus(grade.GradeValue)
+		statusCounts[rowStatus]++
+		componentIDs[grade.ComponentID] = struct{}{}
+		studentID := grade.StudentID
+		if studentID == "" {
+			studentID = grade.EnrollmentID
+		}
+		classID := grade.ClassID
+		if classID == "" {
+			classID = filter.ClassID
+		}
+		componentName := grade.ComponentName
+		if componentName == "" {
+			componentName = grade.ComponentCode
 		}
 		rows = append(rows, gin.H{
-			"id": grade.ID,
-			"studentId": grade.EnrollmentID,
-			"studentName": grade.EnrollmentID,
-			"studentNis": "",
-			"classId": filter.ClassID,
-			"className": "",
-			"subjectId": grade.SubjectID,
-			"subjectName": grade.SubjectID,
-			"componentId": grade.ComponentID,
-			"componentName": grade.ComponentCode,
-			"componentCategory": "",
-			"componentWeight": 0,
-			"score": grade.GradeValue,
-			"kkm": 75,
-			"status": gin.H{"code": status, "label": label, "description": "", "tone": tone, "icon": icon},
-			"teacherId": filter.TeacherID,
-			"teacherName": "",
-			"recordedAt": grade.CreatedAt,
-			"lastUpdated": grade.UpdatedAt,
-			"termId": filter.TermID,
-			"termName": "",
-			"termLabel": "",
+			"id":                   grade.ID,
+			"studentId":            studentID,
+			"studentName":          grade.StudentName,
+			"studentNis":           grade.StudentNIS,
+			"classId":              classID,
+			"className":            grade.ClassName,
+			"subjectId":            grade.SubjectID,
+			"subjectName":          grade.SubjectName,
+			"componentId":          grade.ComponentID,
+			"componentName":        componentName,
+			"componentCategory":    grade.ComponentCode,
+			"componentWeight":      grade.ComponentWeight,
+			"componentDescription": grade.ComponentDescription,
+			"score":                grade.GradeValue,
+			"kkm":                  models.DefaultGradeKKM,
+			"status":               gin.H{"code": rowStatus, "label": label, "description": "", "tone": tone, "icon": icon},
+			"teacherId":            grade.TeacherID,
+			"teacherName":          grade.TeacherName,
+			"recordedAt":           grade.CreatedAt,
+			"lastUpdated":          grade.UpdatedAt,
+			"termId":               grade.TermID,
+			"termName":             grade.TermName,
+			"termLabel":            grade.TermName,
 		})
 	}
 	average := 0.0
 	if len(grades) > 0 {
 		average = total / float64(len(grades))
 	}
-	
-	// Count below KKM
-	belowKkmCount := 0
-	remedialCount := 0
-	for _, grade := range grades {
-		if grade.GradeValue < 75 {
-			belowKkmCount++
-		} else if grade.GradeValue < 85 {
-			remedialCount++
-		}
+
+	statusBreakdown := []gin.H{
+		{"code": "PASS", "label": "Tuntas", "count": statusCounts["PASS"]},
+		{"code": "REMEDIAL", "label": "Remedial", "count": statusCounts["REMEDIAL"]},
+		{"code": "FAIL", "label": "Tidak Tuntas", "count": statusCounts["FAIL"]},
 	}
-	
+
 	response.JSON(c, http.StatusOK, gin.H{
 		"context": gin.H{
-			"termId": filter.TermID,
-			"classId": filter.ClassID,
-			"subjectId": filter.SubjectID,
+			"termId":      firstNonEmpty(filter.TermID, firstGradeTermID(grades)),
+			"termName":    firstGradeTermName(grades),
+			"classId":     firstNonEmpty(filter.ClassID, firstGradeClassID(grades)),
+			"className":   firstGradeClassName(grades),
+			"subjectId":   firstNonEmpty(filter.SubjectID, firstGradeSubjectID(grades)),
+			"subjectName": firstGradeSubjectName(grades),
+			"teacherId":   firstNonEmpty(filter.TeacherID, firstGradeTeacherID(grades)),
+			"teacherName": firstGradeTeacherName(grades),
 		},
 		"summary": gin.H{
-			"averageScore": average,
-			"belowKkmCount": belowKkmCount,
-			"componentCount": 0,
-			"remedialCount": remedialCount,
-			"statusBreakdown": []gin.H{},
-			"distribution": []gin.H{},
+			"averageScore":    average,
+			"belowKkmCount":   statusCounts["REMEDIAL"] + statusCounts["FAIL"],
+			"componentCount":  len(componentIDs),
+			"remedialCount":   statusCounts["REMEDIAL"],
+			"statusBreakdown": statusBreakdown,
+			"distribution":    []gin.H{},
 		},
 		"filters": gin.H{
-			"terms": []gin.H{},
-			"classes": []gin.H{},
-			"subjects": []gin.H{},
+			"terms":      []gin.H{},
+			"classes":    []gin.H{},
+			"subjects":   []gin.H{},
 			"components": []gin.H{},
-			"teachers": []gin.H{},
-			"statuses": []gin.H{},
+			"teachers":   []gin.H{},
+			"statuses": []gin.H{
+				{"value": "PASS", "label": "Tuntas"},
+				{"value": "REMEDIAL", "label": "Remedial"},
+				{"value": "FAIL", "label": "Tidak Tuntas"},
+			},
 		},
 		"rows": rows,
 		"pagination": gin.H{
-			"page": page,
-			"perPage": perPage,
-			"total": len(rows),
-			"totalPages": 1,
+			"page":       page,
+			"perPage":    perPage,
+			"total":      totalCount,
+			"totalPages": pageCount(totalCount, perPage),
 		},
 		"appliedFilters": gin.H{
-			"termId": filter.TermID,
-			"classId": filter.ClassID,
-			"subjectId": filter.SubjectID,
+			"termId":      filter.TermID,
+			"classId":     filter.ClassID,
+			"subjectId":   filter.SubjectID,
 			"componentId": filter.ComponentID,
-			"teacherId": filter.TeacherID,
-			"status": filter.Status,
-			"scoreMin": filter.ScoreMin,
-			"scoreMax": filter.ScoreMax,
-			"search": filter.Search,
-			"sortField": filter.SortBy,
-			"sortOrder": filter.SortOrder,
+			"teacherId":   filter.TeacherID,
+			"status":      filter.Status,
+			"scoreMin":    filter.ScoreMin,
+			"scoreMax":    filter.ScoreMax,
+			"search":      filter.Search,
+			"sortField":   filter.SortBy,
+			"sortOrder":   filter.SortOrder,
+			"page":        page,
+			"perPage":     perPage,
 		},
 	}, nil)
+}
+
+func gradeStatus(score float64) (code, tone, icon, label string) {
+	if score >= models.DefaultGradePassMark {
+		return "PASS", "success", "check", "Tuntas"
+	}
+	if score >= models.DefaultGradeKKM {
+		return "REMEDIAL", "warning", "alert", "Remedial"
+	}
+	return "FAIL", "danger", "x", "Tidak Tuntas"
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if value != "" {
+			return value
+		}
+	}
+	return ""
+}
+
+func firstGradeTermID(grades []models.Grade) string {
+	if len(grades) == 0 {
+		return ""
+	}
+	return grades[0].TermID
+}
+func firstGradeTermName(grades []models.Grade) string {
+	if len(grades) == 0 {
+		return ""
+	}
+	return grades[0].TermName
+}
+func firstGradeClassID(grades []models.Grade) string {
+	if len(grades) == 0 {
+		return ""
+	}
+	return grades[0].ClassID
+}
+func firstGradeClassName(grades []models.Grade) string {
+	if len(grades) == 0 {
+		return ""
+	}
+	return grades[0].ClassName
+}
+func firstGradeSubjectID(grades []models.Grade) string {
+	if len(grades) == 0 {
+		return ""
+	}
+	return grades[0].SubjectID
+}
+func firstGradeSubjectName(grades []models.Grade) string {
+	if len(grades) == 0 {
+		return ""
+	}
+	return grades[0].SubjectName
+}
+func firstGradeTeacherID(grades []models.Grade) string {
+	if len(grades) == 0 {
+		return ""
+	}
+	return grades[0].TeacherID
+}
+func firstGradeTeacherName(grades []models.Grade) string {
+	if len(grades) == 0 {
+		return ""
+	}
+	return grades[0].TeacherName
 }
 
 // Bulk godoc

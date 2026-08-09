@@ -87,6 +87,7 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param payload body map[string]string true "Refresh token"
+// @Security BearerAuth
 // @Success 204 {object} response.Envelope
 // @Failure 401 {object} response.Envelope
 // @Router /auth/logout [post]
@@ -122,6 +123,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param payload body models.ChangePasswordRequest true "Change password"
+// @Security BearerAuth
 // @Success 204 {object} response.Envelope
 // @Failure 400 {object} response.Envelope
 // @Failure 401 {object} response.Envelope
@@ -203,6 +205,7 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 // @Description Returns the authenticated user's info
 // @Tags Authentication
 // @Produce json
+// @Security BearerAuth
 // @Success 200 {object} response.Envelope
 // @Failure 401 {object} response.Envelope
 // @Router /auth/me [get]

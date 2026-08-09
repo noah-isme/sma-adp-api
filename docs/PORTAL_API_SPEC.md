@@ -6,6 +6,15 @@
 
 **Authentication:** JWT Bearer Token with `PARENT` or `STUDENT` role
 
+> **Implementation status (2026-08-09): Partial / not production-ready.**
+> JSON responses are wrapped in the common Go `data` envelope. The admin API uses
+> snake_case, while the current portal auth models still expose camelCase token
+> and profile fields; the route-specific examples below record that actual
+> implementation detail. Portal forgot password and reset password currently
+> validate/log the request but do not send a reset email, validate a reset token,
+> or change a password. Parent access checks for portal data routes and
+> announcement page/limit parsing are also incomplete.
+
 ---
 
 ## Overview
@@ -35,23 +44,25 @@ Authenticate a parent or student user.
 **Response (200):**
 ```json
 {
-  "accessToken": "eyJhbGciOiJIUzI1NiIs...",
-  "refreshToken": "eyJhbGciOiJIUzI1NiIs...",
-  "user": {
-    "id": "usr_parent_001",
-    "email": "parent@example.com",
-    "fullName": "Budi Santoso",
-    "role": "PARENT",
-    "portalRole": "PARENT",
-    "linkedStudents": [
-      {
-        "id": "std_001",
-        "nis": "2024001",
-        "fullName": "Ahmad Fauzi",
-        "className": "X IPA 1",
-        "currentTerm": "Semester 1 2024/2025"
-      }
-    ]
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+    "refreshToken": "eyJhbGciOiJIUzI1NiIs...",
+    "user": {
+      "id": "usr_parent_001",
+      "email": "parent@example.com",
+      "fullName": "Budi Santoso",
+      "role": "PARENT",
+      "portalRole": "PARENT",
+      "linkedStudents": [
+        {
+          "id": "std_001",
+          "nis": "2024001",
+          "fullName": "Ahmad Fauzi",
+          "className": "X IPA 1",
+          "currentTerm": "Semester 1 2024/2025"
+        }
+      ]
+    }
   }
 }
 ```
@@ -67,16 +78,21 @@ Authenticate a parent or student user.
 
 Refresh access token using refresh token.
 
-**Headers:**
-```
-Authorization: Bearer <refresh_token>
+**Request:**
+```json
+{
+  "refresh_token": "refresh_token_to_exchange"
+}
 ```
 
 **Response (200):**
 ```json
 {
-  "accessToken": "eyJhbGciOiJIUzI1NiIs...",
-  "refreshToken": "eyJhbGciOiJIUzI1NiIs..."
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+    "refreshToken": "eyJhbGciOiJIUzI1NiIs...",
+    "user": {}
+  }
 }
 ```
 
@@ -84,7 +100,8 @@ Authorization: Bearer <refresh_token>
 
 ### POST /portal/auth/forgot-password
 
-Request password reset email.
+Request a password reset email. The current service validates and logs the
+request but does not send an email.
 
 **Request:**
 ```json
@@ -93,10 +110,12 @@ Request password reset email.
 }
 ```
 
-**Response (200):**
+**Response (202):**
 ```json
 {
-  "message": "If the email exists, a reset link has been sent"
+  "data": {
+    "message": "if the email exists, a reset link will be sent"
+  }
 }
 ```
 
@@ -104,7 +123,8 @@ Request password reset email.
 
 ### POST /portal/auth/reset-password
 
-Reset password with token from email.
+Reset password with token from email. This endpoint currently validates and
+logs the request but does not validate the token or change the password.
 
 **Request:**
 ```json
@@ -114,12 +134,7 @@ Reset password with token from email.
 }
 ```
 
-**Response (200):**
-```json
-{
-  "message": "Password has been reset successfully"
-}
-```
+**Response (204):** No content
 
 ---
 
@@ -1041,9 +1056,11 @@ All errors follow this format:
 
 ## Rate Limiting
 
-- **Auth endpoints:** 10 requests/minute per IP
-- **Data endpoints:** 100 requests/minute per user
-- **Preferences/Device tokens:** 30 requests/minute per user
+- The current Go API does not enforce the limits listed in this historical
+  design section. Configure rate limiting at the API gateway/WAF before
+  exposing portal endpoints in production.
+- The `RATE_LIMITED` error code and `X-RateLimit-*` headers below are planned
+  contract elements, not behavior currently guaranteed by the service.
 
 Rate limit headers:
 ```
@@ -1076,7 +1093,8 @@ X-RateLimit-Reset: 1730000000
 
 API version in URL path: `/api/v1/portal`
 
-Breaking changes will increment version: `/api/v2/portal`
+No `/api/v2/portal` route is implemented or scheduled. Any future breaking
+version requires an approved migration and an updated compatibility matrix.
 
 ---
 

@@ -67,10 +67,14 @@ func (r *StudentRepository) List(ctx context.Context, filter models.StudentFilte
 	sortBy := filter.SortBy
 	allowedSorts := map[string]string{
 		"full_name":  "s.full_name",
+		"fullName":   "s.full_name",
 		"nis":        "s.nis",
 		"birth_date": "s.birth_date",
 		"created_at": "s.created_at",
+		"lastUpdated": "s.updated_at",
 		"gender":     "s.gender",
+		"className":  "c.name",
+		"status":     "s.active",
 	}
 	if sortBy == "" {
 		sortBy = "created_at"
@@ -79,8 +83,11 @@ func (r *StudentRepository) List(ctx context.Context, filter models.StudentFilte
 	if !ok {
 		column = "s.created_at"
 	}
-	order := strings.ToUpper(filter.SortOrder)
-	if order != "ASC" && order != "DESC" {
+	order := "DESC"
+	switch strings.ToLower(strings.TrimSpace(filter.SortOrder)) {
+	case "asc", "ascend":
+		order = "ASC"
+	case "desc", "descend":
 		order = "DESC"
 	}
 	page := filter.Page

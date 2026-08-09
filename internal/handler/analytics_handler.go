@@ -28,6 +28,10 @@ func NewAnalyticsHandler(analytics *service.AnalyticsService) *AnalyticsHandler 
 // @Tags Analytics
 // @Produce json
 // @Success 200 {object} response.Envelope
+// @Param term_id query string true "Term ID"
+// @Param class_id query string true "Class ID"
+// @Param date_from query string false "Date From (RFC3339)"
+// @Param date_to query string false "Date To (RFC3339)"
 // @Router /analytics/attendance [get]
 func (h *AnalyticsHandler) Attendance(c *gin.Context) {
 	if h.analytics == nil {
@@ -59,6 +63,9 @@ func (h *AnalyticsHandler) Attendance(c *gin.Context) {
 // @Tags Analytics
 // @Produce json
 // @Success 200 {object} response.Envelope
+// @Param term_id query string true "Term ID"
+// @Param class_id query string true "Class ID"
+// @Param subject_id query string true "Subject ID"
 // @Router /analytics/grades [get]
 func (h *AnalyticsHandler) Grades(c *gin.Context) {
 	if h.analytics == nil {
@@ -90,6 +97,11 @@ func (h *AnalyticsHandler) Grades(c *gin.Context) {
 // @Tags Analytics
 // @Produce json
 // @Success 200 {object} response.Envelope
+// @Param term_id query string true "Term ID"
+// @Param student_id query string true "Student ID"
+// @Param class_id query string true "Class ID"
+// @Param date_from query string false "Date From (RFC3339)"
+// @Param date_to query string false "Date To (RFC3339)"
 // @Router /analytics/behavior [get]
 func (h *AnalyticsHandler) Behavior(c *gin.Context) {
 	if h.analytics == nil {

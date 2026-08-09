@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/jmoiron/sqlx/types"
 
 	"github.com/noah-isme/sma-adp-api/internal/models"
 )
@@ -72,7 +73,7 @@ func (r *ImportRunRepository) Complete(ctx context.Context, runID, importType st
 		Action:     models.AuditActionCSVImport,
 		Resource:   importType,
 		ResourceID: &runID,
-		NewValues:  result,
+		NewValues:  types.JSONText(result),
 		IPAddress:  ipAddress,
 		UserAgent:  userAgent,
 		CreatedAt:  time.Now().UTC(),

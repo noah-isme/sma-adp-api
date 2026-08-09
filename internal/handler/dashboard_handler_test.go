@@ -111,7 +111,7 @@ func TestDashboardHandlerTeacherSuccess(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(rec)
 	c.Request = httptest.NewRequest(http.MethodGet, "/dashboard/academics?termId=term-1", nil)
-	c.Set(middleware.ContextUserKey, &models.JWTClaims{UserID: "usr-1", Role: models.RoleTeacher})
+	c.Set(middleware.ContextUserKey, &models.JWTClaims{UserID: "usr-1", TeacherID: "tch-1", Role: models.RoleTeacher})
 
 	handler.Teacher(c)
 

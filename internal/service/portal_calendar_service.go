@@ -14,11 +14,11 @@ import (
 
 // PortalCalendarService provides calendar data for parent/student portal.
 type PortalCalendarService struct {
-	calendarRepo calendarReader
+	calendarRepo   calendarReader
 	enrollmentRepo enrollmentReader
-	studentRepo studentReader
-	validator *validator.Validate
-	logger *zap.Logger
+	studentRepo    studentReader
+	validator      *validator.Validate
+	logger         *zap.Logger
 }
 
 // NewPortalCalendarService constructs the portal calendar service.
@@ -36,11 +36,11 @@ func NewPortalCalendarService(
 		logger = zap.NewNop()
 	}
 	return &PortalCalendarService{
-		calendarRepo: calendarRepo,
+		calendarRepo:   calendarRepo,
 		enrollmentRepo: enrollmentRepo,
-		studentRepo: studentRepo,
-		validator: validate,
-		logger: logger,
+		studentRepo:    studentRepo,
+		validator:      validate,
+		logger:         logger,
 	}
 }
 

@@ -60,13 +60,13 @@ type PortalHomeroomRequest struct {
 
 // PortalHomeroomResponse represents homeroom data for a student.
 type PortalHomeroomResponse struct {
-	StudentID      string             `json:"studentId"`
-	StudentName    string             `json:"studentName"`
-	TermID         string             `json:"termId"`
-	TermName       string             `json:"termName"`
-	ClassID        string             `json:"classId"`
-	ClassName      string             `json:"className"`
-	HomeroomTeacher *HomeroomTeacher  `json:"homeroomTeacher,omitempty"`
+	StudentID       string           `json:"studentId"`
+	StudentName     string           `json:"studentName"`
+	TermID          string           `json:"termId"`
+	TermName        string           `json:"termName"`
+	ClassID         string           `json:"classId"`
+	ClassName       string           `json:"className"`
+	HomeroomTeacher *HomeroomTeacher `json:"homeroomTeacher,omitempty"`
 }
 
 // HomeroomTeacher represents homeroom teacher information.
@@ -156,8 +156,8 @@ func (s *PortalHomeroomService) GetHomeroomByClass(ctx context.Context, classID,
 	// TODO: Use class reader interface to get class details
 
 	resp := &PortalHomeroomResponse{
-		ClassID:  classID,
-		TermID:   termID,
+		ClassID: classID,
+		TermID:  termID,
 	}
 
 	if homeroom != nil {

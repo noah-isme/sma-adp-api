@@ -14,7 +14,7 @@ fmt: ## Format Go files
 	gofmt -w $(shell find . -name '*.go' -not -path './vendor/*')
 
 lint: ## Run vet
-	go vet ./...
+	GOCACHE=/tmp/go-build GOMODCACHE=/tmp/go-mod go vet ./...
 
 contract-test: ## Run default Postman smoke contract via Newman (requires Docker and ACCESS_TOKEN)
 	@BASE_URL=$${BASE_URL:-http://localhost:8080/api/v1}; \
@@ -43,13 +43,13 @@ dev: ## Run dev server with Air (if installed) or plain go run
 	@if command -v air >/dev/null 2>&1; then air; else go run ./cmd/api-gateway; fi
 
 build: ## Build binary
-	go build -o bin/api-gateway ./cmd/api-gateway
+	GOCACHE=/tmp/go-build GOMODCACHE=/tmp/go-mod go build -o bin/api-gateway ./cmd/api-gateway
 
 test: ## Run tests
-	go test -v ./...
+	GOCACHE=/tmp/go-build GOMODCACHE=/tmp/go-mod go test -v ./...
 
 test-coverage: ## Coverage report
-	go test -coverprofile=coverage.out ./...
+	GOCACHE=/tmp/go-build GOMODCACHE=/tmp/go-mod go test -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o coverage.html
 
 migrate-create: ## Create new migration: make migrate-create name=init_schema

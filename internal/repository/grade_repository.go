@@ -77,7 +77,7 @@ func (r *GradeRepository) List(ctx context.Context, filter models.GradeFilter) (
 
 	sortBy := filter.SortBy
 	allowedSorts := map[string]string{
-		"grade_value":  "g.grade_value",
+		"grade_value":    "g.grade_value",
 		"component_code": "gc.code",
 		"student_name":   "s.full_name",
 		"updated_at":     "g.updated_at",

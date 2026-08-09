@@ -207,6 +207,53 @@ definitions:
     - new_password
     - token
     type: object
+  github_com_noah-isme_sma-adp-api_internal_models.CreateParentStudentLinkRequest:
+    properties:
+      canReceiveNotifications:
+        type: boolean
+      canViewAnnouncements:
+        type: boolean
+      canViewAttendance:
+        type: boolean
+      canViewBehavior:
+        type: boolean
+      canViewGrades:
+        type: boolean
+      parentId:
+        type: string
+      relationship:
+        allOf:
+        - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.ParentStudentRelationship'
+        enum:
+        - PARENT
+        - GUARDIAN
+        - EMERGENCY_CONTACT
+      studentId:
+        type: string
+    required:
+    - parentId
+    - studentId
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.DeviceToken:
+    properties:
+      appVersion:
+        type: string
+      createdAt:
+        type: string
+      deviceId:
+        type: string
+      id:
+        type: string
+      lastUsedAt:
+        type: string
+      platform:
+        description: ios, android, web
+        type: string
+      token:
+        type: string
+      userId:
+        type: string
+    type: object
   github_com_noah-isme_sma-adp-api_internal_models.FinalGradeFilter:
     properties:
       classID:
@@ -224,6 +271,17 @@ definitions:
     x-enum-varnames:
     - GradeSchemeWeighted
     - GradeSchemeAverage
+  github_com_noah-isme_sma-adp-api_internal_models.GradesSummary:
+    properties:
+      failedSubjects:
+        type: integer
+      gpa:
+        type: number
+      passedSubjects:
+        type: integer
+      totalSubjects:
+        type: integer
+    type: object
   github_com_noah-isme_sma-adp-api_internal_models.LoginRequest:
     properties:
       email:
@@ -267,12 +325,417 @@ definitions:
       total_count:
         type: integer
     type: object
+  github_com_noah-isme_sma-adp-api_internal_models.PaginationMeta:
+    properties:
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total_count:
+        type: integer
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.ParentStudentLink:
+    properties:
+      canReceiveNotifications:
+        type: boolean
+      canViewAnnouncements:
+        type: boolean
+      canViewAttendance:
+        type: boolean
+      canViewBehavior:
+        type: boolean
+      canViewGrades:
+        type: boolean
+      createdAt:
+        type: string
+      id:
+        type: string
+      parentId:
+        type: string
+      relationship:
+        $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.ParentStudentRelationship'
+      studentId:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.ParentStudentRelationship:
+    enum:
+    - PARENT
+    - GUARDIAN
+    - EMERGENCY_CONTACT
+    type: string
+    x-enum-varnames:
+    - RelationshipParent
+    - RelationshipGuardian
+    - RelationshipEmergencyContact
+  github_com_noah-isme_sma-adp-api_internal_models.PortalAnnouncement:
+    properties:
+      audience:
+        description: ALL, GURU, SISWA, CLASS, PARENT
+        type: string
+      content:
+        type: string
+      expiresAt:
+        type: string
+      id:
+        type: string
+      isPinned:
+        type: boolean
+      priority:
+        description: LOW, NORMAL, HIGH, URGENT
+        type: string
+      publishedAt:
+        type: string
+      publisherName:
+        type: string
+      title:
+        type: string
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.PortalAnnouncementsResponse:
+    properties:
+      announcements:
+        items:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalAnnouncement'
+        type: array
+      pagination:
+        $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PaginationMeta'
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.PortalAttendanceResponse:
+    properties:
+      daily:
+        items:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalDailyAttendance'
+        type: array
+      studentId:
+        type: string
+      subject:
+        items:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalSubjectAttendance'
+        type: array
+      summary:
+        $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalAttendanceSummary'
+      termId:
+        type: string
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.PortalAttendanceSummary:
+    properties:
+      absent:
+        type: integer
+      percentage:
+        type: number
+      permission:
+        type: integer
+      present:
+        type: integer
+      sick:
+        type: integer
+      totalDays:
+        type: integer
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.PortalBehaviorNote:
+    properties:
+      category:
+        description: POSITIVE, NEGATIVE, NEUTRAL
+        type: string
+      date:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      points:
+        type: integer
+      reporterName:
+        type: string
+      title:
+        type: string
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.PortalBehaviorResponse:
+    properties:
+      notes:
+        items:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalBehaviorNote'
+        type: array
+      studentId:
+        type: string
+      summary:
+        $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalBehaviorSummary'
+      termId:
+        type: string
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.PortalBehaviorSummary:
+    properties:
+      negativeNotes:
+        type: integer
+      neutralNotes:
+        type: integer
+      positiveNotes:
+        type: integer
+      totalNotes:
+        type: integer
+      totalPoints:
+        type: integer
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.PortalCalendarEvent:
+    properties:
+      audience:
+        description: ALL, GURU, SISWA, CLASS, PARENT
+        type: string
+      className:
+        type: string
+      description:
+        type: string
+      endDate:
+        type: string
+      endTime:
+        type: string
+      eventType:
+        description: EXAM, HOLIDAY, MEETING, ACTIVITY, OTHER
+        type: string
+      id:
+        type: string
+      location:
+        type: string
+      startDate:
+        type: string
+      startTime:
+        type: string
+      title:
+        type: string
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.PortalCalendarResponse:
+    properties:
+      events:
+        items:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalCalendarEvent'
+        type: array
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.PortalDailyAttendance:
+    properties:
+      date:
+        type: string
+      id:
+        type: string
+      notes:
+        type: string
+      status:
+        description: H, S, I, A
+        type: string
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.PortalForgotPasswordRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.PortalGrade:
+    properties:
+      className:
+        type: string
+      componentGrades:
+        additionalProperties:
+          format: float64
+          type: number
+        type: object
+      enrollmentId:
+        type: string
+      finalGrade:
+        type: number
+      isPassed:
+        type: boolean
+      letterGrade:
+        type: string
+      studentId:
+        type: string
+      subjectCode:
+        type: string
+      subjectId:
+        type: string
+      subjectName:
+        type: string
+      teacherName:
+        type: string
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.PortalGradesResponse:
+    properties:
+      grades:
+        items:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalGrade'
+        type: array
+      summary:
+        $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.GradesSummary'
+      termId:
+        type: string
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.PortalLoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.PortalLoginResponse:
+    properties:
+      accessToken:
+        type: string
+      refreshToken:
+        type: string
+      user:
+        $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalUserInfo'
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.PortalLogoutRequest:
+    properties:
+      refreshToken:
+        type: string
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.PortalPreferences:
+    properties:
+      announcementAlerts:
+        type: boolean
+      attendanceAlerts:
+        type: boolean
+      behaviorAlerts:
+        type: boolean
+      createdAt:
+        type: string
+      emailNotifications:
+        type: boolean
+      gradeAlerts:
+        type: boolean
+      language:
+        type: string
+      pushNotifications:
+        type: boolean
+      smsNotifications:
+        type: boolean
+      timezone:
+        type: string
+      updatedAt:
+        type: string
+      userId:
+        type: string
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.PortalProfile:
+    properties:
+      deviceTokens:
+        items:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.DeviceToken'
+        type: array
+      preferences:
+        $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalPreferences'
+      user:
+        $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalUserInfo'
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.PortalReportCardResponse:
+    properties:
+      studentId:
+        type: string
+      subjects:
+        items:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalReportCardSubject'
+        type: array
+      summary:
+        $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.GradesSummary'
+      termId:
+        type: string
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.PortalReportCardSubject:
+    properties:
+      finalGrade:
+        type: number
+      isPassed:
+        type: boolean
+      letterGrade:
+        type: string
+      subjectCode:
+        type: string
+      subjectId:
+        type: string
+      subjectName:
+        type: string
+      teacherName:
+        type: string
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.PortalResetPasswordRequest:
+    properties:
+      password:
+        minLength: 8
+        type: string
+      token:
+        type: string
+    required:
+    - password
+    - token
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.PortalSubjectAttendance:
+    properties:
+      date:
+        type: string
+      id:
+        type: string
+      notes:
+        type: string
+      status:
+        description: H, S, I, A
+        type: string
+      subjectId:
+        type: string
+      subjectName:
+        type: string
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.PortalUserInfo:
+    properties:
+      email:
+        type: string
+      fullName:
+        type: string
+      id:
+        type: string
+      linkedStudents:
+        items:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.StudentSummary'
+        type: array
+      portalRole:
+        allOf:
+        - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.UserRole'
+        description: Same as role for portal
+      role:
+        allOf:
+        - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.UserRole'
+        description: ORTU or SISWA
+      studentId:
+        type: string
+    type: object
   github_com_noah-isme_sma-adp-api_internal_models.RefreshTokenRequest:
     properties:
       refresh_token:
         type: string
     required:
     - refresh_token
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.RegisterDeviceTokenRequest:
+    properties:
+      appVersion:
+        type: string
+      deviceId:
+        type: string
+      platform:
+        enum:
+        - ios
+        - android
+        - web
+        type: string
+      token:
+        type: string
+    required:
+    - platform
+    - token
     type: object
   github_com_noah-isme_sma-adp-api_internal_models.ReportFormat:
     enum:
@@ -301,6 +764,25 @@ definitions:
     required:
     - email
     type: object
+  github_com_noah-isme_sma-adp-api_internal_models.StudentSummary:
+    properties:
+      birthDate:
+        type: string
+      className:
+        type: string
+      currentClassId:
+        type: string
+      currentTerm:
+        type: string
+      fullName:
+        type: string
+      gender:
+        type: string
+      id:
+        type: string
+      nis:
+        type: string
+    type: object
   github_com_noah-isme_sma-adp-api_internal_models.TeacherUnavailableSlot:
     properties:
       day_of_week:
@@ -318,6 +800,42 @@ definitions:
     - TermTypeSemester
     - TermTypeTrimester
     - TermTypeQuarter
+  github_com_noah-isme_sma-adp-api_internal_models.UpdateParentStudentLinkRequest:
+    properties:
+      canReceiveNotifications:
+        type: boolean
+      canViewAnnouncements:
+        type: boolean
+      canViewAttendance:
+        type: boolean
+      canViewBehavior:
+        type: boolean
+      canViewGrades:
+        type: boolean
+      relationship:
+        $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.ParentStudentRelationship'
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_models.UpdatePortalPreferencesRequest:
+    properties:
+      announcementAlerts:
+        type: boolean
+      attendanceAlerts:
+        type: boolean
+      behaviorAlerts:
+        type: boolean
+      emailNotifications:
+        type: boolean
+      gradeAlerts:
+        type: boolean
+      language:
+        type: string
+      pushNotifications:
+        type: boolean
+      smsNotifications:
+        type: boolean
+      timezone:
+        type: string
+    type: object
   github_com_noah-isme_sma-adp-api_internal_models.UserRole:
     enum:
     - SUPERADMIN
@@ -779,6 +1297,13 @@ definitions:
     required:
     - component_id
     type: object
+  github_com_noah-isme_sma-adp-api_internal_service.HomeroomTeacher:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
   github_com_noah-isme_sma-adp-api_internal_service.MarkDailyAttendanceRequest:
     properties:
       date:
@@ -811,6 +1336,23 @@ definitions:
     - enrollment_id
     - schedule_id
     - status
+    type: object
+  github_com_noah-isme_sma-adp-api_internal_service.PortalHomeroomResponse:
+    properties:
+      classId:
+        type: string
+      className:
+        type: string
+      homeroomTeacher:
+        $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.HomeroomTeacher'
+      studentId:
+        type: string
+      studentName:
+        type: string
+      termId:
+        type: string
+      termName:
+        type: string
     type: object
   github_com_noah-isme_sma-adp-api_internal_service.SetActiveTermRequest:
     properties:
@@ -1129,6 +1671,25 @@ info:
 paths:
   /analytics/attendance:
     get:
+      parameters:
+      - description: Term ID
+        in: query
+        name: term_id
+        required: true
+        type: string
+      - description: Class ID
+        in: query
+        name: class_id
+        required: true
+        type: string
+      - description: Date From (RFC3339)
+        in: query
+        name: date_from
+        type: string
+      - description: Date To (RFC3339)
+        in: query
+        name: date_to
+        type: string
       produces:
       - application/json
       responses:
@@ -1141,6 +1702,30 @@ paths:
       - Analytics
   /analytics/behavior:
     get:
+      parameters:
+      - description: Term ID
+        in: query
+        name: term_id
+        required: true
+        type: string
+      - description: Student ID
+        in: query
+        name: student_id
+        required: true
+        type: string
+      - description: Class ID
+        in: query
+        name: class_id
+        required: true
+        type: string
+      - description: Date From (RFC3339)
+        in: query
+        name: date_from
+        type: string
+      - description: Date To (RFC3339)
+        in: query
+        name: date_to
+        type: string
       produces:
       - application/json
       responses:
@@ -1153,6 +1738,22 @@ paths:
       - Analytics
   /analytics/grades:
     get:
+      parameters:
+      - description: Term ID
+        in: query
+        name: term_id
+        required: true
+        type: string
+      - description: Class ID
+        in: query
+        name: class_id
+        required: true
+        type: string
+      - description: Subject ID
+        in: query
+        name: subject_id
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -2626,6 +3227,11 @@ paths:
         name: termId
         required: true
         type: string
+      - description: Teacher ID
+        in: query
+        name: teacherId
+        required: true
+        type: string
       - description: Date (YYYY-MM-DD). Defaults to today
         in: query
         name: date
@@ -3007,8 +3613,20 @@ paths:
       - Reports
   /export/attendance:
     get:
-      description: Streams the complete daily attendance table as text/csv. Query
-        filters and XLSX format are unsupported.
+      description: Streams attendance as text/csv with optional filters.
+      parameters:
+      - description: Filter by class
+        in: query
+        name: classId
+        type: string
+      - description: Filter by date from (RFC3339)
+        in: query
+        name: dateFrom
+        type: string
+      - description: Filter by date to (RFC3339)
+        in: query
+        name: dateTo
+        type: string
       produces:
       - text/csv
       responses:
@@ -3016,13 +3634,29 @@ paths:
           description: OK
           schema:
             type: file
-      summary: Export attendance as unfiltered CSV
+      summary: Export attendance as CSV
       tags:
       - Exports
   /export/grades:
     get:
-      description: Streams the complete grades table as text/csv. Query filters and
-        XLSX format are unsupported.
+      description: Streams grades as text/csv with optional filters.
+      parameters:
+      - description: Filter by class
+        in: query
+        name: classId
+        type: string
+      - description: Filter by subject
+        in: query
+        name: subjectId
+        type: string
+      - description: Filter by component
+        in: query
+        name: componentId
+        type: string
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
       produces:
       - text/csv
       responses:
@@ -3030,13 +3664,25 @@ paths:
           description: OK
           schema:
             type: file
-      summary: Export grades as unfiltered CSV
+      summary: Export grades as CSV
       tags:
       - Exports
   /export/students:
     get:
-      description: Streams the complete students table as text/csv. Query filters
-        and XLSX format are unsupported.
+      description: Streams students as text/csv with optional filters.
+      parameters:
+      - description: Filter by class
+        in: query
+        name: classId
+        type: string
+      - description: Filter by active state
+        in: query
+        name: active
+        type: boolean
+      - description: Filter by gender
+        in: query
+        name: gender
+        type: string
       produces:
       - text/csv
       responses:
@@ -3044,7 +3690,7 @@ paths:
           description: OK
           schema:
             type: file
-      summary: Export students as unfiltered CSV
+      summary: Export students as CSV
       tags:
       - Exports
   /features:
@@ -3447,6 +4093,40 @@ paths:
         in: query
         name: teacherId
         type: string
+      - description: Status filter
+        in: query
+        name: status
+        type: string
+      - description: Minimum score
+        format: float64
+        in: query
+        name: scoreMin
+        type: number
+      - description: Maximum score
+        format: float64
+        in: query
+        name: scoreMax
+        type: number
+      - description: Search term
+        in: query
+        name: search
+        type: string
+      - description: Sort field
+        in: query
+        name: sortField
+        type: string
+      - description: Sort order
+        in: query
+        name: sortOrder
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: perPage
+        type: integer
       produces:
       - application/json
       responses:
@@ -3661,6 +4341,931 @@ paths:
       summary: Review a mutation request
       tags:
       - Mutations
+  /portal/announcements:
+    get:
+      description: Get announcements filtered by audience and student's class
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: limit
+        type: integer
+      - description: Only active announcements
+        in: query
+        name: active
+        type: boolean
+      - description: Student ID (parent only)
+        in: query
+        name: studentId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalAnnouncementsResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Get announcements for student
+      tags:
+      - Portal Announcements
+  /portal/announcements/{id}:
+    get:
+      description: Get single announcement detail
+      parameters:
+      - description: Announcement ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalAnnouncement'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Get announcement detail
+      tags:
+      - Portal Announcements
+  /portal/attendance:
+    get:
+      description: Get attendance records (daily and/or subject) for student
+      parameters:
+      - description: Term ID
+        in: query
+        name: termId
+        type: string
+      - description: Start date (YYYY-MM-DD)
+        in: query
+        name: startDate
+        type: string
+      - description: End date (YYYY-MM-DD)
+        in: query
+        name: endDate
+        type: string
+      - description: 'daily or subject (default: both)'
+        in: query
+        name: type
+        type: string
+      - description: Student ID (parent only)
+        in: query
+        name: studentId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalAttendanceResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Get attendance for student
+      tags:
+      - Portal Attendance
+  /portal/attendance/percentage:
+    get:
+      description: Get overall attendance percentage (lightweight endpoint for dashboard)
+      parameters:
+      - description: Term ID
+        in: query
+        name: termId
+        type: string
+      - description: Student ID (parent only)
+        in: query
+        name: studentId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalAttendanceSummary'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Get attendance percentage
+      tags:
+      - Portal Attendance
+  /portal/auth/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Initiate forgot password flow for parent/student
+      parameters:
+      - description: Forgot password
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalForgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Forgot password for portal
+      tags:
+      - Portal Authentication
+  /portal/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate parent or student by email and password
+      parameters:
+      - description: Login payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalLoginResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Authenticate parent or student
+      tags:
+      - Portal Authentication
+  /portal/auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Revoke refresh token
+      parameters:
+      - description: Refresh token
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalLogoutRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Logout portal session
+      tags:
+      - Portal Authentication
+  /portal/auth/me:
+    get:
+      description: Returns the authenticated portal user's info
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalUserInfo'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get current portal user
+      tags:
+      - Portal Authentication
+  /portal/auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Exchange refresh token for new access token
+      parameters:
+      - description: Refresh payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalLoginResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Refresh portal access token
+      tags:
+      - Portal Authentication
+  /portal/auth/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: Reset password with token for parent/student
+      parameters:
+      - description: Reset password
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Reset password for portal
+      tags:
+      - Portal Authentication
+  /portal/behavior-notes:
+    get:
+      description: Get behavior notes for student in a term
+      parameters:
+      - description: Term ID
+        in: query
+        name: termId
+        type: string
+      - description: POSITIVE, NEGATIVE, NEUTRAL
+        in: query
+        name: category
+        type: string
+      - description: Student ID (parent only)
+        in: query
+        name: studentId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalBehaviorResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Get behavior notes for student
+      tags:
+      - Portal Behavior
+  /portal/behavior-notes/summary:
+    get:
+      description: Get behavior summary for student
+      parameters:
+      - description: Student ID (parent only)
+        in: query
+        name: studentId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalBehaviorSummary'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Get behavior summary for student
+      tags:
+      - Portal Behavior
+  /portal/calendar:
+    get:
+      description: Get calendar events relevant to student filtered by audience and
+        class
+      parameters:
+      - description: Start date (YYYY-MM-DD)
+        in: query
+        name: startDate
+        type: string
+      - description: End date (YYYY-MM-DD)
+        in: query
+        name: endDate
+        type: string
+      - description: Month filter (YYYY-MM)
+        in: query
+        name: month
+        type: string
+      - description: Student ID (parent only)
+        in: query
+        name: studentId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalCalendarResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Get calendar events for student
+      tags:
+      - Portal Calendar
+  /portal/calendar/upcoming:
+    get:
+      description: Get upcoming events (next 7 days) for quick dashboard display
+      parameters:
+      - description: Student ID (parent only)
+        in: query
+        name: studentId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalCalendarResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Get upcoming calendar events
+      tags:
+      - Portal Calendar
+  /portal/grades:
+    get:
+      description: Get grades for a student in a term
+      parameters:
+      - description: Term ID
+        in: query
+        name: termId
+        type: string
+      - description: Subject ID
+        in: query
+        name: subjectId
+        type: string
+      - description: Class ID
+        in: query
+        name: classId
+        type: string
+      - description: Student ID (parent only)
+        in: query
+        name: studentId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalGradesResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Get grades for student
+      tags:
+      - Portal Grades
+  /portal/grades/report-card:
+    get:
+      description: Get full report card for current/selected term
+      parameters:
+      - description: Term ID
+        in: query
+        name: termId
+        type: string
+      - description: Student ID (parent only)
+        in: query
+        name: studentId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalReportCardResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Get report card for student
+      tags:
+      - Portal Grades
+  /portal/homeroom:
+    get:
+      description: Get homeroom teacher and class information for a student in a term
+      parameters:
+      - description: Term ID
+        in: query
+        name: termId
+        type: string
+      - description: Student ID (parent only)
+        in: query
+        name: studentId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_service.PortalHomeroomResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Get homeroom information for student
+      tags:
+      - Portal Homeroom
+  /portal/parent/students:
+    get:
+      description: Returns all students linked to the authenticated parent
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.ParentStudentLink'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get linked students for a parent
+      tags:
+      - Portal Parent-Student Links
+    post:
+      consumes:
+      - application/json
+      description: Link a student to the authenticated parent
+      parameters:
+      - description: Link payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.CreateParentStudentLinkRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.ParentStudentLink'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Create a parent-student link
+      tags:
+      - Portal Parent-Student Links
+  /portal/parent/students/{linkId}:
+    delete:
+      description: Remove a parent-student link
+      parameters:
+      - description: Link ID
+        in: path
+        name: linkId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Delete a parent-student link
+      tags:
+      - Portal Parent-Student Links
+    put:
+      consumes:
+      - application/json
+      description: Update permissions for a parent-student link
+      parameters:
+      - description: Link ID
+        in: path
+        name: linkId
+        required: true
+        type: string
+      - description: Update payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.UpdateParentStudentLinkRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.ParentStudentLink'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Update a parent-student link
+      tags:
+      - Portal Parent-Student Links
+  /portal/profile:
+    get:
+      description: Returns the full portal profile including preferences and device
+        tokens
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalProfile'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Get full portal profile
+      tags:
+      - Portal Profile
+  /portal/profile/device-tokens:
+    post:
+      consumes:
+      - application/json
+      description: Register a device token for push notifications
+      parameters:
+      - description: Device token
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.RegisterDeviceTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.DeviceToken'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Register device token
+      tags:
+      - Portal Profile
+  /portal/profile/device-tokens/{tokenId}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a device token
+      parameters:
+      - description: Device token ID
+        in: path
+        name: tokenId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Unregister device token
+      tags:
+      - Portal Profile
+  /portal/profile/preferences:
+    put:
+      consumes:
+      - application/json
+      description: Update notification and display preferences
+      parameters:
+      - description: Preferences update
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.UpdatePortalPreferencesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalPreferences'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      summary: Update portal preferences
+      tags:
+      - Portal Profile
   /reports/classes/{id}:
     get:
       parameters:
@@ -4259,6 +5864,26 @@ paths:
         in: query
         name: active
         type: boolean
+      - description: Filter by gender
+        in: query
+        name: gender
+        type: string
+      - description: Filter by track
+        in: query
+        name: track
+        type: string
+      - description: Filter by guardian
+        in: query
+        name: guardian
+        type: string
+      - description: Birth year start
+        in: query
+        name: birthYearStart
+        type: integer
+      - description: Birth year end
+        in: query
+        name: birthYearEnd
+        type: integer
       - description: Page
         in: query
         name: page
@@ -4755,6 +6380,22 @@ paths:
         in: query
         name: active
         type: boolean
+      - description: Filter by subject
+        in: query
+        name: subjectId
+        type: string
+      - description: Filter by track
+        in: query
+        name: track
+        type: string
+      - description: Filter by availability
+        in: query
+        name: availability
+        type: string
+      - description: Filter by homeroom class
+        in: query
+        name: homeroomClassId
+        type: string
       - description: Page
         in: query
         name: page

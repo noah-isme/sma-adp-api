@@ -20,6 +20,34 @@
                     "Analytics"
                 ],
                 "summary": "Attendance analytics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Term ID",
+                        "name": "term_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Class ID",
+                        "name": "class_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Date From (RFC3339)",
+                        "name": "date_from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Date To (RFC3339)",
+                        "name": "date_to",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -39,6 +67,41 @@
                     "Analytics"
                 ],
                 "summary": "Behavior analytics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Term ID",
+                        "name": "term_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Student ID",
+                        "name": "student_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Class ID",
+                        "name": "class_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Date From (RFC3339)",
+                        "name": "date_from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Date To (RFC3339)",
+                        "name": "date_to",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -58,6 +121,29 @@
                     "Analytics"
                 ],
                 "summary": "Grade analytics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Term ID",
+                        "name": "term_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Class ID",
+                        "name": "class_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Subject ID",
+                        "name": "subject_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2315,6 +2401,13 @@
                     },
                     {
                         "type": "string",
+                        "description": "Teacher ID",
+                        "name": "teacherId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "Date (YYYY-MM-DD). Defaults to today",
                         "name": "date",
                         "in": "query"
@@ -2864,14 +2957,34 @@
         },
         "/export/attendance": {
             "get": {
-                "description": "Streams the complete daily attendance table as text/csv. Query filters and XLSX format are unsupported.",
+                "description": "Streams attendance as text/csv with optional filters.",
                 "produces": [
                     "text/csv"
                 ],
                 "tags": [
                     "Exports"
                 ],
-                "summary": "Export attendance as unfiltered CSV",
+                "summary": "Export attendance as CSV",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by class",
+                        "name": "classId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by date from (RFC3339)",
+                        "name": "dateFrom",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by date to (RFC3339)",
+                        "name": "dateTo",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2884,14 +2997,40 @@
         },
         "/export/grades": {
             "get": {
-                "description": "Streams the complete grades table as text/csv. Query filters and XLSX format are unsupported.",
+                "description": "Streams grades as text/csv with optional filters.",
                 "produces": [
                     "text/csv"
                 ],
                 "tags": [
                     "Exports"
                 ],
-                "summary": "Export grades as unfiltered CSV",
+                "summary": "Export grades as CSV",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by class",
+                        "name": "classId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by subject",
+                        "name": "subjectId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by component",
+                        "name": "componentId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by status",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2904,14 +3043,34 @@
         },
         "/export/students": {
             "get": {
-                "description": "Streams the complete students table as text/csv. Query filters and XLSX format are unsupported.",
+                "description": "Streams students as text/csv with optional filters.",
                 "produces": [
                     "text/csv"
                 ],
                 "tags": [
                     "Exports"
                 ],
-                "summary": "Export students as unfiltered CSV",
+                "summary": "Export students as CSV",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by class",
+                        "name": "classId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by active state",
+                        "name": "active",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by gender",
+                        "name": "gender",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -3466,6 +3625,56 @@
                         "description": "Teacher ID",
                         "name": "teacherId",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Status filter",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "format": "float64",
+                        "description": "Minimum score",
+                        "name": "scoreMin",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "format": "float64",
+                        "description": "Maximum score",
+                        "name": "scoreMax",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search term",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort field",
+                        "name": "sortField",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort order",
+                        "name": "sortOrder",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "perPage",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -3891,6 +4100,1523 @@
                 "responses": {
                     "200": {
                         "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/portal/announcements": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get announcements filtered by audience and student's class",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portal Announcements"
+                ],
+                "summary": "Get announcements for student",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Only active announcements",
+                        "name": "active",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Student ID (parent only)",
+                        "name": "studentId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalAnnouncementsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/portal/announcements/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get single announcement detail",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portal Announcements"
+                ],
+                "summary": "Get announcement detail",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Announcement ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalAnnouncement"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/portal/attendance": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get attendance records (daily and/or subject) for student",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portal Attendance"
+                ],
+                "summary": "Get attendance for student",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Term ID",
+                        "name": "termId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Start date (YYYY-MM-DD)",
+                        "name": "startDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "End date (YYYY-MM-DD)",
+                        "name": "endDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "daily or subject (default: both)",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Student ID (parent only)",
+                        "name": "studentId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalAttendanceResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/portal/attendance/percentage": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get overall attendance percentage (lightweight endpoint for dashboard)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portal Attendance"
+                ],
+                "summary": "Get attendance percentage",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Term ID",
+                        "name": "termId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Student ID (parent only)",
+                        "name": "studentId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalAttendanceSummary"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/portal/auth/forgot-password": {
+            "post": {
+                "description": "Initiate forgot password flow for parent/student",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portal Authentication"
+                ],
+                "summary": "Forgot password for portal",
+                "parameters": [
+                    {
+                        "description": "Forgot password",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalForgotPasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/portal/auth/login": {
+            "post": {
+                "description": "Authenticate parent or student by email and password",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portal Authentication"
+                ],
+                "summary": "Authenticate parent or student",
+                "parameters": [
+                    {
+                        "description": "Login payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalLoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalLoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/portal/auth/logout": {
+            "post": {
+                "description": "Revoke refresh token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portal Authentication"
+                ],
+                "summary": "Logout portal session",
+                "parameters": [
+                    {
+                        "description": "Refresh token",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalLogoutRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/portal/auth/me": {
+            "get": {
+                "description": "Returns the authenticated portal user's info",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portal Authentication"
+                ],
+                "summary": "Get current portal user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalUserInfo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/portal/auth/refresh": {
+            "post": {
+                "description": "Exchange refresh token for new access token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portal Authentication"
+                ],
+                "summary": "Refresh portal access token",
+                "parameters": [
+                    {
+                        "description": "Refresh payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.RefreshTokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalLoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/portal/auth/reset-password": {
+            "post": {
+                "description": "Reset password with token for parent/student",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portal Authentication"
+                ],
+                "summary": "Reset password for portal",
+                "parameters": [
+                    {
+                        "description": "Reset password",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalResetPasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/portal/behavior-notes": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get behavior notes for student in a term",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portal Behavior"
+                ],
+                "summary": "Get behavior notes for student",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Term ID",
+                        "name": "termId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "POSITIVE, NEGATIVE, NEUTRAL",
+                        "name": "category",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Student ID (parent only)",
+                        "name": "studentId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalBehaviorResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/portal/behavior-notes/summary": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get behavior summary for student",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portal Behavior"
+                ],
+                "summary": "Get behavior summary for student",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Student ID (parent only)",
+                        "name": "studentId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalBehaviorSummary"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/portal/calendar": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get calendar events relevant to student filtered by audience and class",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portal Calendar"
+                ],
+                "summary": "Get calendar events for student",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Start date (YYYY-MM-DD)",
+                        "name": "startDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "End date (YYYY-MM-DD)",
+                        "name": "endDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Month filter (YYYY-MM)",
+                        "name": "month",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Student ID (parent only)",
+                        "name": "studentId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalCalendarResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/portal/calendar/upcoming": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get upcoming events (next 7 days) for quick dashboard display",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portal Calendar"
+                ],
+                "summary": "Get upcoming calendar events",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Student ID (parent only)",
+                        "name": "studentId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalCalendarResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/portal/grades": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get grades for a student in a term",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portal Grades"
+                ],
+                "summary": "Get grades for student",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Term ID",
+                        "name": "termId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Subject ID",
+                        "name": "subjectId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Class ID",
+                        "name": "classId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Student ID (parent only)",
+                        "name": "studentId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalGradesResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/portal/grades/report-card": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get full report card for current/selected term",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portal Grades"
+                ],
+                "summary": "Get report card for student",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Term ID",
+                        "name": "termId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Student ID (parent only)",
+                        "name": "studentId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalReportCardResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/portal/homeroom": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get homeroom teacher and class information for a student in a term",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portal Homeroom"
+                ],
+                "summary": "Get homeroom information for student",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Term ID",
+                        "name": "termId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Student ID (parent only)",
+                        "name": "studentId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.PortalHomeroomResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/portal/parent/students": {
+            "get": {
+                "description": "Returns all students linked to the authenticated parent",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portal Parent-Student Links"
+                ],
+                "summary": "Get linked students for a parent",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.ParentStudentLink"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Link a student to the authenticated parent",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portal Parent-Student Links"
+                ],
+                "summary": "Create a parent-student link",
+                "parameters": [
+                    {
+                        "description": "Link payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.CreateParentStudentLinkRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.ParentStudentLink"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/portal/parent/students/{linkId}": {
+            "put": {
+                "description": "Update permissions for a parent-student link",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portal Parent-Student Links"
+                ],
+                "summary": "Update a parent-student link",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Link ID",
+                        "name": "linkId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.UpdateParentStudentLinkRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.ParentStudentLink"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Remove a parent-student link",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portal Parent-Student Links"
+                ],
+                "summary": "Delete a parent-student link",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Link ID",
+                        "name": "linkId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/portal/profile": {
+            "get": {
+                "description": "Returns the full portal profile including preferences and device tokens",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portal Profile"
+                ],
+                "summary": "Get full portal profile",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalProfile"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/portal/profile/device-tokens": {
+            "post": {
+                "description": "Register a device token for push notifications",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portal Profile"
+                ],
+                "summary": "Register device token",
+                "parameters": [
+                    {
+                        "description": "Device token",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.RegisterDeviceTokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.DeviceToken"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/portal/profile/device-tokens/{tokenId}": {
+            "delete": {
+                "description": "Remove a device token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portal Profile"
+                ],
+                "summary": "Unregister device token",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Device token ID",
+                        "name": "tokenId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/portal/profile/preferences": {
+            "put": {
+                "description": "Update notification and display preferences",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Portal Profile"
+                ],
+                "summary": "Update portal preferences",
+                "parameters": [
+                    {
+                        "description": "Preferences update",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.UpdatePortalPreferencesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalPreferences"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
                         }
@@ -4660,6 +6386,36 @@
                         "in": "query"
                     },
                     {
+                        "type": "string",
+                        "description": "Filter by gender",
+                        "name": "gender",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by track",
+                        "name": "track",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by guardian",
+                        "name": "guardian",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Birth year start",
+                        "name": "birthYearStart",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Birth year end",
+                        "name": "birthYearEnd",
+                        "in": "query"
+                    },
+                    {
                         "type": "integer",
                         "description": "Page",
                         "name": "page",
@@ -5263,6 +7019,30 @@
                         "type": "boolean",
                         "description": "Filter by active state",
                         "name": "active",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by subject",
+                        "name": "subjectId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by track",
+                        "name": "track",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by availability",
+                        "name": "availability",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by homeroom class",
+                        "name": "homeroomClassId",
                         "in": "query"
                     },
                     {
@@ -6344,6 +8124,78 @@
                 }
             }
         },
+        "github_com_noah-isme_sma-adp-api_internal_models.CreateParentStudentLinkRequest": {
+            "type": "object",
+            "required": [
+                "parentId",
+                "studentId"
+            ],
+            "properties": {
+                "canReceiveNotifications": {
+                    "type": "boolean"
+                },
+                "canViewAnnouncements": {
+                    "type": "boolean"
+                },
+                "canViewAttendance": {
+                    "type": "boolean"
+                },
+                "canViewBehavior": {
+                    "type": "boolean"
+                },
+                "canViewGrades": {
+                    "type": "boolean"
+                },
+                "parentId": {
+                    "type": "string"
+                },
+                "relationship": {
+                    "enum": [
+                        "PARENT",
+                        "GUARDIAN",
+                        "EMERGENCY_CONTACT"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.ParentStudentRelationship"
+                        }
+                    ]
+                },
+                "studentId": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.DeviceToken": {
+            "type": "object",
+            "properties": {
+                "appVersion": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "deviceId": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "lastUsedAt": {
+                    "type": "string"
+                },
+                "platform": {
+                    "description": "ios, android, web",
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                }
+            }
+        },
         "github_com_noah-isme_sma-adp-api_internal_models.FinalGradeFilter": {
             "type": "object",
             "properties": {
@@ -6368,6 +8220,23 @@
                 "GradeSchemeWeighted",
                 "GradeSchemeAverage"
             ]
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.GradesSummary": {
+            "type": "object",
+            "properties": {
+                "failedSubjects": {
+                    "type": "integer"
+                },
+                "gpa": {
+                    "type": "number"
+                },
+                "passedSubjects": {
+                    "type": "integer"
+                },
+                "totalSubjects": {
+                    "type": "integer"
+                }
+            }
         },
         "github_com_noah-isme_sma-adp-api_internal_models.LoginRequest": {
             "type": "object",
@@ -6428,6 +8297,595 @@
                 }
             }
         },
+        "github_com_noah-isme_sma-adp-api_internal_models.PaginationMeta": {
+            "type": "object",
+            "properties": {
+                "page": {
+                    "type": "integer"
+                },
+                "page_size": {
+                    "type": "integer"
+                },
+                "total_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.ParentStudentLink": {
+            "type": "object",
+            "properties": {
+                "canReceiveNotifications": {
+                    "type": "boolean"
+                },
+                "canViewAnnouncements": {
+                    "type": "boolean"
+                },
+                "canViewAttendance": {
+                    "type": "boolean"
+                },
+                "canViewBehavior": {
+                    "type": "boolean"
+                },
+                "canViewGrades": {
+                    "type": "boolean"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "parentId": {
+                    "type": "string"
+                },
+                "relationship": {
+                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.ParentStudentRelationship"
+                },
+                "studentId": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.ParentStudentRelationship": {
+            "type": "string",
+            "enum": [
+                "PARENT",
+                "GUARDIAN",
+                "EMERGENCY_CONTACT"
+            ],
+            "x-enum-varnames": [
+                "RelationshipParent",
+                "RelationshipGuardian",
+                "RelationshipEmergencyContact"
+            ]
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.PortalAnnouncement": {
+            "type": "object",
+            "properties": {
+                "audience": {
+                    "description": "ALL, GURU, SISWA, CLASS, PARENT",
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "expiresAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isPinned": {
+                    "type": "boolean"
+                },
+                "priority": {
+                    "description": "LOW, NORMAL, HIGH, URGENT",
+                    "type": "string"
+                },
+                "publishedAt": {
+                    "type": "string"
+                },
+                "publisherName": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.PortalAnnouncementsResponse": {
+            "type": "object",
+            "properties": {
+                "announcements": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalAnnouncement"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PaginationMeta"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.PortalAttendanceResponse": {
+            "type": "object",
+            "properties": {
+                "daily": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalDailyAttendance"
+                    }
+                },
+                "studentId": {
+                    "type": "string"
+                },
+                "subject": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalSubjectAttendance"
+                    }
+                },
+                "summary": {
+                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalAttendanceSummary"
+                },
+                "termId": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.PortalAttendanceSummary": {
+            "type": "object",
+            "properties": {
+                "absent": {
+                    "type": "integer"
+                },
+                "percentage": {
+                    "type": "number"
+                },
+                "permission": {
+                    "type": "integer"
+                },
+                "present": {
+                    "type": "integer"
+                },
+                "sick": {
+                    "type": "integer"
+                },
+                "totalDays": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.PortalBehaviorNote": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "description": "POSITIVE, NEGATIVE, NEUTRAL",
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "points": {
+                    "type": "integer"
+                },
+                "reporterName": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.PortalBehaviorResponse": {
+            "type": "object",
+            "properties": {
+                "notes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalBehaviorNote"
+                    }
+                },
+                "studentId": {
+                    "type": "string"
+                },
+                "summary": {
+                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalBehaviorSummary"
+                },
+                "termId": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.PortalBehaviorSummary": {
+            "type": "object",
+            "properties": {
+                "negativeNotes": {
+                    "type": "integer"
+                },
+                "neutralNotes": {
+                    "type": "integer"
+                },
+                "positiveNotes": {
+                    "type": "integer"
+                },
+                "totalNotes": {
+                    "type": "integer"
+                },
+                "totalPoints": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.PortalCalendarEvent": {
+            "type": "object",
+            "properties": {
+                "audience": {
+                    "description": "ALL, GURU, SISWA, CLASS, PARENT",
+                    "type": "string"
+                },
+                "className": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "endDate": {
+                    "type": "string"
+                },
+                "endTime": {
+                    "type": "string"
+                },
+                "eventType": {
+                    "description": "EXAM, HOLIDAY, MEETING, ACTIVITY, OTHER",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.PortalCalendarResponse": {
+            "type": "object",
+            "properties": {
+                "events": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalCalendarEvent"
+                    }
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.PortalDailyAttendance": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "H, S, I, A",
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.PortalForgotPasswordRequest": {
+            "type": "object",
+            "required": [
+                "email"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.PortalGrade": {
+            "type": "object",
+            "properties": {
+                "className": {
+                    "type": "string"
+                },
+                "componentGrades": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number",
+                        "format": "float64"
+                    }
+                },
+                "enrollmentId": {
+                    "type": "string"
+                },
+                "finalGrade": {
+                    "type": "number"
+                },
+                "isPassed": {
+                    "type": "boolean"
+                },
+                "letterGrade": {
+                    "type": "string"
+                },
+                "studentId": {
+                    "type": "string"
+                },
+                "subjectCode": {
+                    "type": "string"
+                },
+                "subjectId": {
+                    "type": "string"
+                },
+                "subjectName": {
+                    "type": "string"
+                },
+                "teacherName": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.PortalGradesResponse": {
+            "type": "object",
+            "properties": {
+                "grades": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalGrade"
+                    }
+                },
+                "summary": {
+                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.GradesSummary"
+                },
+                "termId": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.PortalLoginRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 8
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.PortalLoginResponse": {
+            "type": "object",
+            "properties": {
+                "accessToken": {
+                    "type": "string"
+                },
+                "refreshToken": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalUserInfo"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.PortalLogoutRequest": {
+            "type": "object",
+            "properties": {
+                "refreshToken": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.PortalPreferences": {
+            "type": "object",
+            "properties": {
+                "announcementAlerts": {
+                    "type": "boolean"
+                },
+                "attendanceAlerts": {
+                    "type": "boolean"
+                },
+                "behaviorAlerts": {
+                    "type": "boolean"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "emailNotifications": {
+                    "type": "boolean"
+                },
+                "gradeAlerts": {
+                    "type": "boolean"
+                },
+                "language": {
+                    "type": "string"
+                },
+                "pushNotifications": {
+                    "type": "boolean"
+                },
+                "smsNotifications": {
+                    "type": "boolean"
+                },
+                "timezone": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.PortalProfile": {
+            "type": "object",
+            "properties": {
+                "deviceTokens": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.DeviceToken"
+                    }
+                },
+                "preferences": {
+                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalPreferences"
+                },
+                "user": {
+                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalUserInfo"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.PortalReportCardResponse": {
+            "type": "object",
+            "properties": {
+                "studentId": {
+                    "type": "string"
+                },
+                "subjects": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.PortalReportCardSubject"
+                    }
+                },
+                "summary": {
+                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.GradesSummary"
+                },
+                "termId": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.PortalReportCardSubject": {
+            "type": "object",
+            "properties": {
+                "finalGrade": {
+                    "type": "number"
+                },
+                "isPassed": {
+                    "type": "boolean"
+                },
+                "letterGrade": {
+                    "type": "string"
+                },
+                "subjectCode": {
+                    "type": "string"
+                },
+                "subjectId": {
+                    "type": "string"
+                },
+                "subjectName": {
+                    "type": "string"
+                },
+                "teacherName": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.PortalResetPasswordRequest": {
+            "type": "object",
+            "required": [
+                "password",
+                "token"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string",
+                    "minLength": 8
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.PortalSubjectAttendance": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "H, S, I, A",
+                    "type": "string"
+                },
+                "subjectId": {
+                    "type": "string"
+                },
+                "subjectName": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.PortalUserInfo": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "linkedStudents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.StudentSummary"
+                    }
+                },
+                "portalRole": {
+                    "description": "Same as role for portal",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.UserRole"
+                        }
+                    ]
+                },
+                "role": {
+                    "description": "ORTU or SISWA",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.UserRole"
+                        }
+                    ]
+                },
+                "studentId": {
+                    "type": "string"
+                }
+            }
+        },
         "github_com_noah-isme_sma-adp-api_internal_models.RefreshTokenRequest": {
             "type": "object",
             "required": [
@@ -6435,6 +8893,32 @@
             ],
             "properties": {
                 "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.RegisterDeviceTokenRequest": {
+            "type": "object",
+            "required": [
+                "platform",
+                "token"
+            ],
+            "properties": {
+                "appVersion": {
+                    "type": "string"
+                },
+                "deviceId": {
+                    "type": "string"
+                },
+                "platform": {
+                    "type": "string",
+                    "enum": [
+                        "ios",
+                        "android",
+                        "web"
+                    ]
+                },
+                "token": {
                     "type": "string"
                 }
             }
@@ -6476,6 +8960,35 @@
                 }
             }
         },
+        "github_com_noah-isme_sma-adp-api_internal_models.StudentSummary": {
+            "type": "object",
+            "properties": {
+                "birthDate": {
+                    "type": "string"
+                },
+                "className": {
+                    "type": "string"
+                },
+                "currentClassId": {
+                    "type": "string"
+                },
+                "currentTerm": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "nis": {
+                    "type": "string"
+                }
+            }
+        },
         "github_com_noah-isme_sma-adp-api_internal_models.TeacherUnavailableSlot": {
             "type": "object",
             "properties": {
@@ -6499,6 +9012,61 @@
                 "TermTypeTrimester",
                 "TermTypeQuarter"
             ]
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.UpdateParentStudentLinkRequest": {
+            "type": "object",
+            "properties": {
+                "canReceiveNotifications": {
+                    "type": "boolean"
+                },
+                "canViewAnnouncements": {
+                    "type": "boolean"
+                },
+                "canViewAttendance": {
+                    "type": "boolean"
+                },
+                "canViewBehavior": {
+                    "type": "boolean"
+                },
+                "canViewGrades": {
+                    "type": "boolean"
+                },
+                "relationship": {
+                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.ParentStudentRelationship"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_models.UpdatePortalPreferencesRequest": {
+            "type": "object",
+            "properties": {
+                "announcementAlerts": {
+                    "type": "boolean"
+                },
+                "attendanceAlerts": {
+                    "type": "boolean"
+                },
+                "behaviorAlerts": {
+                    "type": "boolean"
+                },
+                "emailNotifications": {
+                    "type": "boolean"
+                },
+                "gradeAlerts": {
+                    "type": "boolean"
+                },
+                "language": {
+                    "type": "string"
+                },
+                "pushNotifications": {
+                    "type": "boolean"
+                },
+                "smsNotifications": {
+                    "type": "boolean"
+                },
+                "timezone": {
+                    "type": "string"
+                }
+            }
         },
         "github_com_noah-isme_sma-adp-api_internal_models.UserRole": {
             "type": "string",
@@ -7161,6 +9729,17 @@
                 }
             }
         },
+        "github_com_noah-isme_sma-adp-api_internal_service.HomeroomTeacher": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "github_com_noah-isme_sma-adp-api_internal_service.MarkDailyAttendanceRequest": {
             "type": "object",
             "required": [
@@ -7205,6 +9784,32 @@
                     "type": "string"
                 },
                 "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_noah-isme_sma-adp-api_internal_service.PortalHomeroomResponse": {
+            "type": "object",
+            "properties": {
+                "classId": {
+                    "type": "string"
+                },
+                "className": {
+                    "type": "string"
+                },
+                "homeroomTeacher": {
+                    "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_service.HomeroomTeacher"
+                },
+                "studentId": {
+                    "type": "string"
+                },
+                "studentName": {
+                    "type": "string"
+                },
+                "termId": {
+                    "type": "string"
+                },
+                "termName": {
                     "type": "string"
                 }
             }

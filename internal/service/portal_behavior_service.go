@@ -13,11 +13,11 @@ import (
 
 // PortalBehaviorService provides behavior data for parent/student portal.
 type PortalBehaviorService struct {
-	behaviorRepo behaviorReader
+	behaviorRepo   behaviorReader
 	enrollmentRepo enrollmentReader
-	studentRepo studentReader
-	validator *validator.Validate
-	logger *zap.Logger
+	studentRepo    studentReader
+	validator      *validator.Validate
+	logger         *zap.Logger
 }
 
 // NewPortalBehaviorService constructs the portal behavior service.
@@ -35,11 +35,11 @@ func NewPortalBehaviorService(
 		logger = zap.NewNop()
 	}
 	return &PortalBehaviorService{
-		behaviorRepo: behaviorRepo,
+		behaviorRepo:   behaviorRepo,
 		enrollmentRepo: enrollmentRepo,
-		studentRepo: studentRepo,
-		validator: validate,
-		logger: logger,
+		studentRepo:    studentRepo,
+		validator:      validate,
+		logger:         logger,
 	}
 }
 
@@ -70,11 +70,11 @@ func (s *PortalBehaviorService) GetBehaviorNotes(ctx context.Context, req models
 	items := make([]*models.PortalBehaviorNote, len(notes))
 	for i, n := range notes {
 		items[i] = &models.PortalBehaviorNote{
-			ID:          n.ID,
-			Date:        n.NoteDate.Format("2006-01-02"),
-			Category:    string(n.NoteType),
-			Points:      n.Points,
-			Description: n.Description,
+			ID:           n.ID,
+			Date:         n.NoteDate.Format("2006-01-02"),
+			Category:     string(n.NoteType),
+			Points:       n.Points,
+			Description:  n.Description,
 			ReporterName: &n.CreatedBy,
 		}
 	}
@@ -84,11 +84,11 @@ func (s *PortalBehaviorService) GetBehaviorNotes(ctx context.Context, req models
 		TermID:    req.TermID,
 		Notes:     items,
 		Summary: models.PortalBehaviorSummary{
-			TotalPoints:    summary.TotalPoints,
-			PositiveNotes:  summary.PositiveCount,
-			NegativeNotes:  summary.NegativeCount,
-			NeutralNotes:   summary.NeutralCount,
-			TotalNotes:     summary.PositiveCount + summary.NegativeCount + summary.NeutralCount,
+			TotalPoints:   summary.TotalPoints,
+			PositiveNotes: summary.PositiveCount,
+			NegativeNotes: summary.NegativeCount,
+			NeutralNotes:  summary.NeutralCount,
+			TotalNotes:    summary.PositiveCount + summary.NegativeCount + summary.NeutralCount,
 		},
 	}, nil
 }
@@ -101,10 +101,10 @@ func (s *PortalBehaviorService) GetBehaviorSummary(ctx context.Context, studentI
 	}
 
 	return &models.PortalBehaviorSummary{
-		TotalPoints:    summary.TotalPoints,
-		PositiveNotes:  summary.PositiveCount,
-		NegativeNotes:  summary.NegativeCount,
-		NeutralNotes:   summary.NeutralCount,
-		TotalNotes:     summary.PositiveCount + summary.NegativeCount + summary.NeutralCount,
+		TotalPoints:   summary.TotalPoints,
+		PositiveNotes: summary.PositiveCount,
+		NegativeNotes: summary.NegativeCount,
+		NeutralNotes:  summary.NeutralCount,
+		TotalNotes:    summary.PositiveCount + summary.NegativeCount + summary.NeutralCount,
 	}, nil
 }

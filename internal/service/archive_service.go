@@ -16,6 +16,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/jmoiron/sqlx/types"
 	"github.com/noah-isme/sma-adp-api/internal/dto"
 	"github.com/noah-isme/sma-adp-api/internal/models"
 	appErrors "github.com/noah-isme/sma-adp-api/pkg/errors"
@@ -174,7 +175,7 @@ func (s *ArchiveService) Upload(ctx context.Context, meta dto.CreateArchiveReque
 		Action:     models.AuditActionArchiveUpload,
 		Resource:   "archive",
 		ResourceID: &item.ID,
-		NewValues:  []byte(fmt.Sprintf(`{"title":"%s","category":"%s"}`, item.Title, item.Category)),
+		NewValues:  types.JSONText(fmt.Sprintf(`{"title":"%s","category":"%s"}`, item.Title, item.Category)),
 	})
 	return item, nil
 }

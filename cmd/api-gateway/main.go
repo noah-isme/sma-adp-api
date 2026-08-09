@@ -12,6 +12,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	_ "github.com/noah-isme/sma-adp-api/api/swagger"
+	"github.com/noah-isme/sma-adp-api/internal/archives"
 	internalhandler "github.com/noah-isme/sma-adp-api/internal/handler"
 	internalmiddleware "github.com/noah-isme/sma-adp-api/internal/middleware"
 	"github.com/noah-isme/sma-adp-api/internal/models"
@@ -463,32 +464,24 @@ func main() {
 		mutationHandler = internalhandler.NewMutationHandler(mutationSvc)
 	}
 
-	var archiveHandler *internalhandler.ArchiveHandler
+	var archivesHandler *archives.ArchiveHandler
 	if cfg.Archives.Enabled {
 		if cfg.Archives.SignedURLSecret == "" {
 			logr.Sugar().Fatal("archives signed url secret not configured")
 		}
-		archiveRepo := repository.NewArchiveRepository(db)
-		archiveStore, err := storage.NewLocalStorage(cfg.Archives.StorageDir)
-		if err != nil {
-			logr.Sugar().Fatalw("failed to init archive storage", "error", err)
+		var arcRepo archives.Repository
+		if db != nil {
+			arcRepo = archives.NewPostgresRepository(db)
+		} else {
+			arcRepo = archives.NewMemoryRepository()
 		}
-		archiveSigner := storage.NewSignedURLSigner(cfg.Archives.SignedURLSecret, cfg.Archives.SignedURLTTL)
-		archiveSvc := service.NewArchiveService(
-			archiveRepo,
-			assignmentRepo,
-			enrollmentRepo,
-			archiveStore,
-			archiveSigner,
-			authRepo,
-			logr,
-			service.ArchiveServiceConfig{
-				MaxFileSize:  cfg.Archives.MaxFileSizeBytes,
-				AllowedMIMEs: cfg.Archives.AllowedMIMEs,
-				APIPrefix:    cfg.APIPrefix,
-			},
-		)
-		archiveHandler = internalhandler.NewArchiveHandler(archiveSvc)
+		arcSearchEngine := archives.NewMemorySearchEngine()
+		arcWorkerPool := archives.NewGoOCRWorkerPool(4, 100, arcRepo, arcSearchEngine)
+		arcSigner := archives.NewHMACSignedURLSigner(cfg.Archives.SignedURLSecret, cfg.APIPrefix+"/archives")
+		arcRetentionEngine := archives.NewRetentionEngine(arcRepo)
+		arcSvc := archives.NewArchiveService(arcRepo, arcSearchEngine, arcWorkerPool, arcSigner, arcRetentionEngine)
+		_ = arcSvc.StartBackgroundTasks(context.Background())
+		archivesHandler = archives.NewArchiveHandler(arcSvc)
 	}
 
 	secured := api.Group("")
@@ -732,24 +725,12 @@ func main() {
 		mutations.PATCH("/:id/reject", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), mutationHandler.Reject)
 	}
 
-	if archiveHandler != nil {
-		archives := secured.Group("/archives")
-		archives.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), archiveHandler.Upload)
-		archives.GET("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), archiveHandler.List)
-		archives.GET("/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), archiveHandler.Get)
-		archives.GET("/:id/download", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), archiveHandler.Download)
-		archives.DELETE("/:id", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), archiveHandler.Delete)
+	if archivesHandler != nil {
+		archivesGroup := secured.Group("/archives")
+		archivesHandler.RegisterRoutes(archivesGroup)
 
-		// /documents is an alias over the same archive store. The admin panel's
-		// RBAC matrix grants ADMIN_TU a `documents` resource; without this the
-		// permission resolved to no endpoint at all.
-		documentHandler := internalhandler.NewDocumentAliasHandler(archiveHandler)
-		documents := secured.Group("/documents")
-		documents.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), documentHandler.Upload)
-		documents.GET("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), documentHandler.List)
-		documents.GET("/:id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), documentHandler.Get)
-		documents.GET("/:id/download", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), documentHandler.Download)
-		documents.DELETE("/:id", internalmiddleware.RBAC(string(models.RoleSuperAdmin)), documentHandler.Delete)
+		documentsGroup := secured.Group("/documents")
+		archivesHandler.RegisterRoutes(documentsGroup)
 	}
 
 	if cfg.Dashboard.Enabled {

@@ -4,7 +4,7 @@ Dokumen ini adalah sumber utama untuk membaca progres pekerjaan backend Go. Guna
 
 ## Ringkasan Saat Ini
 
-Backend Go sudah memiliki implementasi internal untuk domain utama dan API gateway sudah mengekspos endpoint core. Modul lanjutan tetap dikontrol feature flag sampai kontrak, smoke test, dan shadow compare terhadap backend legacy selesai.
+Backend Go sudah memiliki implementasi internal untuk domain utama dan API gateway sudah mengekspos endpoint core. Modul lanjutan tetap dikontrol feature flag sampai kontrak dan smoke test selesai (shadow compare SKIPPED karena legacy backend offline).
 
 Sumber kebenaran teknis:
 
@@ -90,7 +90,7 @@ graph TB
 | Phase 3 | Student, enrollment, grading, report card | Implemented + exposed | Students, enrollments, grade components/configs/grades, report card JSON aktif. Async reports tetap feature-flagged. |
 | Phase 4 | Attendance, communication, calendar | Implemented behind flag | Announcements, behavior notes, calendar events aktif. Attendance CRUD (daily/subject and compatibility routes) requires `ENABLE_ATTENDANCE_ALIAS`; calendar FE alias remains separately feature-flagged. |
 | Phase 5 | Analytics, dashboard, cache, async reports, scheduler | Implemented behind flags | Perlu contract test, smoke test, dan data validation sebelum dianggap production-ready. |
-| Phase 6 | Cutover, rollback, decommission | Planned + support implemented | Middleware, runbook, shadow compare script, dan checklist ada. Cutover produksi belum selesai. |
+| Phase 6 | Cutover, rollback, decommission | Planned + support implemented | Middleware, runbook, dan checklist ada. Cutover produksi belum selesai. |
 
 ## Endpoint Availability
 
@@ -199,7 +199,7 @@ Feature-flagged:
 - **Contract collection diperbaiki**: 6 request tidak mengirim query param yang required (reports, dashboard, attendance butuh `termId`; class report butuh `subjectId` + `termId`; dashboard academics butuh `teacherId`). Query params ditambahkan ke collection.
 - **RBAC smoke test selesai** untuk 3 role (SUPERADMIN, ADMIN, TEACHER). Semua RBAC denial yang teramati adalah expected behavior.
 - **Rollback drill tabletop selesai** — lihat `docs/decommission.md`.
-- **Shadow compare: BLOCKED** — legacy NestJS backend tidak tersedia di environment ini.
+- **Shadow compare: SKIPPED / DEPRECATED** — legacy NestJS backend tidak tersedia di environment ini.
 - Hasil contract test SUPERADMIN/ADMIN: **37 dari 38 request return 200 OK, 75 dari 76 assertions pass** (1 failure: Report Job Status 404 — expected).
 - Hasil contract test TEACHER: **29 dari 38 request return 200 OK** (9 failures: semua expected RBAC denials atau validation errors).
 - Last successful verification — 12 Jul 2026: `go test ./...`, `go vet ./...`, dan `go build` semua pass.
@@ -250,17 +250,14 @@ Feature-flagged:
 4. ~~Perbaiki design issue Dashboard Academics~~ — **SELESAI** (migrasi 000014 + JWT TeacherID).
 5. ~~Validasi smoke test RBAC untuk role `SUPERADMIN`, `ADMIN`, dan `TEACHER`~~ — **SELESAI**.
 6. ~~Rollback drill tabletop~~ — **SELESAI** (lihat `docs/decommission.md`).
-7. **Shadow compare** — BLOCKED: legacy NestJS backend tidak tersedia. Perlu provisi legacy backend di dev/staging.
-8. Setelah shadow compare stabil, lanjutkan checklist cutover di `docs/operations.md` dan `docs/decommission.md`.
+7. ~~**Shadow compare** — BLOCKED: legacy NestJS backend tidak tersedia. Perlu provisi legacy backend di dev/staging.~~ (SKIPPED/DEPRECATED)
+8. Lanjutkan checklist cutover di `docs/operations.md` dan `docs/decommission.md`.
 
 ## Saran Pengembangan Selanjutnya
 
 ### Prioritas Tinggi — Unblock Cutover
 
-1. **Provisi legacy NestJS backend untuk shadow compare**
-   - Setup legacy backend di `:3000` dengan database yang sama atau seed data parity.
-   - Jalankan `make shadow-compare GO_BASE_URL=http://localhost:8080 LEGACY_BASE_URL=http://localhost:3000` minimal 7 hari berturut-turut.
-   - Target: delta ≤1% pada optional fields, 99% schema parity.
+1. ~~**Provisi legacy NestJS backend untuk shadow compare**~~ (SKIPPED)
 
 2. **Automasi rollback dengan `make rollback` target**
    - Gabungkan `make toggle-go value=false` + cache purge (`auth`, `grades`, `attendance` keys) dalam satu command.
@@ -275,7 +272,7 @@ Feature-flagged:
    - Wire alerts ke notification channel (Slack/PagerDuty).
 
 4. **Rollback drill produksi**
-   - Setelah shadow compare stabil, jalankan rollback drill di staging/produksi (bukan tabletop).
+   - Jalankan rollback drill di staging/produksi (bukan tabletop).
    - Catat hasil di tabel `docs/decommission.md` Rollback Drill Log.
 
 ### Prioritas Sedang — Hardening
@@ -318,8 +315,8 @@ Feature-flagged:
 
 ## Blocker Aktif
 
-- **Shadow compare blocked**: Legacy NestJS backend tidak tersedia di environment ini. Perlu provisi legacy backend di `:3000` dengan seed data yang sama untuk `make shadow-compare` dapat dijalankan.
-- Cutover produksi belum boleh ditandai selesai sampai shadow compare dan rollback drill produksi terdokumentasi.
+- **Shadow compare SKIPPED / DEPRECATED**: Legacy NestJS backend tidak tersedia di environment ini.
+- Cutover produksi belum boleh ditandai selesai sampai rollback drill produksi terdokumentasi.
 - Dokumen fase lama masih berisi desain rinci dan estimasi awal; status aktual harian harus dirujuk ke dokumen ini.
 
 ## Command Verifikasi

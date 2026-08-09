@@ -30,8 +30,8 @@ type AuditLog struct {
 	Action     string    `db:"action" json:"action"`
 	Resource   string    `db:"resource" json:"resource"`
 	ResourceID *string   `db:"resource_id" json:"resource_id,omitempty"`
-	OldValues  []byte    `db:"old_values" json:"old_values,omitempty"`
-	NewValues  []byte    `db:"new_values" json:"new_values,omitempty"`
+	OldValues  types.JSONText `db:"old_values" json:"old_values,omitempty"`
+	NewValues  types.JSONText `db:"new_values" json:"new_values,omitempty"`
 	IPAddress  string    `db:"ip_address" json:"ip_address"`
 	UserAgent  string    `db:"user_agent" json:"user_agent"`
 	CreatedAt  time.Time `db:"created_at" json:"created_at"`

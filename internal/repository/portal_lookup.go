@@ -8,10 +8,10 @@ import (
 
 // PortalLookup composes repositories to implement PortalUserLookup interface.
 type PortalLookup struct {
-	studentRepo          *StudentRepository
-	parentStudentRepo    *ParentStudentRepository
+	studentRepo           *StudentRepository
+	parentStudentRepo     *ParentStudentRepository
 	portalPreferencesRepo *PortalPreferencesRepository
-	deviceTokenRepo      *DeviceTokenRepository
+	deviceTokenRepo       *DeviceTokenRepository
 }
 
 // NewPortalLookup creates a new PortalLookup.

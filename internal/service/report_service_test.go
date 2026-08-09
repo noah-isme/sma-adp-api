@@ -11,11 +11,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
+	"github.com/google/uuid"
 	"github.com/noah-isme/sma-adp-api/internal/dto"
 	"github.com/noah-isme/sma-adp-api/internal/models"
 	"github.com/noah-isme/sma-adp-api/internal/repository"
 	"github.com/noah-isme/sma-adp-api/pkg/jobs"
-	"github.com/google/uuid"
 )
 
 type reportRepoStub struct {
@@ -110,9 +110,9 @@ func newReportServiceForTest(t *testing.T) (*ReportService, *reportRepoStub, *qu
 	queue := &queueStub{}
 	exportSvc, _ := newExportServiceForTest(t)
 	service := NewReportService(repo, assignmentStub{allow: true}, queue, exportSvc, zap.NewNop(), ReportServiceConfig{
-		ResultTTL:      time.Hour,
+		ResultTTL:       time.Hour,
 		CleanupInterval: time.Hour,
-		MaxRetries:     3,
+		MaxRetries:      3,
 	})
 	return service, repo, queue, exportSvc
 }

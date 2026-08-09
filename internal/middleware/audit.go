@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx/types"
 
 	"github.com/noah-isme/sma-adp-api/internal/models"
 	"github.com/noah-isme/sma-adp-api/internal/repository"
@@ -38,7 +39,7 @@ func Audit(repo *repository.UserRepository, action, resource string) gin.Handler
 			Action:     action,
 			Resource:   resource,
 			ResourceID: nil,
-			NewValues:  body,
+			NewValues:  types.JSONText(body),
 			IPAddress:  c.ClientIP(),
 			UserAgent:  c.GetHeader("User-Agent"),
 		})

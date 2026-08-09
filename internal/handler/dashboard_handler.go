@@ -72,6 +72,7 @@ func (h *DashboardHandler) Admin(c *gin.Context) {
 // @Tags Dashboard
 // @Produce json
 // @Param termId query string true "Term ID"
+// @Param teacherId query string true "Teacher ID"
 // @Param date query string false "Date (YYYY-MM-DD). Defaults to today"
 // @Success 200 {object} response.Envelope
 // @Router /dashboard/academics [get]
@@ -113,13 +114,6 @@ func (h *DashboardHandler) Teacher(c *gin.Context) {
 	if claims.Role == models.RoleTeacher {
 		if claims.TeacherID != "" {
 			teacherID = claims.TeacherID
-		} else if h.teacherResolver != nil {
-			teacher, err := h.teacherResolver.FindByUserID(c.Request.Context(), claims.UserID)
-			if err != nil {
-				response.Error(c, appErrors.Clone(appErrors.ErrNotFound, "teacher not found for current user"))
-				return
-			}
-			teacherID = teacher.ID
 		}
 	}
 	if teacherID == "" {

@@ -216,11 +216,6 @@ func (s *CalendarAliasService) resolveClassFilter(ctx context.Context, claims *m
 	}
 
 	teacherID := claims.TeacherID
-	if teacherID == "" {
-		// FALLBACK: For backward compatibility with tokens issued before migration 000014
-		// which added TeacherID claim. Remove after all old tokens expire.
-		teacherID = claims.UserID
-	}
 	assignments, err := s.assignments.ListByTeacher(ctx, teacherID)
 	if err != nil {
 		return nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to resolve teacher assignments")

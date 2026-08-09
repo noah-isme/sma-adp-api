@@ -168,10 +168,10 @@ func (s *PortalGradesService) GetGrades(ctx context.Context, req models.PortalGr
 		TermID: req.TermID,
 		Grades: portalGrades,
 		Summary: &models.GradesSummary{
-			GPA:              gpa,
-			TotalSubjects:    len(portalGrades),
-			PassedSubjects:   passed,
-			FailedSubjects:   failed,
+			GPA:            gpa,
+			TotalSubjects:  len(portalGrades),
+			PassedSubjects: passed,
+			FailedSubjects: failed,
 		},
 	}, nil
 }
@@ -302,10 +302,10 @@ func (s *PortalGradesService) GetReportCard(ctx context.Context, studentID, term
 		TermID:    termID,
 		Subjects:  portalSubjects,
 		Summary: &models.GradesSummary{
-			GPA:              gpa,
-			TotalSubjects:    len(portalSubjects),
-			PassedSubjects:   passed,
-			FailedSubjects:   failed,
+			GPA:            gpa,
+			TotalSubjects:  len(portalSubjects),
+			PassedSubjects: passed,
+			FailedSubjects: failed,
 		},
 	}, nil
 }

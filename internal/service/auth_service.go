@@ -12,6 +12,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx/types"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 
@@ -129,7 +130,7 @@ func (s *AuthService) Login(ctx context.Context, req models.LoginRequest) (*mode
 		Action:     models.AuditActionLogin,
 		Resource:   "auth",
 		ResourceID: &user.ID,
-		NewValues:  []byte(`{"status":"success"}`),
+		NewValues:  types.JSONText(`{"status":"success"}`),
 		IPAddress:  req.IP,
 		UserAgent:  req.UserAgent,
 	}); err != nil {
@@ -216,7 +217,7 @@ func (s *AuthService) RefreshToken(ctx context.Context, req models.RefreshTokenR
 		Action:     models.AuditActionLogin,
 		Resource:   "auth",
 		ResourceID: &user.ID,
-		NewValues:  []byte(`{"refresh":"rotated"}`),
+		NewValues:  types.JSONText(`{"refresh":"rotated"}`),
 		IPAddress:  req.IP,
 		UserAgent:  req.UserAgent,
 	}); err != nil {
@@ -254,7 +255,7 @@ func (s *AuthService) Logout(ctx context.Context, refreshToken string, userID st
 		Action:     models.AuditActionLogout,
 		Resource:   "auth",
 		ResourceID: &userID,
-		NewValues:  []byte(`{"status":"logout"}`),
+		NewValues:  types.JSONText(`{"status":"logout"}`),
 		IPAddress:  meta.IP,
 		UserAgent:  meta.UserAgent,
 	}); err != nil {
@@ -300,7 +301,7 @@ func (s *AuthService) ChangePassword(ctx context.Context, userID string, req mod
 		Action:     models.AuditActionPasswordChange,
 		Resource:   "auth",
 		ResourceID: &userID,
-		NewValues:  []byte(`{"status":"changed"}`),
+		NewValues:  types.JSONText(`{"status":"changed"}`),
 	}); err != nil {
 		s.logger.Warn("failed to record password change audit log", zap.Error(err))
 	}

@@ -12,6 +12,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx/types"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 
@@ -44,11 +45,11 @@ type PortalUserLookup interface {
 
 // PortalAuthService provides authentication use cases for parent/student portal.
 type PortalAuthService struct {
-	userRepo        authUserRepository
-	portalLookup    PortalUserLookup
-	validator       *validator.Validate
-	logger          *zap.Logger
-	config          PortalAuthConfig
+	userRepo     authUserRepository
+	portalLookup PortalUserLookup
+	validator    *validator.Validate
+	logger       *zap.Logger
+	config       PortalAuthConfig
 }
 
 // NewPortalAuthService constructs a PortalAuthService instance.
@@ -141,7 +142,7 @@ func (s *PortalAuthService) PortalLogin(ctx context.Context, req models.PortalLo
 		Action:     models.AuditActionLogin,
 		Resource:   "portal_auth",
 		ResourceID: &user.ID,
-		NewValues:  []byte(`{"status":"success"}`),
+		NewValues:  types.JSONText(`{"status":"success"}`),
 		IPAddress:  req.IP,
 		UserAgent:  req.UserAgent,
 	}); err != nil {
@@ -229,7 +230,7 @@ func (s *PortalAuthService) PortalRefreshToken(ctx context.Context, req models.R
 		Action:     models.AuditActionLogin,
 		Resource:   "portal_auth",
 		ResourceID: &user.ID,
-		NewValues:  []byte(`{"refresh":"rotated"}`),
+		NewValues:  types.JSONText(`{"refresh":"rotated"}`),
 		IPAddress:  req.IP,
 		UserAgent:  req.UserAgent,
 	}); err != nil {
@@ -266,7 +267,7 @@ func (s *PortalAuthService) PortalLogout(ctx context.Context, refreshToken strin
 		Action:     models.AuditActionLogout,
 		Resource:   "portal_auth",
 		ResourceID: &userID,
-		NewValues:  []byte(`{"status":"logout"}`),
+		NewValues:  types.JSONText(`{"status":"logout"}`),
 		IPAddress:  meta.IP,
 		UserAgent:  meta.UserAgent,
 	}); err != nil {
@@ -348,9 +349,9 @@ func (s *PortalAuthService) UpdatePortalPreferences(ctx context.Context, userID 
 	var prefs *models.PortalPreferences
 	if existing == nil {
 		prefs = &models.PortalPreferences{
-			UserID:           userID,
-			Language:         "id",
-			Timezone:         "Asia/Jakarta",
+			UserID:             userID,
+			Language:           "id",
+			Timezone:           "Asia/Jakarta",
 			EmailNotifications: true,
 			PushNotifications:  true,
 			SMSNotifications:   false,
@@ -503,12 +504,12 @@ func (s *PortalAuthService) buildPortalUserInfo(ctx context.Context, user *model
 func (s *PortalAuthService) generatePortalAccessToken(user *models.User, studentID *string) (string, time.Time, error) {
 	issuedAt := time.Now().UTC()
 	expiresAt := issuedAt.Add(s.config.AccessTokenExpiry)
-	
+
 	claims := &models.JWTClaims{
-		UserID:    user.ID,
-		Role:      user.Role,
-		Email:     user.Email,
-		FullName:  user.FullName,
+		UserID:   user.ID,
+		Role:     user.Role,
+		Email:    user.Email,
+		FullName: user.FullName,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    s.config.Issuer,
 			Subject:   user.ID,
@@ -625,14 +626,14 @@ func (s *PortalAuthService) CreateParentStudentLink(ctx context.Context, parentI
 	}
 
 	link := &models.ParentStudentLink{
-		ParentID:                 parentID,
-		StudentID:                req.StudentID,
-		Relationship:             relationship,
-		CanViewGrades:            req.CanViewGrades,
-		CanViewAttendance:        req.CanViewAttendance,
-		CanViewBehavior:          req.CanViewBehavior,
-		CanViewAnnouncements:     req.CanViewAnnouncements,
-		CanReceiveNotifications:  req.CanReceiveNotifications,
+		ParentID:                parentID,
+		StudentID:               req.StudentID,
+		Relationship:            relationship,
+		CanViewGrades:           req.CanViewGrades,
+		CanViewAttendance:       req.CanViewAttendance,
+		CanViewBehavior:         req.CanViewBehavior,
+		CanViewAnnouncements:    req.CanViewAnnouncements,
+		CanReceiveNotifications: req.CanReceiveNotifications,
 	}
 
 	if err := s.portalLookup.CreateParentStudentLink(ctx, link); err != nil {

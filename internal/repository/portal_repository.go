@@ -115,8 +115,8 @@ func (r *ParentStudentRepository) List(ctx context.Context, filter models.Parent
 		sortBy = "created_at"
 	}
 	allowedSorts := map[string]bool{
-		"created_at": true,
-		"updated_at": true,
+		"created_at":   true,
+		"updated_at":   true,
 		"relationship": true,
 	}
 	if !allowedSorts[sortBy] {

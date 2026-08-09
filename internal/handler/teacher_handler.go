@@ -144,12 +144,20 @@ func (h *TeacherHandler) Roster(c *gin.Context) {
 }
 
 func teacherFilter(c *gin.Context) models.TeacherFilter {
+	subjectID := c.Query("subjectId")
+	if subjectID == "" {
+		subjectID = c.Query("subject")
+	}
+	homeroomClassID := c.Query("homeroomClassId")
+	if homeroomClassID == "" {
+		homeroomClassID = c.Query("homeroom")
+	}
 	filter := models.TeacherFilter{
 		Search:         strings.TrimSpace(c.Query("search")),
-		SubjectID:      c.Query("subjectId"),
+		SubjectID:      subjectID,
 		Track:          c.Query("track"),
 		Availability:   c.Query("availability"),
-		HomeroomClassID: c.Query("homeroomClassId"),
+		HomeroomClassID: homeroomClassID,
 		SortBy:         c.Query("sort"),
 		SortOrder:      c.Query("order"),
 	}

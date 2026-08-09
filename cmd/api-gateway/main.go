@@ -394,14 +394,14 @@ func main() {
 		registerPprof(r)
 	}
 
-	if cfg.Aliases.AttendanceEnabled && attendanceSvc != nil && attendanceSummaryRepo != nil {
+	if attendanceSvc != nil && attendanceSummaryRepo != nil {
 		attendanceAliasSvc := service.NewAttendanceAliasService(attendanceSvc, analyticsSvc, attendanceSummaryRepo, assignmentRepo, enrollmentRepo, termRepo, logr)
 		attendanceAliasHandler = internalhandler.NewAttendanceAliasHandler(attendanceAliasSvc)
 	}
 
-	// CRUD Attendance Handler (always available when AttendanceEnabled)
+	// CRUD Attendance Handler (always available)
 	var attendanceHandler *internalhandler.AttendanceHandler
-	if cfg.Aliases.AttendanceEnabled && attendanceSvc != nil {
+	if attendanceSvc != nil {
 		attendanceHandler = internalhandler.NewAttendanceHandler(attendanceSvc)
 	}
 

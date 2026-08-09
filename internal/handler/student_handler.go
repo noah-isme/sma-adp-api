@@ -165,6 +165,16 @@ func studentFilter(c *gin.Context) models.StudentFilter {
 			filter.BirthYearEnd = &v
 		}
 	}
+	if birthYear := c.Query("birthYear"); birthYear != "" {
+		if v, err := strconv.Atoi(birthYear); err == nil {
+			if filter.BirthYearStart == nil {
+				filter.BirthYearStart = &v
+			}
+			if filter.BirthYearEnd == nil {
+				filter.BirthYearEnd = &v
+			}
+		}
+	}
 	if page, err := strconv.Atoi(c.DefaultQuery("page", "1")); err == nil {
 		filter.Page = page
 	}

@@ -68,7 +68,7 @@ graph TB
     end
     
     subgraph "Phase 4: Attendance & Comm"
-        P4[⚠️ Partially Exposed]
+        P4[✅ Implemented + Exposed]
     end
     
     subgraph "Phase 5: Analytics & Optimization"
@@ -88,7 +88,7 @@ graph TB
 | Phase 1 | Auth dan user management | Implemented + exposed | `/auth` dan `/users` aktif di gateway. |
 | Phase 2 | Academic management | Implemented + exposed | Terms, subjects, classes, class-subjects, schedules CRUD aktif. Scheduler/generator tetap feature-flagged. |
 | Phase 3 | Student, enrollment, grading, report card | Implemented + exposed | Students, enrollments, grade components/configs/grades, report card JSON aktif. Async reports tetap feature-flagged. |
-| Phase 4 | Attendance, communication, calendar | Implemented behind flag | Announcements, behavior notes, calendar events aktif. Attendance CRUD (daily/subject and compatibility routes) requires `ENABLE_ATTENDANCE_ALIAS`; calendar FE alias remains separately feature-flagged. |
+| Phase 4 | Attendance, communication, calendar | Implemented + exposed | Announcements, behavior notes, calendar events aktif. Attendance CRUD (daily/subject and compatibility routes) are always-on; calendar FE alias remains separately feature-flagged. |
 | Phase 5 | Analytics, dashboard, cache, async reports, scheduler | Implemented behind flags | Perlu contract test, smoke test, dan data validation sebelum dianggap production-ready. |
 | Phase 6 | Cutover, rollback, decommission | Planned + support implemented | Middleware, runbook, dan checklist ada. Cutover produksi belum selesai. |
 
@@ -115,9 +115,6 @@ graph TB
         TEACH[/teachers]
         CSUBJ[/class-subjects]
         TPREF[/teacher-preferences]
-    end
-    
-    subgraph "Conditional (ENABLE_ATTENDANCE_ALIAS)"
         ATTD[/attendance/daily]
         ATTS[/attendance/subject]
         ATTDB[/attendance/daily/bulk]
@@ -158,8 +155,9 @@ Always-on core:
 - `/teachers`
 - `/class-subjects`
 - `/teacher-preferences`
+- `/attendance` (and sub-routes)
 
-Attendance routes and compatibility aliases are not always-on. The daily, subject, generic write, and summary routes are registered only when `ENABLE_ATTENDANCE_ALIAS=true`.
+Attendance routes and compatibility aliases are now always-on core endpoints.
 
 Feature-flagged:
 

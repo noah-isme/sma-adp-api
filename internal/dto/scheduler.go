@@ -2,6 +2,7 @@ package dto
 
 // SubjectLoadRequest captures weekly demand for a subject-teacher pair.
 type SubjectLoadRequest struct {
+	ClassID     string   `json:"classId,omitempty"`
 	SubjectID   string   `json:"subjectId" validate:"required"`
 	TeacherID   string   `json:"teacherId" validate:"required"`
 	WeeklyCount int      `json:"weeklyCount" validate:"required,min=1"`
@@ -13,7 +14,8 @@ type SubjectLoadRequest struct {
 // GenerateScheduleRequest instructs the generator to build a proposal for the class/term.
 type GenerateScheduleRequest struct {
 	TermID          string               `json:"termId" validate:"required"`
-	ClassID         string               `json:"classId" validate:"required"`
+	ClassID         string               `json:"classId,omitempty"`
+	ClassIDs        []string             `json:"classIds,omitempty"`
 	TimeSlotsPerDay int                  `json:"timeSlotsPerDay" validate:"required,min=1,max=16"`
 	Days            []int                `json:"days" validate:"required,min=1,dive,min=1,max=7"`
 	SubjectLoads    []SubjectLoadRequest `json:"subjectLoads" validate:"required,min=1,dive"`
@@ -24,6 +26,7 @@ type GenerateScheduleRequest struct {
 
 // ScheduleSlotProposal represents a generated slot.
 type ScheduleSlotProposal struct {
+	ClassID   string  `json:"classId"`
 	DayOfWeek int     `json:"dayOfWeek"`
 	TimeSlot  int     `json:"timeSlot"`
 	SubjectID string  `json:"subjectId"`

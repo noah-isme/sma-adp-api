@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -36,6 +38,7 @@ func NewScheduleHandler(svc *service.ScheduleService) *ScheduleHandler {
 // @Param page query int false "Page"
 // @Param limit query int false "Page size"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /schedules [get]
 func (h *ScheduleHandler) List(c *gin.Context) {
 	var filter models.ScheduleFilter
@@ -68,6 +71,7 @@ func (h *ScheduleHandler) List(c *gin.Context) {
 // @Produce json
 // @Param id path string true "Class ID"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /classes/{id}/schedules [get]
 func (h *ScheduleHandler) ListByClass(c *gin.Context) {
 	schedules, err := h.service.ListByClass(c.Request.Context(), c.Param("id"))
@@ -84,6 +88,7 @@ func (h *ScheduleHandler) ListByClass(c *gin.Context) {
 // @Produce json
 // @Param id path string true "Teacher ID"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /teachers/{id}/schedules [get]
 func (h *ScheduleHandler) ListByTeacher(c *gin.Context) {
 	schedules, err := h.service.ListByTeacher(c.Request.Context(), c.Param("id"))
@@ -101,6 +106,7 @@ func (h *ScheduleHandler) ListByTeacher(c *gin.Context) {
 // @Produce json
 // @Param payload body service.CreateScheduleRequest true "Schedule payload"
 // @Success 201 {object} response.Envelope
+// @Security BearerAuth
 // @Router /schedules [post]
 func (h *ScheduleHandler) Create(c *gin.Context) {
 	var req service.CreateScheduleRequest
@@ -123,6 +129,7 @@ func (h *ScheduleHandler) Create(c *gin.Context) {
 // @Produce json
 // @Param payload body service.BulkCreateSchedulesRequest true "Bulk payload"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /schedules/bulk [post]
 func (h *ScheduleHandler) BulkCreate(c *gin.Context) {
 	var req service.BulkCreateSchedulesRequest
@@ -146,6 +153,7 @@ func (h *ScheduleHandler) BulkCreate(c *gin.Context) {
 // @Param id path string true "Schedule ID"
 // @Param payload body service.UpdateScheduleRequest true "Schedule payload"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /schedules/{id} [put]
 func (h *ScheduleHandler) Update(c *gin.Context) {
 	var req service.UpdateScheduleRequest
@@ -167,6 +175,7 @@ func (h *ScheduleHandler) Update(c *gin.Context) {
 // @Produce json
 // @Param id path string true "Schedule ID"
 // @Success 204
+// @Security BearerAuth
 // @Router /schedules/{id} [delete]
 func (h *ScheduleHandler) Delete(c *gin.Context) {
 	if err := h.service.Delete(c.Request.Context(), c.Param("id")); err != nil {
@@ -175,3 +184,43 @@ func (h *ScheduleHandler) Delete(c *gin.Context) {
 	}
 	response.NoContent(c)
 }
+
+// ExportPDF godoc
+// @Summary Export schedule grid as PDF
+// @Tags Schedules
+// @Produce application/pdf
+// @Param class_id query string false "Class ID"
+// @Param classId query string false "Class ID (camelCase)"
+// @Param term_id query string false "Term ID"
+// @Param termId query string false "Term ID (camelCase)"
+// @Success 200 {file} binary
+// @Failure 400 {object} response.Envelope
+// @Failure 500 {object} response.Envelope
+// @Security BearerAuth
+// @Router /schedules/export/pdf [get]
+func (h *ScheduleHandler) ExportPDF(c *gin.Context) {
+	classID := strings.TrimSpace(c.Query("class_id"))
+	if classID == "" {
+		classID = strings.TrimSpace(c.Query("classId"))
+	}
+	termID := strings.TrimSpace(c.Query("term_id"))
+	if termID == "" {
+		termID = strings.TrimSpace(c.Query("termId"))
+	}
+
+	if classID == "" || termID == "" {
+		response.Error(c, appErrors.Wrap(errors.New("class_id and term_id are required"), appErrors.ErrValidation.Code, http.StatusBadRequest, "class_id and term_id query parameters are required"))
+		return
+	}
+
+	pdfBytes, filename, err := h.service.ExportPDF(c.Request.Context(), classID, termID)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	c.Header("Content-Type", "application/pdf")
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+	c.Data(http.StatusOK, "application/pdf", pdfBytes)
+}
+

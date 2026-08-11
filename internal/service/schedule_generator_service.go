@@ -144,66 +144,103 @@ func (s *ScheduleGeneratorService) Generate(ctx context.Context, req dto.Generat
 	if err := s.validator.Struct(req); err != nil {
 		return nil, appErrors.Wrap(err, appErrors.ErrValidation.Code, appErrors.ErrValidation.Status, "invalid schedule generation payload")
 	}
-	if err := s.ensureTermAndClass(ctx, req.TermID, req.ClassID); err != nil {
-		return nil, err
+
+	targetClassIDs := req.ClassIDs
+	if len(targetClassIDs) == 0 && req.ClassID != "" {
+		targetClassIDs = []string{req.ClassID}
+	}
+	if len(targetClassIDs) == 0 {
+		return nil, appErrors.Clone(appErrors.ErrValidation, "classId or classIds required")
+	}
+
+	for _, cID := range targetClassIDs {
+		if err := s.ensureTermAndClass(ctx, req.TermID, cID); err != nil {
+			return nil, err
+		}
 	}
 
 	days := normalizeDays(req.Days)
 	if len(days) == 0 {
 		return nil, appErrors.Clone(appErrors.ErrValidation, "days must contain at least one entry between 1-6")
 	}
-	expectedLoad := req.TimeSlotsPerDay * len(days)
-	totalLoad := 0
+
+	expandedLoads := make([]dto.SubjectLoadRequest, 0, len(req.SubjectLoads)*len(targetClassIDs))
 	for _, item := range req.SubjectLoads {
+		if item.ClassID != "" {
+			expandedLoads = append(expandedLoads, item)
+		} else if len(targetClassIDs) == 1 {
+			item.ClassID = targetClassIDs[0]
+			expandedLoads = append(expandedLoads, item)
+		} else {
+			for _, cID := range targetClassIDs {
+				loadCopy := item
+				loadCopy.ClassID = cID
+				expandedLoads = append(expandedLoads, loadCopy)
+			}
+		}
+	}
+
+	expectedLoad := req.TimeSlotsPerDay * len(days) * len(targetClassIDs)
+	totalLoad := 0
+	for _, item := range expandedLoads {
 		totalLoad += item.WeeklyCount
 	}
 	if totalLoad != expectedLoad {
 		return nil, appErrors.Clone(appErrors.ErrValidation, fmt.Sprintf("subjectLoads weeklyCount (%d) must equal total weekly slots (%d)", totalLoad, expectedLoad))
 	}
 
-	assignments, err := s.assignments.ListByClassAndTerm(ctx, req.ClassID, req.TermID)
+	assignmentMap := make(map[string]map[string]map[string]bool)
+	for _, cID := range targetClassIDs {
+		assignments, err := s.assignments.ListByClassAndTerm(ctx, cID, req.TermID)
+		if err != nil {
+			return nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to load teacher assignments")
+		}
+		if len(assignments) == 0 {
+			return nil, appErrors.Clone(appErrors.ErrPreconditionFailed, fmt.Sprintf("no teacher assignments defined for class %s and term %s", cID, req.TermID))
+		}
+		assignmentMap[cID] = mapAssignments(assignments)
+	}
+
+	if err := s.ensureSubjectsExist(ctx, expandedLoads); err != nil {
+		return nil, err
+	}
+
+	if err := validateSubjectLoadsMultiClass(expandedLoads, assignmentMap); err != nil {
+		return nil, err
+	}
+
+	teacherAvailabilities, err := s.buildTeacherAvailability(ctx, req.TermID, assignmentMap, expandedLoads)
 	if err != nil {
-		return nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to load teacher assignments")
-	}
-	if len(assignments) == 0 {
-		return nil, appErrors.Clone(appErrors.ErrPreconditionFailed, "no teacher assignments defined for this class and term")
-	}
-
-	if err := s.ensureSubjectsExist(ctx, req.SubjectLoads); err != nil {
 		return nil, err
 	}
 
-	assignmentMap := mapAssignments(assignments)
-	if err := validateSubjectLoads(req.SubjectLoads, assignmentMap); err != nil {
-		return nil, err
-	}
-
-	teacherAvailabilities, err := s.buildTeacherAvailability(ctx, req.TermID, assignmentMap, req.SubjectLoads)
-	if err != nil {
-		return nil, err
-	}
-
-	state := newSchedulerState(days, req.TimeSlotsPerDay, teacherAvailabilities)
-	conflicts := s.seedSlots(state, req.SubjectLoads)
+	state := newSchedulerState(days, req.TimeSlotsPerDay, targetClassIDs, teacherAvailabilities)
+	conflicts := s.seedSlots(state, expandedLoads)
 	improvements := state.repairGaps(12)
 
 	slots := state.exportSlots()
-	gapPenalty := calculateGapPenalty(days, req.TimeSlotsPerDay, slots)
+	gapPenalty := calculateGapPenalty(days, req.TimeSlotsPerDay, targetClassIDs, slots)
 	loadPenalty := calculateLoadPenalty(teacherAvailabilities)
 	conflictPenalty := float64(len(conflicts))
 	score := math.Max(0, 100-(conflictPenalty*100+gapPenalty*2+loadPenalty*5))
 
+	primaryClassID := req.ClassID
+	if primaryClassID == "" && len(targetClassIDs) > 0 {
+		primaryClassID = targetClassIDs[0]
+	}
+
 	proposal := scheduleProposal{
 		ProposalID:      uuid.NewString(),
 		TermID:          req.TermID,
-		ClassID:         req.ClassID,
+		ClassID:         primaryClassID,
+		ClassIDs:        targetClassIDs,
 		Score:           score,
 		Slots:           slots,
 		Conflicts:       conflicts,
 		Stats:           dto.ScheduleImprovementStats{Iterations: improvements, GapPenalty: gapPenalty, LoadPenalty: loadPenalty},
 		TimeSlotsPerDay: req.TimeSlotsPerDay,
 		Days:            days,
-		SubjectLoads:    req.SubjectLoads,
+		SubjectLoads:    expandedLoads,
 		RequestedAt:     time.Now().UTC(),
 		Meta: map[string]any{
 			"hardConstraints": req.HardConstraints,
@@ -248,6 +285,22 @@ func (s *ScheduleGeneratorService) Save(ctx context.Context, req dto.SaveSchedul
 		}
 	}()
 
+	classIDs := proposal.ClassIDs
+	if len(classIDs) == 0 {
+		classMap := map[string]bool{}
+		for _, slot := range proposal.Slots {
+			if slot.ClassID != "" {
+				classMap[slot.ClassID] = true
+			}
+		}
+		for cID := range classMap {
+			classIDs = append(classIDs, cID)
+		}
+		if len(classIDs) == 0 && proposal.ClassID != "" {
+			classIDs = []string{proposal.ClassID}
+		}
+	}
+
 	metaPayload := map[string]any{
 		"score":      proposal.Score,
 		"stats":      proposal.Stats,
@@ -263,69 +316,82 @@ func (s *ScheduleGeneratorService) Save(ctx context.Context, req dto.SaveSchedul
 		return "", err
 	}
 
-	record := &models.SemesterSchedule{
-		TermID:  proposal.TermID,
-		ClassID: proposal.ClassID,
-		Status:  models.SemesterScheduleStatusDraft,
-		Meta:    types.JSONText(metaBytes),
-	}
-
-	if err = s.semesters.CreateVersioned(ctx, tx, record); err != nil {
-		err = appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to create semester schedule")
-		return "", err
-	}
-
-	slotModels := make([]models.SemesterScheduleSlot, 0, len(proposal.Slots))
-	for _, slot := range proposal.Slots {
-		slotModels = append(slotModels, models.SemesterScheduleSlot{
-			SemesterScheduleID: record.ID,
-			DayOfWeek:          slot.DayOfWeek,
-			TimeSlot:           slot.TimeSlot,
-			SubjectID:          slot.SubjectID,
-			TeacherID:          slot.TeacherID,
-			Room:               slot.Room,
-		})
-	}
-
-	if err = s.slots.UpsertBatch(ctx, tx, slotModels); err != nil {
-		err = appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to persist semester schedule slots")
-		return "", err
-	}
-
-	if req.CommitToDaily {
-		if s.conflicts == nil {
-			err = appErrors.Clone(appErrors.ErrInternal, "schedule conflict checker unavailable")
-			return "", err
-		}
-		conflicts, conflictErr := s.conflicts.Check(ctx, proposal.TermID, proposal.ClassID, proposal.Slots)
-		if conflictErr != nil {
-			err = conflictErr
-			return "", err
-		}
-		if len(conflicts) > 0 {
-			err = appErrors.Wrap(&models.ScheduleConflictError{Type: "CONFLICT", Message: "detected conflicts when committing to daily schedules", Errors: conflicts}, appErrors.ErrConflict.Code, appErrors.ErrConflict.Status, "conflict detected")
-			return "", err
-		}
-
-		daily := make([]models.Schedule, 0, len(proposal.Slots))
+	var firstCreatedID string
+	for _, cID := range classIDs {
+		classSlots := make([]dto.ScheduleSlotProposal, 0)
 		for _, slot := range proposal.Slots {
-			daily = append(daily, models.Schedule{
-				TermID:    proposal.TermID,
-				ClassID:   proposal.ClassID,
-				SubjectID: slot.SubjectID,
-				TeacherID: slot.TeacherID,
-				DayOfWeek: dayIndexToName(slot.DayOfWeek),
-				TimeSlot:  strconv.Itoa(slot.TimeSlot),
-				Room:      slotRoomValue(slot),
+			if slot.ClassID == cID || (len(classIDs) == 1 && slot.ClassID == "") {
+				classSlots = append(classSlots, slot)
+			}
+		}
+
+		record := &models.SemesterSchedule{
+			TermID:  proposal.TermID,
+			ClassID: cID,
+			Status:  models.SemesterScheduleStatusDraft,
+			Meta:    types.JSONText(metaBytes),
+		}
+
+		if err = s.semesters.CreateVersioned(ctx, tx, record); err != nil {
+			err = appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to create semester schedule")
+			return "", err
+		}
+		if firstCreatedID == "" {
+			firstCreatedID = record.ID
+		}
+
+		slotModels := make([]models.SemesterScheduleSlot, 0, len(classSlots))
+		for _, slot := range classSlots {
+			slotModels = append(slotModels, models.SemesterScheduleSlot{
+				SemesterScheduleID: record.ID,
+				DayOfWeek:          slot.DayOfWeek,
+				TimeSlot:           slot.TimeSlot,
+				SubjectID:          slot.SubjectID,
+				TeacherID:          slot.TeacherID,
+				Room:               slot.Room,
 			})
 		}
-		if err = s.schedules.BulkCreateWithTx(ctx, tx, daily); err != nil {
-			err = appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to commit daily schedules")
+
+		if err = s.slots.UpsertBatch(ctx, tx, slotModels); err != nil {
+			err = appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to persist semester schedule slots")
 			return "", err
 		}
-		if err = s.semesters.UpdateStatus(ctx, tx, record.ID, models.SemesterScheduleStatusPublished, nil); err != nil {
-			err = appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to update schedule status")
-			return "", err
+
+		if req.CommitToDaily {
+			if s.conflicts == nil {
+				err = appErrors.Clone(appErrors.ErrInternal, "schedule conflict checker unavailable")
+				return "", err
+			}
+			conflicts, conflictErr := s.conflicts.Check(ctx, proposal.TermID, cID, classSlots)
+			if conflictErr != nil {
+				err = conflictErr
+				return "", err
+			}
+			if len(conflicts) > 0 {
+				err = appErrors.Wrap(&models.ScheduleConflictError{Type: "CONFLICT", Message: "detected conflicts when committing to daily schedules", Errors: conflicts}, appErrors.ErrConflict.Code, appErrors.ErrConflict.Status, "conflict detected")
+				return "", err
+			}
+
+			daily := make([]models.Schedule, 0, len(classSlots))
+			for _, slot := range classSlots {
+				daily = append(daily, models.Schedule{
+					TermID:    proposal.TermID,
+					ClassID:   cID,
+					SubjectID: slot.SubjectID,
+					TeacherID: slot.TeacherID,
+					DayOfWeek: dayIndexToName(slot.DayOfWeek),
+					TimeSlot:  strconv.Itoa(slot.TimeSlot),
+					Room:      slotRoomValue(slot),
+				})
+			}
+			if err = s.schedules.BulkCreateWithTx(ctx, tx, daily); err != nil {
+				err = appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to commit daily schedules")
+				return "", err
+			}
+			if err = s.semesters.UpdateStatus(ctx, tx, record.ID, models.SemesterScheduleStatusPublished, nil); err != nil {
+				err = appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to update schedule status")
+				return "", err
+			}
 		}
 	}
 
@@ -335,7 +401,7 @@ func (s *ScheduleGeneratorService) Save(ctx context.Context, req dto.SaveSchedul
 	}
 
 	s.store.Delete(req.ProposalID)
-	return record.ID, nil
+	return firstCreatedID, nil
 }
 
 // List returns semester schedules for a class-term tuple.
@@ -432,13 +498,15 @@ func (s *ScheduleGeneratorService) ensureSubjectsExist(ctx context.Context, load
 func (s *ScheduleGeneratorService) buildTeacherAvailability(
 	ctx context.Context,
 	termID string,
-	assignments map[string]map[string]bool,
+	assignments map[string]map[string]map[string]bool,
 	loads []dto.SubjectLoadRequest,
 ) (map[string]*teacherAvailability, error) {
 	teachers := map[string]struct{}{}
-	for _, teacherMap := range assignments {
-		for teacherID := range teacherMap {
-			teachers[teacherID] = struct{}{}
+	for _, subjectMap := range assignments {
+		for _, teacherMap := range subjectMap {
+			for teacherID := range teacherMap {
+				teachers[teacherID] = struct{}{}
+			}
 		}
 	}
 	for _, load := range loads {
@@ -536,7 +604,7 @@ func mapAssignments(items []models.TeacherAssignment) map[string]map[string]bool
 	return result
 }
 
-func validateSubjectLoads(loads []dto.SubjectLoadRequest, assignments map[string]map[string]bool) error {
+func validateSubjectLoadsMultiClass(loads []dto.SubjectLoadRequest, assignmentsByClass map[string]map[string]map[string]bool) error {
 	for _, load := range loads {
 		if load.WeeklyCount <= 0 {
 			return appErrors.Clone(appErrors.ErrValidation, fmt.Sprintf("subject %s weeklyCount must be > 0", load.SubjectID))
@@ -544,9 +612,11 @@ func validateSubjectLoads(loads []dto.SubjectLoadRequest, assignments map[string
 		if load.SubjectID == "" || load.TeacherID == "" {
 			return appErrors.Clone(appErrors.ErrValidation, "subjectId and teacherId are required for subjectLoads")
 		}
-		if teachers, ok := assignments[load.SubjectID]; ok {
-			if !teachers[load.TeacherID] {
-				return appErrors.Clone(appErrors.ErrValidation, fmt.Sprintf("teacher %s is not assigned to subject %s", load.TeacherID, load.SubjectID))
+		if classAssignments, ok := assignmentsByClass[load.ClassID]; ok {
+			if teachers, ok := classAssignments[load.SubjectID]; ok {
+				if !teachers[load.TeacherID] {
+					return appErrors.Clone(appErrors.ErrValidation, fmt.Sprintf("teacher %s is not assigned to subject %s", load.TeacherID, load.SubjectID))
+				}
 			}
 		}
 	}
@@ -559,6 +629,7 @@ type scheduleProposal struct {
 	ProposalID      string
 	TermID          string
 	ClassID         string
+	ClassIDs        []string
 	Score           float64
 	Slots           []dto.ScheduleSlotProposal
 	Conflicts       []dto.ProposalConflict
@@ -611,42 +682,49 @@ func (s *proposalStore) Delete(id string) {
 
 // --- Scheduler state & helpers ---
 
-type slotKey struct {
-	Day  int
-	Time int
+type multiClassSlotKey struct {
+	ClassID string
+	Day     int
+	Time    int
 }
 
 type schedulerState struct {
 	days           []int
 	timeSlots      int
-	classSlots     map[slotKey]dto.ScheduleSlotProposal
-	dayLoad        map[int]int
+	targetClassIDs []string
+	classSlots     map[multiClassSlotKey]dto.ScheduleSlotProposal
+	dayLoad        map[string]int
 	teacherLoads   map[string]*teacherAvailability
 	preferredCache map[string][]int
 }
 
-func newSchedulerState(days []int, timeSlots int, loads map[string]*teacherAvailability) *schedulerState {
+func newSchedulerState(days []int, timeSlots int, targetClassIDs []string, loads map[string]*teacherAvailability) *schedulerState {
 	return &schedulerState{
 		days:           days,
 		timeSlots:      timeSlots,
-		classSlots:     make(map[slotKey]dto.ScheduleSlotProposal),
-		dayLoad:        make(map[int]int),
+		targetClassIDs: targetClassIDs,
+		classSlots:     make(map[multiClassSlotKey]dto.ScheduleSlotProposal),
+		dayLoad:        make(map[string]int),
 		teacherLoads:   loads,
 		preferredCache: make(map[string][]int),
 	}
+}
+
+func (s *schedulerState) getDayLoad(classID string, day int) int {
+	return s.dayLoad[classID+":"+strconv.Itoa(day)]
 }
 
 func (s *schedulerState) Assign(load dto.SubjectLoadRequest) bool {
 	dayOrder := make([]int, len(s.days))
 	copy(dayOrder, s.days)
 	sort.Slice(dayOrder, func(i, j int) bool {
-		return s.dayLoad[dayOrder[i]] < s.dayLoad[dayOrder[j]]
+		return s.getDayLoad(load.ClassID, dayOrder[i]) < s.getDayLoad(load.ClassID, dayOrder[j])
 	})
 
 	candidateTimes := s.candidateTimes(load)
 	for _, day := range dayOrder {
 		for _, slot := range candidateTimes {
-			if s.canPlace(load.TeacherID, day, slot) {
+			if s.canPlace(load.ClassID, load.TeacherID, day, slot) {
 				s.place(load, day, slot)
 				return true
 			}
@@ -674,11 +752,11 @@ func (s *schedulerState) candidateTimes(load dto.SubjectLoadRequest) []int {
 	return result
 }
 
-func (s *schedulerState) canPlace(teacherID string, day, slot int) bool {
+func (s *schedulerState) canPlace(classID, teacherID string, day, slot int) bool {
 	if day < 1 || slot < 1 || slot > s.timeSlots {
 		return false
 	}
-	key := slotKey{Day: day, Time: slot}
+	key := multiClassSlotKey{ClassID: classID, Day: day, Time: slot}
 	if _, exists := s.classSlots[key]; exists {
 		return false
 	}
@@ -690,37 +768,43 @@ func (s *schedulerState) canPlace(teacherID string, day, slot int) bool {
 }
 
 func (s *schedulerState) place(load dto.SubjectLoadRequest, day, slot int) {
-	key := slotKey{Day: day, Time: slot}
+	key := multiClassSlotKey{ClassID: load.ClassID, Day: day, Time: slot}
 	s.classSlots[key] = dto.ScheduleSlotProposal{
+		ClassID:   load.ClassID,
 		DayOfWeek: day,
 		TimeSlot:  slot,
 		SubjectID: load.SubjectID,
 		TeacherID: load.TeacherID,
 	}
 	s.teacherLoads[load.TeacherID].Reserve(day, slot)
-	s.dayLoad[day]++
+	s.dayLoad[load.ClassID+":"+strconv.Itoa(day)]++
 }
 
 func (s *schedulerState) repairGaps(maxIterations int) int {
 	iterations := 0
 	for iterations < maxIterations {
 		moved := false
-		for _, day := range s.days {
-			times := s.timesForDay(day)
-			if len(times) < 2 {
-				continue
-			}
-			for i := 0; i < len(times)-1; i++ {
-				current := times[i]
-				next := times[i+1]
-				if next-current <= 1 {
+		for _, cID := range s.targetClassIDs {
+			for _, day := range s.days {
+				times := s.timesForDayClass(cID, day)
+				if len(times) < 2 {
 					continue
 				}
-				target := current + 1
-				slot := s.classSlots[slotKey{Day: day, Time: next}]
-				if s.canPlace(slot.TeacherID, day, target) {
-					s.moveSlot(day, next, target)
-					moved = true
+				for i := 0; i < len(times)-1; i++ {
+					current := times[i]
+					next := times[i+1]
+					if next-current <= 1 {
+						continue
+					}
+					target := current + 1
+					slot := s.classSlots[multiClassSlotKey{ClassID: cID, Day: day, Time: next}]
+					if s.canPlace(cID, slot.TeacherID, day, target) {
+						s.moveSlot(cID, day, next, target)
+						moved = true
+						break
+					}
+				}
+				if moved {
 					break
 				}
 			}
@@ -736,10 +820,10 @@ func (s *schedulerState) repairGaps(maxIterations int) int {
 	return iterations
 }
 
-func (s *schedulerState) timesForDay(day int) []int {
+func (s *schedulerState) timesForDayClass(classID string, day int) []int {
 	var times []int
 	for key := range s.classSlots {
-		if key.Day == day {
+		if key.ClassID == classID && key.Day == day {
 			times = append(times, key.Time)
 		}
 	}
@@ -747,14 +831,14 @@ func (s *schedulerState) timesForDay(day int) []int {
 	return times
 }
 
-func (s *schedulerState) moveSlot(day, fromSlot, toSlot int) {
-	key := slotKey{Day: day, Time: fromSlot}
+func (s *schedulerState) moveSlot(classID string, day, fromSlot, toSlot int) {
+	key := multiClassSlotKey{ClassID: classID, Day: day, Time: fromSlot}
 	slot := s.classSlots[key]
 	delete(s.classSlots, key)
 	s.teacherLoads[slot.TeacherID].Release(day, fromSlot)
 
 	slot.TimeSlot = toSlot
-	s.classSlots[slotKey{Day: day, Time: toSlot}] = slot
+	s.classSlots[multiClassSlotKey{ClassID: classID, Day: day, Time: toSlot}] = slot
 	s.teacherLoads[slot.TeacherID].Reserve(day, toSlot)
 }
 
@@ -764,10 +848,13 @@ func (s *schedulerState) exportSlots() []dto.ScheduleSlotProposal {
 		slots = append(slots, slot)
 	}
 	sort.Slice(slots, func(i, j int) bool {
-		if slots[i].DayOfWeek == slots[j].DayOfWeek {
-			return slots[i].TimeSlot < slots[j].TimeSlot
+		if slots[i].ClassID == slots[j].ClassID {
+			if slots[i].DayOfWeek == slots[j].DayOfWeek {
+				return slots[i].TimeSlot < slots[j].TimeSlot
+			}
+			return slots[i].DayOfWeek < slots[j].DayOfWeek
 		}
-		return slots[i].DayOfWeek < slots[j].DayOfWeek
+		return slots[i].ClassID < slots[j].ClassID
 	})
 	return slots
 }
@@ -837,26 +924,28 @@ func (t *teacherAvailability) Release(day, slot int) {
 
 // --- Metrics helpers ---
 
-func calculateGapPenalty(days []int, slotsPerDay int, slots []dto.ScheduleSlotProposal) float64 {
+func calculateGapPenalty(days []int, slotsPerDay int, targetClassIDs []string, slots []dto.ScheduleSlotProposal) float64 {
 	var penalty float64
-	for _, day := range days {
-		var times []int
-		for _, slot := range slots {
-			if slot.DayOfWeek == day {
-				times = append(times, slot.TimeSlot)
+	for _, cID := range targetClassIDs {
+		for _, day := range days {
+			var times []int
+			for _, slot := range slots {
+				if slot.ClassID == cID && slot.DayOfWeek == day {
+					times = append(times, slot.TimeSlot)
+				}
 			}
-		}
-		if len(times) <= 1 {
-			continue
-		}
-		sort.Ints(times)
-		for i := 0; i < len(times)-1; i++ {
-			diff := times[i+1] - times[i]
-			if diff > 1 {
-				penalty += float64(diff - 1)
+			if len(times) <= 1 {
+				continue
 			}
+			sort.Ints(times)
+			for i := 0; i < len(times)-1; i++ {
+				diff := times[i+1] - times[i]
+				if diff > 1 {
+					penalty += float64(diff - 1)
+				}
+			}
+			penalty += float64(slotsPerDay - len(times))
 		}
-		penalty += float64(slotsPerDay - len(times))
 	}
 	return penalty
 }

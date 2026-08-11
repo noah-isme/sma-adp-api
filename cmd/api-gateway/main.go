@@ -33,6 +33,9 @@ import (
 // @description Bootstrap server for Golang migration (Phase 0)
 // @BasePath /
 // @schemes http
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 
 func main() {
 	cfg, err := config.Load()
@@ -526,6 +529,7 @@ func main() {
 
 	schedulesGroup := secured.Group("/schedules")
 	schedulesGroup.GET("", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), scheduleHandler.List)
+	schedulesGroup.GET("/export/pdf", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), scheduleHandler.ExportPDF) // GET /schedules/export/pdf
 	schedulesGroup.POST("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), scheduleHandler.Create)
 	schedulesGroup.POST("/bulk", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), scheduleHandler.BulkCreate)
 	schedulesGroup.PUT("/:id", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), scheduleHandler.Update)

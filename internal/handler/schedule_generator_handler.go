@@ -48,6 +48,7 @@ func NewScheduleGeneratorHandler(svc *service.ScheduleGeneratorService) *Schedul
 // @Produce json
 // @Param payload body dto.GenerateScheduleRequest true "Generate schedule payload"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /schedule/generate [post]
 func (h *ScheduleGeneratorHandler) Generate(c *gin.Context) {
 	h.handleGenerate(c)
@@ -61,6 +62,7 @@ func (h *ScheduleGeneratorHandler) Generate(c *gin.Context) {
 // @Produce json
 // @Param payload body dto.GenerateScheduleRequest true "Generate schedule payload"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /schedules/generator [post]
 func (h *ScheduleGeneratorHandler) GenerateAlias(c *gin.Context) {
 	h.handleGenerate(c)
@@ -73,6 +75,7 @@ func (h *ScheduleGeneratorHandler) GenerateAlias(c *gin.Context) {
 // @Produce json
 // @Param payload body dto.SaveScheduleRequest true "Save schedule payload"
 // @Success 201 {object} response.Envelope
+// @Security BearerAuth
 // @Router /schedule/save [post]
 func (h *ScheduleGeneratorHandler) Save(c *gin.Context) {
 	var req dto.SaveScheduleRequest
@@ -95,6 +98,7 @@ func (h *ScheduleGeneratorHandler) Save(c *gin.Context) {
 // @Param termId query string true "Term ID"
 // @Param classId query string true "Class ID"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /semester-schedule [get]
 func (h *ScheduleGeneratorHandler) List(c *gin.Context) {
 	query := dto.SemesterScheduleQuery{
@@ -115,6 +119,7 @@ func (h *ScheduleGeneratorHandler) List(c *gin.Context) {
 // @Produce json
 // @Param id path string true "Semester schedule ID"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /semester-schedule/{id}/slots [get]
 func (h *ScheduleGeneratorHandler) Slots(c *gin.Context) {
 	slots, err := h.service.GetSlots(c.Request.Context(), c.Param("id"))
@@ -130,6 +135,7 @@ func (h *ScheduleGeneratorHandler) Slots(c *gin.Context) {
 // @Tags Scheduler
 // @Param id path string true "Semester schedule ID"
 // @Success 204
+// @Security BearerAuth
 // @Router /semester-schedule/{id} [delete]
 func (h *ScheduleGeneratorHandler) Delete(c *gin.Context) {
 	if err := h.service.Delete(c.Request.Context(), c.Param("id")); err != nil {
@@ -162,6 +168,12 @@ func (h *ScheduleGeneratorHandler) handleGenerate(c *gin.Context) {
 }
 
 func validateGenerateAliasRequest(req dto.GenerateScheduleRequest) error {
+	if req.ClassID == "" && len(req.ClassIDs) == 0 {
+		return appErrors.Clone(appErrors.ErrValidation, "classId or classIds required")
+	}
+	if req.TimeSlotsPerDay <= 0 || len(req.Days) == 0 {
+		return appErrors.Clone(appErrors.ErrValidation, "timeSlotsPerDay and days required")
+	}
 	if len(req.SubjectLoads) > maxSubjectLoads {
 		return appErrors.Clone(appErrors.ErrValidation, "subjectLoads exceeds supported limit")
 	}

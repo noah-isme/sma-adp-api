@@ -40,6 +40,38 @@ func TestScheduleGeneratorServiceGenerateSuccess(t *testing.T) {
 	assert.Greater(t, resp.Score, 0.0)
 }
 
+func TestScheduleGeneratorServiceGenerateMultiClass(t *testing.T) {
+	service := newSchedulerServiceFixture(t, schedulerFixtureConfig{})
+
+	resp, err := service.Generate(context.Background(), dto.GenerateScheduleRequest{
+		TermID:          "term-1",
+		ClassIDs:        []string{"class-1", "class-2"},
+		TimeSlotsPerDay: 2,
+		Days:            []int{1, 2},
+		SubjectLoads: []dto.SubjectLoadRequest{
+			{ClassID: "class-1", SubjectID: "math", TeacherID: "teacher-1", WeeklyCount: 2, Difficulty: 5},
+			{ClassID: "class-1", SubjectID: "science", TeacherID: "teacher-2", WeeklyCount: 2, Difficulty: 3},
+			{ClassID: "class-2", SubjectID: "math", TeacherID: "teacher-1", WeeklyCount: 2, Difficulty: 5},
+			{ClassID: "class-2", SubjectID: "science", TeacherID: "teacher-2", WeeklyCount: 2, Difficulty: 3},
+		},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, 8, len(resp.Slots))
+	assert.Empty(t, resp.Conflicts)
+	assert.Greater(t, resp.Score, 0.0)
+
+	// Verify zero teacher time-slot conflicts across classes
+	teacherSlots := make(map[string]map[string]bool) // teacherID -> "day-slot" -> bool
+	for _, slot := range resp.Slots {
+		key := fmt.Sprintf("%d-%d", slot.DayOfWeek, slot.TimeSlot)
+		if teacherSlots[slot.TeacherID] == nil {
+			teacherSlots[slot.TeacherID] = make(map[string]bool)
+		}
+		assert.False(t, teacherSlots[slot.TeacherID][key], "teacher %s scheduled in multiple classes at day %d slot %d", slot.TeacherID, slot.DayOfWeek, slot.TimeSlot)
+		teacherSlots[slot.TeacherID][key] = true
+	}
+}
+
 func TestScheduleGeneratorServiceGenerateHonoursUnavailable(t *testing.T) {
 	service := newSchedulerServiceFixture(t, schedulerFixtureConfig{
 		preferences: map[string]*models.TeacherPreference{

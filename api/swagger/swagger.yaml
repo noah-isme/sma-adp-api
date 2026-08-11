@@ -73,6 +73,10 @@ definitions:
     properties:
       classId:
         type: string
+      classIds:
+        items:
+          type: string
+        type: array
       days:
         items:
           type: integer
@@ -101,7 +105,6 @@ definitions:
         minimum: 1
         type: integer
     required:
-    - classId
     - days
     - subjectLoads
     - termId
@@ -151,6 +154,8 @@ definitions:
     type: object
   github_com_noah-isme_sma-adp-api_internal_dto.SubjectLoadRequest:
     properties:
+      classId:
+        type: string
       difficulty:
         maximum: 10
         minimum: 1
@@ -1697,6 +1702,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Attendance analytics
       tags:
       - Analytics
@@ -1733,6 +1740,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Behavior analytics
       tags:
       - Analytics
@@ -1761,6 +1770,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Grade analytics
       tags:
       - Analytics
@@ -1773,6 +1784,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: System analytics
       tags:
       - Analytics
@@ -1806,6 +1819,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: List announcements
       tags:
       - Announcements
@@ -1826,6 +1841,8 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Create announcement
       tags:
       - Announcements
@@ -1842,6 +1859,8 @@ paths:
       responses:
         "204":
           description: No Content
+      security:
+      - BearerAuth: []
       summary: Delete announcement
       tags:
       - Announcements
@@ -1859,6 +1878,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Get announcement
       tags:
       - Announcements
@@ -1884,6 +1905,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Update announcement
       tags:
       - Announcements
@@ -2989,6 +3012,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: List classes
       tags:
       - Classes
@@ -3009,6 +3034,8 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Create class
       tags:
       - Classes
@@ -3025,6 +3052,8 @@ paths:
       responses:
         "204":
           description: No Content
+      security:
+      - BearerAuth: []
       summary: Delete class
       tags:
       - Classes
@@ -3042,6 +3071,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Get class detail
       tags:
       - Classes
@@ -3067,6 +3098,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Update class
       tags:
       - Classes
@@ -3085,6 +3118,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: List schedules by class
       tags:
       - Schedules
@@ -5305,6 +5340,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Class grade report
       tags:
       - Reports
@@ -5326,6 +5363,8 @@ paths:
           description: Accepted
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Queue a new report job
       tags:
       - Reports
@@ -5344,6 +5383,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Get report job status
       tags:
       - Reports
@@ -5367,6 +5408,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Student report card
       tags:
       - Reports
@@ -5390,6 +5433,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Generate conflict-free schedule proposal (legacy endpoint)
       tags:
       - Academics
@@ -5411,6 +5456,8 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Save schedule proposal to semester schedules
       tags:
       - Scheduler
@@ -5456,6 +5503,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: List schedules
       tags:
       - Schedules
@@ -5476,6 +5525,8 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Create schedule
       tags:
       - Schedules
@@ -5492,6 +5543,8 @@ paths:
       responses:
         "204":
           description: No Content
+      security:
+      - BearerAuth: []
       summary: Delete schedule
       tags:
       - Schedules
@@ -5517,6 +5570,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Update schedule
       tags:
       - Schedules
@@ -5538,7 +5593,48 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Bulk create schedules
+      tags:
+      - Schedules
+  /schedules/export/pdf:
+    get:
+      parameters:
+      - description: Class ID
+        in: query
+        name: class_id
+        type: string
+      - description: Class ID (camelCase)
+        in: query
+        name: classId
+        type: string
+      - description: Term ID
+        in: query
+        name: term_id
+        type: string
+      - description: Term ID (camelCase)
+        in: query
+        name: termId
+        type: string
+      produces:
+      - application/pdf
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Export schedule grid as PDF
       tags:
       - Schedules
   /schedules/generator:
@@ -5561,6 +5657,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Generate schedule proposal (canonical alias)
       tags:
       - Academics
@@ -5647,6 +5745,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: List semester schedules for class-term
       tags:
       - Scheduler
@@ -5661,6 +5761,8 @@ paths:
       responses:
         "204":
           description: No Content
+      security:
+      - BearerAuth: []
       summary: Delete draft semester schedule
       tags:
       - Scheduler
@@ -5679,6 +5781,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Get slots for a semester schedule
       tags:
       - Scheduler
@@ -5716,6 +5820,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: List students
       tags:
       - Students
@@ -5736,6 +5842,8 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Create student
       tags:
       - Students
@@ -5752,6 +5860,8 @@ paths:
       responses:
         "204":
           description: No Content
+      security:
+      - BearerAuth: []
       summary: Deactivate student
       tags:
       - Students
@@ -5769,6 +5879,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Get student detail
       tags:
       - Students
@@ -5794,6 +5906,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Update student
       tags:
       - Students
@@ -5839,6 +5953,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Update student status
       tags:
       - Students
@@ -5864,6 +5980,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Import students from CSV
       tags:
       - Students
@@ -5937,6 +6055,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: List student roster
       tags:
       - Students
@@ -6145,6 +6265,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: List teachers
       tags:
       - Teachers
@@ -6165,6 +6287,8 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Create teacher
       tags:
       - Teachers
@@ -6179,6 +6303,8 @@ paths:
       responses:
         "204":
           description: No Content
+      security:
+      - BearerAuth: []
       summary: Deactivate teacher
       tags:
       - Teachers
@@ -6196,6 +6322,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Get teacher detail
       tags:
       - Teachers
@@ -6221,6 +6349,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Update teacher
       tags:
       - Teachers
@@ -6239,6 +6369,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: List teacher assignments
       tags:
       - Teacher Assignments
@@ -6264,6 +6396,8 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Create teacher assignment
       tags:
       - Teacher Assignments
@@ -6283,6 +6417,8 @@ paths:
       responses:
         "204":
           description: No Content
+      security:
+      - BearerAuth: []
       summary: Delete teacher assignment
       tags:
       - Teacher Assignments
@@ -6344,6 +6480,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: List schedules by teacher
       tags:
       - Schedules
@@ -6371,6 +6509,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Update teacher status
       tags:
       - Teachers
@@ -6396,6 +6536,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Import teachers from CSV
       tags:
       - Teachers
@@ -6461,6 +6603,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: List teacher roster
       tags:
       - Teachers
@@ -6635,6 +6779,8 @@ paths:
           description: Forbidden
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: List users
       tags:
       - Users
@@ -6660,6 +6806,8 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Create user
       tags:
       - Users
@@ -6683,6 +6831,8 @@ paths:
           description: Not Found
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Delete user
       tags:
       - Users
@@ -6705,6 +6855,8 @@ paths:
           description: Not Found
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Get user
       tags:
       - Users
@@ -6735,9 +6887,16 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
       summary: Update user
       tags:
       - Users
 schemes:
 - http
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

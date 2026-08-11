@@ -14,6 +14,7 @@ import (
 	"github.com/noah-isme/sma-adp-api/internal/dto"
 	"github.com/noah-isme/sma-adp-api/internal/middleware"
 	"github.com/noah-isme/sma-adp-api/internal/models"
+	appErrors "github.com/noah-isme/sma-adp-api/pkg/errors"
 )
 
 type fakeDashboardSrv struct {
@@ -80,7 +81,8 @@ func TestDashboardHandlerAdminSuccess(t *testing.T) {
 	var envelope responseEnvelope
 	_ = json.Unmarshal(rec.Body.Bytes(), &envelope)
 	assert.Equal(t, true, envelope.Meta["cache_hit"])
-	assert.Equal(t, "term-1", envelope.Data["termId"])
+	dataMap, _ := envelope.Data.(map[string]interface{})
+	assert.Equal(t, "term-1", dataMap["termId"])
 }
 
 func TestDashboardHandlerTeacherInvalidDate(t *testing.T) {
@@ -121,7 +123,60 @@ func TestDashboardHandlerTeacherSuccess(t *testing.T) {
 	assert.False(t, service.lastTeacher.date.IsZero())
 }
 
+func TestDashboardHandlerTeacherUnauthorized(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	handler := NewDashboardHandler(&fakeDashboardSrv{}, nil)
+
+	rec := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rec)
+	c.Request = httptest.NewRequest(http.MethodGet, "/dashboard/academics?termId=term-1", nil)
+	// No claims set
+
+	handler.Teacher(c)
+
+	assert.Equal(t, http.StatusUnauthorized, rec.Code)
+}
+
+func TestDashboardHandlerForbidden(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	handler := NewDashboardHandler(&fakeDashboardSrv{}, nil)
+	r := gin.New()
+	r.Use(func(c *gin.Context) {
+		if role := c.GetHeader("X-Test-Role"); role != "" {
+			c.Set(middleware.ContextUserKey, &models.JWTClaims{
+				UserID: "usr-1",
+				Role:   models.UserRole(role),
+			})
+		}
+		c.Next()
+	})
+	r.GET("/dashboard", middleware.RBAC(string(models.RoleAdmin)), handler.Admin)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/dashboard?termId=term-1", nil)
+	req.Header.Set("X-Test-Role", string(models.RoleStudent))
+	r.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusForbidden, rec.Code)
+}
+
+func TestDashboardHandlerAdminInternalError(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	handler := NewDashboardHandler(&fakeDashboardSrv{
+		adminErr: appErrors.ErrInternal,
+	}, nil)
+
+	rec := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rec)
+	c.Request = httptest.NewRequest(http.MethodGet, "/dashboard?termId=term-1", nil)
+
+	handler.Admin(c)
+
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+}
+
 type responseEnvelope struct {
-	Data map[string]interface{} `json:"data"`
+	Data interface{}            `json:"data"`
 	Meta map[string]interface{} `json:"meta"`
 }
+

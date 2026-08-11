@@ -103,3 +103,79 @@ func TestReportHandlerDownloadReport(t *testing.T) {
 	handler.DownloadReport(c)
 	require.Equal(t, http.StatusOK, w.Code)
 }
+
+func TestReportHandlerGenerateReportUnauthorized(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	mockSvc := &reportServiceMock{}
+	handler := NewReportHandler(mockSvc, nil)
+
+	payload, _ := json.Marshal(dto.ReportRequest{Type: models.ReportTypeGrades, TermID: "term-1"})
+	c, w := newGinContext(http.MethodPost, "/reports/generate", payload)
+	// No claims attached
+
+	handler.GenerateReport(c)
+	require.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+func TestReportHandlerGenerateReportForbidden(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	mockSvc := &reportServiceMock{}
+	handler := NewReportHandler(mockSvc, nil)
+
+	r := gin.New()
+	r.Use(func(c *gin.Context) {
+		if role := c.GetHeader("X-Test-Role"); role != "" {
+			c.Set(middleware.ContextUserKey, &models.JWTClaims{
+				UserID: "user-1",
+				Role:   models.UserRole(role),
+			})
+		}
+		c.Next()
+	})
+	r.POST("/reports/generate", middleware.RBAC(string(models.RoleAdmin)), handler.GenerateReport)
+
+	payload, _ := json.Marshal(dto.ReportRequest{Type: models.ReportTypeGrades, TermID: "term-1"})
+	req, _ := http.NewRequest(http.MethodPost, "/reports/generate", bytes.NewReader(payload))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Test-Role", string(models.RoleStudent))
+
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusForbidden, rec.Code)
+}
+
+func TestReportHandlerGenerateReportInvalidJSON(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	mockSvc := &reportServiceMock{}
+	handler := NewReportHandler(mockSvc, nil)
+
+	c, w := newGinContext(http.MethodPost, "/reports/generate", []byte(`{invalid}`))
+	c.Set(middleware.ContextUserKey, &models.JWTClaims{UserID: "admin", Role: models.RoleAdmin})
+
+	handler.GenerateReport(c)
+	require.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestReportHandlerStudentReportMissingTerm(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	handler := NewReportHandler(nil, &service.GradeService{})
+
+	c, w := newGinContext(http.MethodGet, "/reports/students/std-1", nil)
+	c.Params = gin.Params{{Key: "id", Value: "std-1"}}
+
+	handler.StudentReport(c)
+	require.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestReportHandlerNilService(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	handler := NewReportHandler(nil, nil)
+
+	c, w := newGinContext(http.MethodGet, "/reports/status/job-1", nil)
+	c.Params = gin.Params{{Key: "id", Value: "job-1"}}
+
+	handler.ReportStatus(c)
+	require.Equal(t, http.StatusInternalServerError, w.Code)
+}
+
+

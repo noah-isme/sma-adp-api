@@ -30,6 +30,7 @@ type TeacherHandler struct {
 // @Param csv body string true "CSV document"
 // @Param Idempotency-Key header string false "Stable key for safe retries"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /teachers/import [post]
 func (h *TeacherHandler) ImportCSV(c *gin.Context) {
 	body, ok := readCSVImportBody(c)
@@ -87,6 +88,7 @@ func NewTeacherHandler(teachers *service.TeacherService, assignments *service.Te
 // @Param sort query string false "Sort field (full_name,email,created_at)"
 // @Param order query string false "Sort order (asc/desc)"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /teachers [get]
 func (h *TeacherHandler) List(c *gin.Context) {
 	if !validateRosterStatus(c) {
@@ -121,6 +123,7 @@ func (h *TeacherHandler) List(c *gin.Context) {
 // @Param sort query string false "Legacy alias for sortField"
 // @Param order query string false "Legacy alias for sortOrder"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /teachers/roster [get]
 func (h *TeacherHandler) Roster(c *gin.Context) {
 	if !validateRosterStatus(c) {
@@ -203,6 +206,7 @@ func teacherPageCount(total, size int) int {
 // @Produce json
 // @Param id path string true "Teacher ID"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /teachers/{id} [get]
 func (h *TeacherHandler) Get(c *gin.Context) {
 	teacher, err := h.teachers.Get(c.Request.Context(), c.Param("id"))
@@ -220,6 +224,7 @@ func (h *TeacherHandler) Get(c *gin.Context) {
 // @Produce json
 // @Param payload body service.CreateTeacherRequest true "Teacher payload"
 // @Success 201 {object} response.Envelope
+// @Security BearerAuth
 // @Router /teachers [post]
 func (h *TeacherHandler) Create(c *gin.Context) {
 	var req service.CreateTeacherRequest
@@ -243,6 +248,7 @@ func (h *TeacherHandler) Create(c *gin.Context) {
 // @Param id path string true "Teacher ID"
 // @Param payload body service.UpdateTeacherRequest true "Teacher payload"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /teachers/{id} [put]
 func (h *TeacherHandler) Update(c *gin.Context) {
 	var req service.UpdateTeacherRequest
@@ -267,6 +273,7 @@ func (h *TeacherHandler) Update(c *gin.Context) {
 // @Param id path string true "Teacher ID"
 // @Param payload body map[string]interface{} true "Status payload"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /teachers/{id}/status [patch]
 func (h *TeacherHandler) UpdateStatus(c *gin.Context) {
 	var payload struct {
@@ -305,6 +312,7 @@ func (h *TeacherHandler) UpdateStatus(c *gin.Context) {
 // @Tags Teachers
 // @Param id path string true "Teacher ID"
 // @Success 204
+// @Security BearerAuth
 // @Router /teachers/{id} [delete]
 func (h *TeacherHandler) Delete(c *gin.Context) {
 	if err := h.teachers.Deactivate(c.Request.Context(), c.Param("id")); err != nil {
@@ -320,6 +328,7 @@ func (h *TeacherHandler) Delete(c *gin.Context) {
 // @Param id path string true "Teacher ID"
 // @Produce json
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /teachers/{id}/assignments [get]
 func (h *TeacherHandler) ListAssignments(c *gin.Context) {
 	assignments, err := h.assignments.ListByTeacher(c.Request.Context(), c.Param("id"))
@@ -338,6 +347,7 @@ func (h *TeacherHandler) ListAssignments(c *gin.Context) {
 // @Param id path string true "Teacher ID"
 // @Param payload body service.CreateTeacherAssignmentRequest true "Assignment payload"
 // @Success 201 {object} response.Envelope
+// @Security BearerAuth
 // @Router /teachers/{id}/assignments [post]
 func (h *TeacherHandler) CreateAssignment(c *gin.Context) {
 	var req service.CreateTeacherAssignmentRequest
@@ -359,6 +369,7 @@ func (h *TeacherHandler) CreateAssignment(c *gin.Context) {
 // @Param id path string true "Teacher ID"
 // @Param aid path string true "Assignment ID"
 // @Success 204
+// @Security BearerAuth
 // @Router /teachers/{id}/assignments/{aid} [delete]
 func (h *TeacherHandler) DeleteAssignment(c *gin.Context) {
 	if err := h.assignments.Remove(c.Request.Context(), c.Param("id"), c.Param("aid")); err != nil {
@@ -368,13 +379,7 @@ func (h *TeacherHandler) DeleteAssignment(c *gin.Context) {
 	response.NoContent(c)
 }
 
-// GetPreferences godoc
-// @Summary Get teacher preferences
-// @Tags Teacher Preferences
-// @Param id path string true "Teacher ID"
-// @Produce json
-// @Success 200 {object} response.Envelope
-// @Router /teachers/{id}/preferences [get]
+// GetPreferences fetches teacher preferences.
 func (h *TeacherHandler) GetPreferences(c *gin.Context) {
 	pref, err := h.prefs.Get(c.Request.Context(), c.Param("id"))
 	if err != nil {
@@ -384,15 +389,7 @@ func (h *TeacherHandler) GetPreferences(c *gin.Context) {
 	response.JSON(c, http.StatusOK, pref, nil)
 }
 
-// UpsertPreferences godoc
-// @Summary Upsert teacher preferences
-// @Tags Teacher Preferences
-// @Accept json
-// @Produce json
-// @Param id path string true "Teacher ID"
-// @Param payload body service.UpsertTeacherPreferenceRequest true "Preference payload"
-// @Success 200 {object} response.Envelope
-// @Router /teachers/{id}/preferences [put]
+// UpsertPreferences creates or updates teacher preferences.
 func (h *TeacherHandler) UpsertPreferences(c *gin.Context) {
 	var req service.UpsertTeacherPreferenceRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

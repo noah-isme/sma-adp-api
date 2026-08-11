@@ -33,6 +33,7 @@ func NewClassHandler(svc *service.ClassService) *ClassHandler {
 // @Param page query int false "Page"
 // @Param limit query int false "Page size"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /classes [get]
 func (h *ClassHandler) List(c *gin.Context) {
 	var filter models.ClassFilter
@@ -62,6 +63,7 @@ func (h *ClassHandler) List(c *gin.Context) {
 // @Produce json
 // @Param id path string true "Class ID"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /classes/{id} [get]
 func (h *ClassHandler) Get(c *gin.Context) {
 	classDetail, err := h.service.Get(c.Request.Context(), c.Param("id"))
@@ -79,6 +81,7 @@ func (h *ClassHandler) Get(c *gin.Context) {
 // @Produce json
 // @Param payload body service.CreateClassRequest true "Class payload"
 // @Success 201 {object} response.Envelope
+// @Security BearerAuth
 // @Router /classes [post]
 func (h *ClassHandler) Create(c *gin.Context) {
 	var req service.CreateClassRequest
@@ -102,6 +105,7 @@ func (h *ClassHandler) Create(c *gin.Context) {
 // @Param id path string true "Class ID"
 // @Param payload body service.UpdateClassRequest true "Class payload"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /classes/{id} [put]
 func (h *ClassHandler) Update(c *gin.Context) {
 	var req service.UpdateClassRequest
@@ -123,6 +127,7 @@ func (h *ClassHandler) Update(c *gin.Context) {
 // @Produce json
 // @Param id path string true "Class ID"
 // @Success 204
+// @Security BearerAuth
 // @Router /classes/{id} [delete]
 func (h *ClassHandler) Delete(c *gin.Context) {
 	if err := h.service.Delete(c.Request.Context(), c.Param("id")); err != nil {

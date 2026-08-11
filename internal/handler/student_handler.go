@@ -31,6 +31,7 @@ type StudentHandler struct {
 // @Param csv body string true "CSV document"
 // @Param Idempotency-Key header string false "Stable key for safe retries"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /students/import [post]
 func (h *StudentHandler) ImportCSV(c *gin.Context) {
 	body, ok := readCSVImportBody(c)
@@ -83,6 +84,7 @@ func NewStudentHandler(students *service.StudentService, stores ...importRunStor
 // @Param page query int false "Page"
 // @Param limit query int false "Page size"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /students [get]
 func (h *StudentHandler) List(c *gin.Context) {
 	if !validateRosterStatus(c) {
@@ -120,6 +122,7 @@ func (h *StudentHandler) List(c *gin.Context) {
 // @Param sort query string false "Legacy alias for sortField"
 // @Param order query string false "Legacy alias for sortOrder"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /students/roster [get]
 func (h *StudentHandler) Roster(c *gin.Context) {
 	if !validateRosterStatus(c) {
@@ -246,6 +249,7 @@ func pageCount(total, size int) int {
 // @Produce json
 // @Param id path string true "Student ID"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /students/{id} [get]
 func (h *StudentHandler) Get(c *gin.Context) {
 	student, err := h.students.Get(c.Request.Context(), c.Param("id"))
@@ -263,6 +267,7 @@ func (h *StudentHandler) Get(c *gin.Context) {
 // @Produce json
 // @Param payload body service.CreateStudentRequest true "Student payload"
 // @Success 201 {object} response.Envelope
+// @Security BearerAuth
 // @Router /students [post]
 func (h *StudentHandler) Create(c *gin.Context) {
 	var req service.CreateStudentRequest
@@ -286,6 +291,7 @@ func (h *StudentHandler) Create(c *gin.Context) {
 // @Param id path string true "Student ID"
 // @Param payload body service.UpdateStudentRequest true "Student payload"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /students/{id} [put]
 func (h *StudentHandler) Update(c *gin.Context) {
 	var req service.UpdateStudentRequest
@@ -310,6 +316,7 @@ func (h *StudentHandler) Update(c *gin.Context) {
 // @Param id path string true "Student ID"
 // @Param payload body map[string]interface{} true "Status payload"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /students/{id}/status [patch]
 func (h *StudentHandler) UpdateStatus(c *gin.Context) {
 	var payload struct {
@@ -349,6 +356,7 @@ func (h *StudentHandler) UpdateStatus(c *gin.Context) {
 // @Produce json
 // @Param id path string true "Student ID"
 // @Success 204
+// @Security BearerAuth
 // @Router /students/{id} [delete]
 func (h *StudentHandler) Delete(c *gin.Context) {
 	if err := h.students.Deactivate(c.Request.Context(), c.Param("id")); err != nil {

@@ -17,6 +17,11 @@ const docTemplate = `{
     "paths": {
         "/analytics/attendance": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -64,6 +69,11 @@ const docTemplate = `{
         },
         "/analytics/behavior": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -118,6 +128,11 @@ const docTemplate = `{
         },
         "/analytics/grades": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -160,6 +175,11 @@ const docTemplate = `{
         },
         "/analytics/system": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -179,6 +199,11 @@ const docTemplate = `{
         },
         "/announcements": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -228,6 +253,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -261,6 +291,11 @@ const docTemplate = `{
         },
         "/announcements/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -287,6 +322,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -325,6 +365,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1992,6 +2037,11 @@ const docTemplate = `{
         },
         "/classes": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -2041,6 +2091,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -2074,6 +2129,11 @@ const docTemplate = `{
         },
         "/classes/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -2100,6 +2160,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -2138,6 +2203,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -2163,6 +2233,11 @@ const docTemplate = `{
         },
         "/classes/{id}/schedules": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -5661,6 +5736,11 @@ const docTemplate = `{
         },
         "/reports/classes/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -5703,6 +5783,11 @@ const docTemplate = `{
         },
         "/reports/generate": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -5736,6 +5821,11 @@ const docTemplate = `{
         },
         "/reports/status/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -5764,6 +5854,11 @@ const docTemplate = `{
         },
         "/reports/students/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -5799,6 +5894,11 @@ const docTemplate = `{
         },
         "/schedule/generate": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Legacy path kept for backward compatibility. Prefer /schedules/generator for new integrations.",
                 "consumes": [
                     "application/json"
@@ -5833,6 +5933,11 @@ const docTemplate = `{
         },
         "/schedule/save": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -5866,6 +5971,11 @@ const docTemplate = `{
         },
         "/schedules": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -5933,6 +6043,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -5966,6 +6081,11 @@ const docTemplate = `{
         },
         "/schedules/bulk": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -5997,8 +6117,75 @@ const docTemplate = `{
                 }
             }
         },
+        "/schedules/export/pdf": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/pdf"
+                ],
+                "tags": [
+                    "Schedules"
+                ],
+                "summary": "Export schedule grid as PDF",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Class ID",
+                        "name": "class_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Class ID (camelCase)",
+                        "name": "classId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Term ID",
+                        "name": "term_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Term ID (camelCase)",
+                        "name": "termId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
+                        }
+                    }
+                }
+            }
+        },
         "/schedules/generator": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Preferred endpoint for UI preview mode. Responses include mode metadata to distinguish preview vs. persisted schedules.",
                 "consumes": [
                     "application/json"
@@ -6125,6 +6312,11 @@ const docTemplate = `{
         },
         "/schedules/{id}": {
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -6163,6 +6355,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -6188,6 +6385,11 @@ const docTemplate = `{
         },
         "/semester-schedule": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -6223,6 +6425,11 @@ const docTemplate = `{
         },
         "/semester-schedule/{id}": {
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "tags": [
                     "Scheduler"
                 ],
@@ -6245,6 +6452,11 @@ const docTemplate = `{
         },
         "/semester-schedule/{id}/slots": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -6273,6 +6485,11 @@ const docTemplate = `{
         },
         "/students": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -6328,6 +6545,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -6361,6 +6583,11 @@ const docTemplate = `{
         },
         "/students/import": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "text/csv"
                 ],
@@ -6400,6 +6627,11 @@ const docTemplate = `{
         },
         "/students/roster": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -6511,6 +6743,11 @@ const docTemplate = `{
         },
         "/students/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -6537,6 +6774,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -6575,6 +6817,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -6628,6 +6875,11 @@ const docTemplate = `{
         },
         "/students/{id}/status": {
             "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -6933,6 +7185,11 @@ const docTemplate = `{
         },
         "/teachers": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -6988,6 +7245,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -7021,6 +7283,11 @@ const docTemplate = `{
         },
         "/teachers/import": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "text/csv"
                 ],
@@ -7060,6 +7327,11 @@ const docTemplate = `{
         },
         "/teachers/roster": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -7159,6 +7431,11 @@ const docTemplate = `{
         },
         "/teachers/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -7185,6 +7462,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -7223,6 +7505,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "tags": [
                     "Teachers"
                 ],
@@ -7245,6 +7532,11 @@ const docTemplate = `{
         },
         "/teachers/{id}/assignments": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -7271,6 +7563,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -7311,6 +7608,11 @@ const docTemplate = `{
         },
         "/teachers/{id}/assignments/{aid}": {
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "tags": [
                     "Teacher Assignments"
                 ],
@@ -7406,6 +7708,11 @@ const docTemplate = `{
         },
         "/teachers/{id}/schedules": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -7434,6 +7741,11 @@ const docTemplate = `{
         },
         "/teachers/{id}/status": {
             "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -7673,6 +7985,11 @@ const docTemplate = `{
         },
         "/users": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "List users with pagination and filtering",
                 "produces": [
                     "application/json"
@@ -7741,6 +8058,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Create a new user",
                 "consumes": [
                     "application/json"
@@ -7781,6 +8103,11 @@ const docTemplate = `{
         },
         "/users/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get user detail",
                 "produces": [
                     "application/json"
@@ -7814,6 +8141,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Update user details",
                 "consumes": [
                     "application/json"
@@ -7859,6 +8191,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Soft delete user by marking inactive",
                 "produces": [
                     "application/json"
@@ -8003,7 +8340,6 @@ const docTemplate = `{
         "github_com_noah-isme_sma-adp-api_internal_dto.GenerateScheduleRequest": {
             "type": "object",
             "required": [
-                "classId",
                 "days",
                 "subjectLoads",
                 "termId",
@@ -8012,6 +8348,12 @@ const docTemplate = `{
             "properties": {
                 "classId": {
                     "type": "string"
+                },
+                "classIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "days": {
                     "type": "array",
@@ -8125,6 +8467,9 @@ const docTemplate = `{
                 "weeklyCount"
             ],
             "properties": {
+                "classId": {
+                    "type": "string"
+                },
                 "difficulty": {
                     "type": "integer",
                     "maximum": 10,
@@ -10341,6 +10686,13 @@ const docTemplate = `{
                     "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.Pagination"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`

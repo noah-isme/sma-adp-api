@@ -33,6 +33,7 @@ func NewAnnouncementHandler(announcements *service.AnnouncementService) *Announc
 // @Param page query int false "Page"
 // @Param limit query int false "Page size"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /announcements [get]
 func (h *AnnouncementHandler) List(c *gin.Context) {
 	req := service.AnnouncementListRequest{
@@ -59,6 +60,7 @@ func (h *AnnouncementHandler) List(c *gin.Context) {
 // @Produce json
 // @Param id path string true "Announcement ID"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /announcements/{id} [get]
 func (h *AnnouncementHandler) Get(c *gin.Context) {
 	announcement, err := h.announcements.Get(c.Request.Context(), c.Param("id"))
@@ -76,6 +78,7 @@ func (h *AnnouncementHandler) Get(c *gin.Context) {
 // @Produce json
 // @Param payload body service.CreateAnnouncementRequest true "Announcement payload"
 // @Success 201 {object} response.Envelope
+// @Security BearerAuth
 // @Router /announcements [post]
 func (h *AnnouncementHandler) Create(c *gin.Context) {
 	claims := claimsFromContext(c)
@@ -106,6 +109,7 @@ func (h *AnnouncementHandler) Create(c *gin.Context) {
 // @Param id path string true "Announcement ID"
 // @Param payload body service.UpdateAnnouncementRequest true "Announcement payload"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /announcements/{id} [put]
 func (h *AnnouncementHandler) Update(c *gin.Context) {
 	var req service.UpdateAnnouncementRequest
@@ -127,6 +131,7 @@ func (h *AnnouncementHandler) Update(c *gin.Context) {
 // @Produce json
 // @Param id path string true "Announcement ID"
 // @Success 204
+// @Security BearerAuth
 // @Router /announcements/{id} [delete]
 func (h *AnnouncementHandler) Delete(c *gin.Context) {
 	if err := h.announcements.Delete(c.Request.Context(), c.Param("id")); err != nil {

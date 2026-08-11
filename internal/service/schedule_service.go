@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/noah-isme/sma-adp-api/internal/models"
 	appErrors "github.com/noah-isme/sma-adp-api/pkg/errors"
+	"github.com/noah-isme/sma-adp-api/pkg/export"
 )
 
 type scheduleRepository interface {
@@ -279,3 +281,93 @@ func (s *ScheduleService) wrapConflict(conflictType, message string, existing mo
 	domainErr := &models.ScheduleConflictError{Type: conflictType, Message: message, Conflict: conflict}
 	return appErrors.Wrap(domainErr, appErrors.ErrConflict.Code, appErrors.ErrConflict.Status, fmt.Sprintf("schedule conflict: %s", message))
 }
+
+// ExportPDF generates a PDF containing the timetable grid for a given class and term.
+func (s *ScheduleService) ExportPDF(ctx context.Context, classID, termID string) ([]byte, string, error) {
+	if strings.TrimSpace(classID) == "" || strings.TrimSpace(termID) == "" {
+		return nil, "", appErrors.Wrap(errors.New("class_id and term_id are required"), appErrors.ErrValidation.Code, appErrors.ErrValidation.Status, "class_id and term_id parameters are required")
+	}
+
+	schedules, _, err := s.repo.List(ctx, models.ScheduleFilter{
+		ClassID:  classID,
+		TermID:   termID,
+		PageSize: 1000,
+	})
+	if err != nil {
+		return nil, "", appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to load class schedules for export")
+	}
+
+	days := []string{"Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"}
+	timeSlots := []string{
+		"Jam 1 (07:00 - 07:45)",
+		"Jam 2 (07:45 - 08:30)",
+		"Jam 3 (08:30 - 09:15)",
+		"Jam 4 (09:30 - 10:15)",
+		"Jam 5 (10:15 - 11:00)",
+		"Jam 6 (11:00 - 11:45)",
+		"Jam 7 (12:30 - 13:15)",
+		"Jam 8 (13:15 - 14:00)",
+	}
+
+	gridData := make(map[int]map[int]export.TimetableCell)
+
+	for _, item := range schedules {
+		dayIdx := parseDayIndex(item.DayOfWeek)
+		slotIdx := parseTimeSlotIndex(item.TimeSlot)
+
+		if dayIdx >= 0 && slotIdx >= 0 {
+			if gridData[slotIdx] == nil {
+				gridData[slotIdx] = make(map[int]export.TimetableCell)
+			}
+			gridData[slotIdx][dayIdx] = export.TimetableCell{
+				SubjectName: item.SubjectID,
+				TeacherName: item.TeacherID,
+				Room:        item.Room,
+			}
+		}
+	}
+
+	pdfExporter := export.NewPDFExporter()
+	title := fmt.Sprintf("JADWAL PELAJARAN KELAS %s", strings.ToUpper(classID))
+	subtitle := fmt.Sprintf("Tahun Ajar / Term: %s", termID)
+
+	pdfBytes, err := pdfExporter.RenderTimetableGrid(title, subtitle, days, timeSlots, gridData)
+	if err != nil {
+		return nil, "", appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to render PDF schedule")
+	}
+
+	filename := fmt.Sprintf("Jadwal_Kelas_%s_%s.pdf", classID, termID)
+	return pdfBytes, filename, nil
+}
+
+func parseDayIndex(dayStr string) int {
+	d := strings.ToUpper(strings.TrimSpace(dayStr))
+	switch d {
+	case "1", "SENIN", "MONDAY":
+		return 0
+	case "2", "SELASA", "TUESDAY":
+		return 1
+	case "3", "RABU", "WEDNESDAY":
+		return 2
+	case "4", "KAMIS", "THURSDAY":
+		return 3
+	case "5", "JUMAT", "FRIDAY":
+		return 4
+	case "6", "SABTU", "SATURDAY":
+		return 5
+	case "7", "MINGGU", "SUNDAY":
+		return 6
+	}
+	return -1
+}
+
+func parseTimeSlotIndex(slotStr string) int {
+	s := strings.TrimSpace(slotStr)
+	if num, err := strconv.Atoi(s); err == nil {
+		if num >= 1 && num <= 16 {
+			return num - 1
+		}
+	}
+	return -1
+}
+

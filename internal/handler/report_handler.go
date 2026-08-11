@@ -40,6 +40,7 @@ func NewReportHandler(reportSvc reportService, gradeSvc *service.GradeService) *
 // @Param id path string true "Student ID"
 // @Param termId query string true "Term ID"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /reports/students/{id} [get]
 func (h *ReportHandler) StudentReport(c *gin.Context) {
 	if h.grades == nil {
@@ -67,6 +68,7 @@ func (h *ReportHandler) StudentReport(c *gin.Context) {
 // @Param subjectId query string true "Subject ID"
 // @Param termId query string true "Term ID"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /reports/classes/{id} [get]
 func (h *ReportHandler) ClassReport(c *gin.Context) {
 	if h.grades == nil {
@@ -94,6 +96,7 @@ func (h *ReportHandler) ClassReport(c *gin.Context) {
 // @Produce json
 // @Param payload body dto.ReportRequest true "Report request"
 // @Success 202 {object} response.Envelope
+// @Security BearerAuth
 // @Router /reports/generate [post]
 func (h *ReportHandler) GenerateReport(c *gin.Context) {
 	if h.reports == nil {
@@ -129,6 +132,7 @@ func (h *ReportHandler) GenerateReport(c *gin.Context) {
 // @Produce json
 // @Param id path string true "Job ID"
 // @Success 200 {object} response.Envelope
+// @Security BearerAuth
 // @Router /reports/status/{id} [get]
 func (h *ReportHandler) ReportStatus(c *gin.Context) {
 	if h.reports == nil {

@@ -37,6 +37,7 @@ func NewUserHandler(svc *service.UserService) *UserHandler {
 // @Param sort_order query string false "Sort order"
 // @Success 200 {object} response.Envelope
 // @Failure 403 {object} response.Envelope
+// @Security BearerAuth
 // @Router /users [get]
 func (h *UserHandler) List(c *gin.Context) {
 	var filter models.UserFilter
@@ -80,6 +81,7 @@ func (h *UserHandler) List(c *gin.Context) {
 // @Param id path string true "User ID"
 // @Success 200 {object} response.Envelope
 // @Failure 404 {object} response.Envelope
+// @Security BearerAuth
 // @Router /users/{id} [get]
 func (h *UserHandler) Get(c *gin.Context) {
 	id := c.Param("id")
@@ -102,6 +104,7 @@ func (h *UserHandler) Get(c *gin.Context) {
 // @Param payload body service.CreateUserRequest true "Create user payload"
 // @Success 201 {object} response.Envelope
 // @Failure 400 {object} response.Envelope
+// @Security BearerAuth
 // @Router /users [post]
 func (h *UserHandler) Create(c *gin.Context) {
 	claims, ok := c.Get(middleware.ContextUserKey)
@@ -137,6 +140,7 @@ func (h *UserHandler) Create(c *gin.Context) {
 // @Param payload body service.UpdateUserRequest true "Update payload"
 // @Success 200 {object} response.Envelope
 // @Failure 400 {object} response.Envelope
+// @Security BearerAuth
 // @Router /users/{id} [put]
 func (h *UserHandler) Update(c *gin.Context) {
 	claims, ok := c.Get(middleware.ContextUserKey)
@@ -170,6 +174,7 @@ func (h *UserHandler) Update(c *gin.Context) {
 // @Param id path string true "User ID"
 // @Success 204 {object} response.Envelope
 // @Failure 404 {object} response.Envelope
+// @Security BearerAuth
 // @Router /users/{id} [delete]
 func (h *UserHandler) Delete(c *gin.Context) {
 	claims, ok := c.Get(middleware.ContextUserKey)

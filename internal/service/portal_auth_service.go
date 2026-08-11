@@ -520,10 +520,10 @@ func (s *PortalAuthService) generatePortalAccessToken(user *models.User, student
 		},
 	}
 
-	// Add student_id to claims if available (for parent access control)
+	// Add the student's own ID to the claims so portal handlers never trust a
+	// client-supplied student ID for student accounts.
 	if studentID != nil {
-		// We'll use TeacherID field for student_id in portal context
-		claims.TeacherID = *studentID
+		claims.StudentID = *studentID
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

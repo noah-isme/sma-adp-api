@@ -67,6 +67,7 @@ type UserInfo struct {
 type JWTClaims struct {
 	UserID    string   `json:"user_id"`
 	TeacherID string   `json:"teacher_id,omitempty"`
+	StudentID string   `json:"student_id,omitempty"`
 	Role      UserRole `json:"role"`
 	Email     string   `json:"email"`
 	FullName  string   `json:"full_name"`

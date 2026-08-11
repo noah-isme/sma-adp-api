@@ -14,6 +14,7 @@ const (
 	AuditActionUserUpdate     = "USER_UPDATE"
 	AuditActionUserDelete     = "USER_DELETE"
 	AuditActionPasswordChange = "PASSWORD_CHANGE"
+	AuditActionPasswordReset  = "PASSWORD_RESET"
 	AuditActionMutationCreate = "MUTATION_REQUEST"
 	AuditActionMutationReview = "MUTATION_REVIEW"
 	AuditActionArchiveUpload  = "ARCHIVE_UPLOAD"

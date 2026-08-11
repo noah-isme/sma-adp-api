@@ -1,7 +1,11 @@
 package handler
 
 import (
+	"context"
+	"database/sql"
+	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -14,13 +18,28 @@ import (
 
 // PortalDataHandler wires HTTP endpoints to portal data services.
 type PortalDataHandler struct {
-	gradesService      *service.PortalGradesService
-	attendanceService  *service.PortalAttendanceService
+	gradesService        *service.PortalGradesService
+	attendanceService    *service.PortalAttendanceService
 	announcementsService *service.PortalAnnouncementsService
-	behaviorService    *service.PortalBehaviorService
-	calendarService    *service.PortalCalendarService
-	homeroomService    *service.PortalHomeroomService
+	behaviorService      *service.PortalBehaviorService
+	calendarService      *service.PortalCalendarService
+	homeroomService      *service.PortalHomeroomService
+	accessReader         portalStudentAccessReader
 }
+
+type portalStudentAccessReader interface {
+	FindParentStudentLinkByParentAndStudent(ctx context.Context, parentID, studentID string) (*models.ParentStudentLink, error)
+}
+
+type portalCapability string
+
+const (
+	portalStudentLinkContextKey                    = "portalStudentLink"
+	portalCapabilityGrades        portalCapability = "grades"
+	portalCapabilityAttendance    portalCapability = "attendance"
+	portalCapabilityBehavior      portalCapability = "behavior"
+	portalCapabilityAnnouncements portalCapability = "announcements"
+)
 
 // NewPortalDataHandler creates a new handler.
 func NewPortalDataHandler(
@@ -30,14 +49,20 @@ func NewPortalDataHandler(
 	behaviorService *service.PortalBehaviorService,
 	calendarService *service.PortalCalendarService,
 	homeroomService *service.PortalHomeroomService,
+	accessReaders ...portalStudentAccessReader,
 ) *PortalDataHandler {
+	var accessReader portalStudentAccessReader
+	if len(accessReaders) > 0 {
+		accessReader = accessReaders[0]
+	}
 	return &PortalDataHandler{
-		gradesService:       gradesService,
-		attendanceService:   attendanceService,
+		gradesService:        gradesService,
+		attendanceService:    attendanceService,
 		announcementsService: announcementsService,
-		behaviorService:     behaviorService,
-		calendarService:     calendarService,
-		homeroomService:     homeroomService,
+		behaviorService:      behaviorService,
+		calendarService:      calendarService,
+		homeroomService:      homeroomService,
+		accessReader:         accessReader,
 	}
 }
 
@@ -47,7 +72,10 @@ func (h *PortalDataHandler) getPortalContext(c *gin.Context) (*models.JWTClaims,
 	if !ok {
 		return nil, appErrors.ErrUnauthorized
 	}
-	jwtClaims := claims.(*models.JWTClaims)
+	jwtClaims, ok := claims.(*models.JWTClaims)
+	if !ok || jwtClaims == nil {
+		return nil, appErrors.ErrUnauthorized
+	}
 	return jwtClaims, nil
 }
 
@@ -55,21 +83,106 @@ func (h *PortalDataHandler) getPortalContext(c *gin.Context) (*models.JWTClaims,
 // For students: uses their own student ID from claims.
 // For parents: uses the studentId query param (required).
 func (h *PortalDataHandler) getStudentIDForRequest(c *gin.Context, jwtClaims *models.JWTClaims) (string, error) {
-	if jwtClaims.Role == models.RoleStudent {
-		if jwtClaims.TeacherID == "" {
+	if jwtClaims == nil {
+		return "", appErrors.ErrUnauthorized
+	}
+
+	switch jwtClaims.Role {
+	case models.RoleStudent:
+		if jwtClaims.StudentID == "" {
 			return "", appErrors.Clone(appErrors.ErrForbidden, "student ID not found in claims")
 		}
-		return jwtClaims.TeacherID, nil
+		if requested := c.Query("studentId"); requested != "" && requested != jwtClaims.StudentID {
+			return "", appErrors.Clone(appErrors.ErrForbidden, "students can only access their own data")
+		}
+		return jwtClaims.StudentID, nil
+
+	case models.RoleOrtu:
+		studentID := c.Query("studentId")
+		if studentID == "" {
+			return "", appErrors.Clone(appErrors.ErrValidation, "studentId query parameter required for parents")
+		}
+		if h.accessReader == nil {
+			return "", appErrors.Wrap(errors.New("portal student access repository is not configured"), appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "portal access control unavailable")
+		}
+
+		link, err := h.accessReader.FindParentStudentLinkByParentAndStudent(c.Request.Context(), jwtClaims.UserID, studentID)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return "", appErrors.Clone(appErrors.ErrForbidden, "student is not linked to parent")
+			}
+			return "", appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to verify parent-student link")
+		}
+		if link == nil || link.ParentID != jwtClaims.UserID || link.StudentID != studentID {
+			return "", appErrors.Clone(appErrors.ErrForbidden, "student is not linked to parent")
+		}
+		c.Set(portalStudentLinkContextKey, link)
+		return studentID, nil
+
+	default:
+		return "", appErrors.Clone(appErrors.ErrForbidden, "portal access restricted to parents and students")
+	}
+}
+
+func (h *PortalDataHandler) requireCapability(c *gin.Context, jwtClaims *models.JWTClaims, capability portalCapability) error {
+	if jwtClaims == nil {
+		return appErrors.ErrUnauthorized
+	}
+	if jwtClaims.Role == models.RoleStudent {
+		return nil
+	}
+	if jwtClaims.Role != models.RoleOrtu {
+		return appErrors.Clone(appErrors.ErrForbidden, "portal access restricted to parents and students")
 	}
 
-	// Parent role - requires studentId query param
-	studentID := c.Query("studentId")
-	if studentID == "" {
-		return "", appErrors.Clone(appErrors.ErrValidation, "studentId query parameter required for parents")
+	value, ok := c.Get(portalStudentLinkContextKey)
+	if !ok {
+		return appErrors.Clone(appErrors.ErrForbidden, "student is not linked to parent")
+	}
+	link, ok := value.(*models.ParentStudentLink)
+	if !ok || link == nil {
+		return appErrors.Clone(appErrors.ErrForbidden, "student link is invalid")
 	}
 
-	// TODO: Add permission check against parent_students link
-	return studentID, nil
+	allowed := false
+	switch capability {
+	case portalCapabilityGrades:
+		allowed = link.CanViewGrades
+	case portalCapabilityAttendance:
+		allowed = link.CanViewAttendance
+	case portalCapabilityBehavior:
+		allowed = link.CanViewBehavior
+	case portalCapabilityAnnouncements:
+		allowed = link.CanViewAnnouncements
+	}
+	if !allowed {
+		return appErrors.Clone(appErrors.ErrForbidden, "parent capability does not allow this data")
+	}
+	return nil
+}
+
+func parsePortalQueryInt(c *gin.Context, name string, defaultValue, min, max int) (int, error) {
+	raw := c.Query(name)
+	if raw == "" {
+		return defaultValue, nil
+	}
+	value, err := strconv.Atoi(raw)
+	if err != nil || value < min || (max > 0 && value > max) {
+		return 0, appErrors.Clone(appErrors.ErrValidation, name+" must be within the allowed range")
+	}
+	return value, nil
+}
+
+func parsePortalQueryBool(c *gin.Context, name string, defaultValue bool) (bool, error) {
+	raw := c.Query(name)
+	if raw == "" {
+		return defaultValue, nil
+	}
+	value, err := strconv.ParseBool(raw)
+	if err != nil {
+		return false, appErrors.Clone(appErrors.ErrValidation, name+" must be true or false")
+	}
+	return value, nil
 }
 
 // GetGrades godoc
@@ -96,6 +209,10 @@ func (h *PortalDataHandler) GetGrades(c *gin.Context) {
 
 	studentID, err := h.getStudentIDForRequest(c, jwtClaims)
 	if err != nil {
+		response.Error(c, err)
+		return
+	}
+	if err := h.requireCapability(c, jwtClaims, portalCapabilityGrades); err != nil {
 		response.Error(c, err)
 		return
 	}
@@ -143,6 +260,10 @@ func (h *PortalDataHandler) GetReportCard(c *gin.Context) {
 		response.Error(c, err)
 		return
 	}
+	if err := h.requireCapability(c, jwtClaims, portalCapabilityGrades); err != nil {
+		response.Error(c, err)
+		return
+	}
 
 	termID := c.DefaultQuery("termId", "")
 
@@ -180,6 +301,10 @@ func (h *PortalDataHandler) GetAttendance(c *gin.Context) {
 
 	studentID, err := h.getStudentIDForRequest(c, jwtClaims)
 	if err != nil {
+		response.Error(c, err)
+		return
+	}
+	if err := h.requireCapability(c, jwtClaims, portalCapabilityAttendance); err != nil {
 		response.Error(c, err)
 		return
 	}
@@ -228,6 +353,10 @@ func (h *PortalDataHandler) GetAttendanceStats(c *gin.Context) {
 		response.Error(c, err)
 		return
 	}
+	if err := h.requireCapability(c, jwtClaims, portalCapabilityAttendance); err != nil {
+		response.Error(c, err)
+		return
+	}
 
 	termID := c.DefaultQuery("termId", "")
 
@@ -267,28 +396,36 @@ func (h *PortalDataHandler) GetAnnouncements(c *gin.Context) {
 		response.Error(c, err)
 		return
 	}
+	if err := h.requireCapability(c, jwtClaims, portalCapabilityAnnouncements); err != nil {
+		response.Error(c, err)
+		return
+	}
 
 	termID := c.DefaultQuery("termId", "")
+	page, err := parsePortalQueryInt(c, "page", 1, 1, 0)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+	limit, err := parsePortalQueryInt(c, "limit", 20, 1, 100)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+	activeOnly, err := parsePortalQueryBool(c, "active", true)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
 
 	req := models.PortalAnnouncementsRequest{
 		UserID:     jwtClaims.UserID,
 		PortalRole: jwtClaims.Role,
 		StudentID:  studentID,
 		TermID:     termID,
-		Page:       1,
-		Limit:      20,
-		ActiveOnly: true,
-	}
-
-	if page := c.Query("page"); page != "" {
-		req.Page = 1
-		// TODO: parse page
-	}
-	if limit := c.Query("limit"); limit != "" {
-		// TODO: parse limit
-	}
-	if active := c.Query("active"); active == "false" {
-		req.ActiveOnly = false
+		Page:       page,
+		Limit:      limit,
+		ActiveOnly: activeOnly,
 	}
 
 	res, err := h.announcementsService.GetAnnouncements(c.Request.Context(), req)
@@ -314,13 +451,28 @@ func (h *PortalDataHandler) GetAnnouncements(c *gin.Context) {
 // @Failure 404 {object} response.Envelope
 // @Router /portal/announcements/{id} [get]
 func (h *PortalDataHandler) GetAnnouncementByID(c *gin.Context) {
+	jwtClaims, err := h.getPortalContext(c)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+	studentID, err := h.getStudentIDForRequest(c, jwtClaims)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+	if err := h.requireCapability(c, jwtClaims, portalCapabilityAnnouncements); err != nil {
+		response.Error(c, err)
+		return
+	}
+
 	id := c.Param("id")
 	if id == "" {
 		response.Error(c, appErrors.Clone(appErrors.ErrValidation, "announcement ID required"))
 		return
 	}
 
-	res, err := h.announcementsService.GetAnnouncementByID(c.Request.Context(), id)
+	res, err := h.announcementsService.GetAnnouncementByIDForStudent(c.Request.Context(), id, studentID)
 	if err != nil {
 		response.Error(c, err)
 		return
@@ -352,6 +504,10 @@ func (h *PortalDataHandler) GetBehaviorNotes(c *gin.Context) {
 
 	studentID, err := h.getStudentIDForRequest(c, jwtClaims)
 	if err != nil {
+		response.Error(c, err)
+		return
+	}
+	if err := h.requireCapability(c, jwtClaims, portalCapabilityBehavior); err != nil {
 		response.Error(c, err)
 		return
 	}
@@ -394,6 +550,10 @@ func (h *PortalDataHandler) GetBehaviorSummary(c *gin.Context) {
 
 	studentID, err := h.getStudentIDForRequest(c, jwtClaims)
 	if err != nil {
+		response.Error(c, err)
+		return
+	}
+	if err := h.requireCapability(c, jwtClaims, portalCapabilityBehavior); err != nil {
 		response.Error(c, err)
 		return
 	}

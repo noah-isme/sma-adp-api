@@ -218,6 +218,40 @@ func (r *UserRepository) RevokeUserRefreshTokens(ctx context.Context, userID str
 	return nil
 }
 
+// CreatePasswordResetToken persists only the hash of a reset token.
+func (r *UserRepository) CreatePasswordResetToken(ctx context.Context, token *models.PasswordResetToken) error {
+	if token.ID == "" {
+		token.ID = uuid.NewString()
+	}
+	if token.CreatedAt.IsZero() {
+		token.CreatedAt = time.Now().UTC()
+	}
+
+	const query = `INSERT INTO password_reset_tokens (id, user_id, token_hash, expires_at, created_at, used_at) VALUES (:id, :user_id, :token_hash, :expires_at, :created_at, :used_at)`
+	if _, err := r.db.NamedExecContext(ctx, query, token); err != nil {
+		return fmt.Errorf("create password reset token: %w", err)
+	}
+	return nil
+}
+
+// ConsumePasswordResetToken atomically marks a non-expired token as used and
+// returns it. The conditional UPDATE prevents concurrent reuse.
+func (r *UserRepository) ConsumePasswordResetToken(ctx context.Context, tokenHash string, usedAt time.Time) (*models.PasswordResetToken, error) {
+	const query = `UPDATE password_reset_tokens
+SET used_at = $2
+WHERE token_hash = $1 AND used_at IS NULL AND expires_at > $2
+RETURNING id, user_id, token_hash, expires_at, created_at, used_at`
+
+	var token models.PasswordResetToken
+	if err := r.db.GetContext(ctx, &token, query, tokenHash, usedAt); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, err
+		}
+		return nil, fmt.Errorf("consume password reset token: %w", err)
+	}
+	return &token, nil
+}
+
 // CreateAuditLog stores an audit log entry.
 func (r *UserRepository) CreateAuditLog(ctx context.Context, log *models.AuditLog) error {
 	if log.ID == "" {

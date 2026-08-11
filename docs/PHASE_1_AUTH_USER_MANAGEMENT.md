@@ -355,7 +355,8 @@ Authorization: Bearer {accessToken}
 
 #### 5. POST /auth/forgot-password
 
-**Description**: Request password reset link (Future: send email)
+**Description**: Request an admin password reset link. The response is
+intentionally generic whether or not the email belongs to an active account.
 
 **Request:**
 
@@ -365,15 +366,20 @@ Authorization: Bearer {accessToken}
 }
 ```
 
-**Response (200 OK):**
+**Response (202 Accepted):**
 
 ```json
 {
-  "message": "Password reset link sent to email"
+  "data": {
+    "message": "Jika email terdaftar, tautan reset akan dikirim"
+  }
 }
 ```
 
-**Note**: For security, always return success even if email doesn't exist
+**Note**: For security, always return the same success response even if the
+email does not exist or the account is inactive. A cryptographically random
+single-use token is generated for active accounts, while only its SHA-256 hash
+is persisted.
 
 ---
 
@@ -386,17 +392,20 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "token": "reset_token_here",
-  "newPassword": "newpass123"
+  "new_password": "newpass123"
 }
 ```
 
-**Response (200 OK):**
+**Response (204 No Content):** No response body.
 
-```json
-{
-  "message": "Password reset successful"
-}
-```
+The token expires after `PASSWORD_RESET_TOKEN_TTL` (one hour by default) and
+is atomically marked used during reset, so it cannot be reused. The new
+password is stored as a bcrypt hash and all existing refresh tokens are
+revoked. The link base is configured with `PASSWORD_RESET_URL`. Email delivery
+is injected into the auth service; local development uses a non-network
+logging delivery and tests use a recording fake. Production currently uses the
+safe no-op delivery until a real `PasswordResetEmailDelivery` provider is
+injected; configuring `PASSWORD_RESET_*` alone does not send email.
 
 ---
 

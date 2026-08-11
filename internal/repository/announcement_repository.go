@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -173,4 +175,91 @@ func (r *AnnouncementRepository) ListByStudentAndTerm(ctx context.Context, stude
 		return nil, fmt.Errorf("list student announcements by term: %w", err)
 	}
 	return announcements, nil
+}
+
+// ListByStudentAndTermPage returns announcements visible to a student with
+// database-level pagination and a total count for response metadata.
+func (r *AnnouncementRepository) ListByStudentAndTermPage(ctx context.Context, studentID, termID string, page, limit int, activeOnly bool) ([]models.Announcement, int, error) {
+	classID, err := r.studentClassID(ctx, studentID, termID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, 0, fmt.Errorf("get student class for paginated announcements: %w", err)
+	}
+
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+	offset := (page - 1) * limit
+
+	where := []string{
+		"(audience = $1 OR audience = $2 OR (audience = $3 AND target_class_id = $4))",
+	}
+	args := []interface{}{
+		models.AnnouncementAudienceSiswa,
+		models.AnnouncementAudienceAll,
+		models.AnnouncementAudienceClass,
+		classID,
+	}
+	if activeOnly {
+		where = append(where, "published_at <= NOW()", "(expires_at IS NULL OR expires_at > NOW())")
+	}
+	whereClause := strings.Join(where, " AND ")
+	const selectColumns = "id, title, content, audience, target_class_id, priority, is_pinned, published_at, expires_at, created_by, created_at, updated_at"
+
+	query := fmt.Sprintf(`SELECT %s FROM announcements WHERE %s
+ORDER BY is_pinned DESC, priority DESC, published_at DESC, id DESC
+LIMIT $5 OFFSET $6`, selectColumns, whereClause)
+	queryArgs := append(append([]interface{}{}, args...), limit, offset)
+	var announcements []models.Announcement
+	if err := r.db.SelectContext(ctx, &announcements, query, queryArgs...); err != nil {
+		return nil, 0, fmt.Errorf("list paginated student announcements: %w", err)
+	}
+
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM announcements WHERE %s", whereClause)
+	var total int
+	if err := r.db.GetContext(ctx, &total, countQuery, args...); err != nil {
+		return nil, 0, fmt.Errorf("count paginated student announcements: %w", err)
+	}
+	return announcements, total, nil
+}
+
+// FindByIDForStudent returns an active announcement only when it is visible to
+// the student's audience or current class.
+func (r *AnnouncementRepository) FindByIDForStudent(ctx context.Context, id, studentID string) (*models.Announcement, error) {
+	classID, err := r.studentClassID(ctx, studentID, "")
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("get student class for announcement: %w", err)
+	}
+
+	const query = `SELECT id, title, content, audience, target_class_id, priority, is_pinned, published_at, expires_at, created_by, created_at, updated_at
+FROM announcements
+WHERE id = $1
+  AND published_at <= NOW()
+  AND (expires_at IS NULL OR expires_at > NOW())
+  AND (audience = $2 OR audience = $3 OR (audience = $4 AND target_class_id = $5))`
+	var announcement models.Announcement
+	if err := r.db.GetContext(ctx, &announcement, query, id,
+		models.AnnouncementAudienceSiswa,
+		models.AnnouncementAudienceAll,
+		models.AnnouncementAudienceClass,
+		classID,
+	); err != nil {
+		return nil, err
+	}
+	return &announcement, nil
+}
+
+func (r *AnnouncementRepository) studentClassID(ctx context.Context, studentID, termID string) (string, error) {
+	var classID string
+	if termID != "" {
+		const query = `SELECT e.class_id FROM enrollments e WHERE e.student_id = $1 AND e.term_id = $2 AND e.status = $3 ORDER BY e.joined_at DESC LIMIT 1`
+		err := r.db.GetContext(ctx, &classID, query, studentID, termID, models.EnrollmentStatusActive)
+		return classID, err
+	}
+
+	const query = `SELECT e.class_id FROM enrollments e WHERE e.student_id = $1 AND e.status = $2 ORDER BY e.joined_at DESC LIMIT 1`
+	err := r.db.GetContext(ctx, &classID, query, studentID, models.EnrollmentStatusActive)
+	return classID, err
 }

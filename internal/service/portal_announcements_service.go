@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -19,6 +20,14 @@ type PortalAnnouncementsService struct {
 	studentRepo      studentReader
 	validator        *validator.Validate
 	logger           *zap.Logger
+}
+
+type portalAnnouncementPager interface {
+	ListByStudentAndTermPage(ctx context.Context, studentID, termID string, page, limit int, activeOnly bool) ([]models.Announcement, int, error)
+}
+
+type portalAnnouncementByStudentReader interface {
+	FindByIDForStudent(ctx context.Context, id, studentID string) (*models.Announcement, error)
 }
 
 // NewPortalAnnouncementsService constructs the portal announcements service.
@@ -49,45 +58,62 @@ func (s *PortalAnnouncementsService) GetAnnouncements(ctx context.Context, req m
 	// Get student detail
 	_, err := s.studentRepo.FindByID(ctx, req.StudentID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, appErrors.Clone(appErrors.ErrNotFound, "student not found")
 		}
 		return nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to fetch student")
 	}
 
-	// Get announcements
-	announcements, err := s.announcementRepo.ListByStudentAndTerm(ctx, req.StudentID, req.TermID)
-	if err != nil {
-		return nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to fetch announcements")
+	page := req.Page
+	if page == 0 {
+		page = 1
+	}
+	if page < 1 {
+		return nil, appErrors.Clone(appErrors.ErrValidation, "page must be at least 1")
+	}
+	limit := req.Limit
+	if limit == 0 {
+		limit = 20
+	}
+	if limit < 1 || limit > 100 {
+		return nil, appErrors.Clone(appErrors.ErrValidation, "limit must be between 1 and 100")
+	}
+
+	var (
+		announcements []models.Announcement
+		total         int
+	)
+	if pager, ok := s.announcementRepo.(portalAnnouncementPager); ok {
+		var err error
+		announcements, total, err = pager.ListByStudentAndTermPage(ctx, req.StudentID, req.TermID, page, limit, req.ActiveOnly)
+		if err != nil {
+			return nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to fetch announcements")
+		}
+	} else {
+		// Keep older repository fakes usable while the concrete repository
+		// provides the database-backed pagination path above.
+		var err error
+		announcements, err = s.announcementRepo.ListByStudentAndTerm(ctx, req.StudentID, req.TermID)
+		if err != nil {
+			return nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to fetch announcements")
+		}
+		total = len(announcements)
+		start := (page - 1) * limit
+		if start >= total {
+			announcements = []models.Announcement{}
+		} else {
+			end := start + limit
+			if end > total {
+				end = total
+			}
+			announcements = announcements[start:end]
+		}
 	}
 
 	// Build response
 	items := make([]*models.PortalAnnouncement, len(announcements))
 	for i, a := range announcements {
-		publishedAt := a.PublishedAt.Format(time.RFC3339)
-		var expiresAt *string
-		if a.ExpiresAt != nil {
-			exp := a.ExpiresAt.Format(time.RFC3339)
-			expiresAt = &exp
-		}
-		items[i] = &models.PortalAnnouncement{
-			ID:          a.ID,
-			Title:       a.Title,
-			Content:     a.Content,
-			Priority:    string(a.Priority),
-			IsPinned:    a.IsPinned,
-			PublishedAt: &publishedAt,
-			ExpiresAt:   expiresAt,
-		}
-	}
-
-	page := req.Page
-	if page < 1 {
-		page = 1
-	}
-	limit := req.Limit
-	if limit <= 0 || limit > 100 {
-		limit = 20
+		items[i] = portalAnnouncementModel(&a)
 	}
 
 	return &models.PortalAnnouncementsResponse{
@@ -95,21 +121,42 @@ func (s *PortalAnnouncementsService) GetAnnouncements(ctx context.Context, req m
 		Pagination: &models.PaginationMeta{
 			Page:       page,
 			PageSize:   limit,
-			TotalCount: len(items),
+			TotalCount: total,
 		},
 	}, nil
+}
+
+// GetAnnouncementByIDForStudent applies the same audience scope as the list
+// endpoint so a guessed announcement ID cannot bypass portal authorization.
+func (s *PortalAnnouncementsService) GetAnnouncementByIDForStudent(ctx context.Context, id, studentID string) (*models.PortalAnnouncement, error) {
+	reader, ok := s.announcementRepo.(portalAnnouncementByStudentReader)
+	if !ok {
+		return nil, appErrors.Wrap(errors.New("announcement repository does not support portal scoping"), appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "portal announcement unavailable")
+	}
+	announcement, err := reader.FindByIDForStudent(ctx, id, studentID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, appErrors.Clone(appErrors.ErrNotFound, "announcement not found")
+		}
+		return nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to fetch announcement")
+	}
+	return portalAnnouncementModel(announcement), nil
 }
 
 // GetAnnouncementByID returns a single announcement by ID.
 func (s *PortalAnnouncementsService) GetAnnouncementByID(ctx context.Context, id string) (*models.PortalAnnouncement, error) {
 	announcement, err := s.announcementRepo.FindByID(ctx, id)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, appErrors.Clone(appErrors.ErrNotFound, "announcement not found")
 		}
 		return nil, appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to fetch announcement")
 	}
 
+	return portalAnnouncementModel(announcement), nil
+}
+
+func portalAnnouncementModel(announcement *models.Announcement) *models.PortalAnnouncement {
 	publishedAt := announcement.PublishedAt.Format(time.RFC3339)
 	var expiresAt *string
 	if announcement.ExpiresAt != nil {
@@ -121,9 +168,10 @@ func (s *PortalAnnouncementsService) GetAnnouncementByID(ctx context.Context, id
 		ID:          announcement.ID,
 		Title:       announcement.Title,
 		Content:     announcement.Content,
+		Audience:    string(announcement.Audience),
 		Priority:    string(announcement.Priority),
 		IsPinned:    announcement.IsPinned,
 		PublishedAt: &publishedAt,
 		ExpiresAt:   expiresAt,
-	}, nil
+	}
 }

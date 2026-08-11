@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"testing"
 	"time"
@@ -17,18 +18,22 @@ import (
 )
 
 type mockAuthRepo struct {
-	userByEmail         *models.User
-	userByID            *models.User
-	findByEmailErr      error
-	findByIDErr         error
-	refreshTokens       map[string]*models.RefreshToken
-	refreshTokenErr     error
-	createRefreshErr    error
-	revokeRefreshErr    error
-	revokeUserTokensErr error
-	updatePasswordErr   error
-	auditLogs           []*models.AuditLog
-	lastLoginUpdated    bool
+	userByEmail          *models.User
+	userByID             *models.User
+	findByEmailErr       error
+	findByIDErr          error
+	refreshTokens        map[string]*models.RefreshToken
+	refreshTokenErr      error
+	createRefreshErr     error
+	revokeRefreshErr     error
+	revokeUserTokensErr  error
+	updatePasswordErr    error
+	passwordResetToken   *models.PasswordResetToken
+	createResetErr       error
+	consumeResetErr      error
+	auditLogs            []*models.AuditLog
+	lastLoginUpdated     bool
+	refreshTokensRevoked bool
 }
 
 func (m *mockAuthRepo) FindByEmail(ctx context.Context, email string) (*models.User, error) {
@@ -64,6 +69,7 @@ func (m *mockAuthRepo) UpdatePassword(ctx context.Context, id, passwordHash stri
 }
 
 func (m *mockAuthRepo) RevokeUserRefreshTokens(ctx context.Context, userID string) error {
+	m.refreshTokensRevoked = true
 	return m.revokeUserTokensErr
 }
 
@@ -100,6 +106,29 @@ func (m *mockAuthRepo) RevokeRefreshToken(ctx context.Context, id string, revoke
 		}
 	}
 	return nil
+}
+
+func (m *mockAuthRepo) CreatePasswordResetToken(ctx context.Context, token *models.PasswordResetToken) error {
+	if m.createResetErr != nil {
+		return m.createResetErr
+	}
+	m.passwordResetToken = token
+	return nil
+}
+
+func (m *mockAuthRepo) ConsumePasswordResetToken(ctx context.Context, tokenHash string, usedAt time.Time) (*models.PasswordResetToken, error) {
+	if m.consumeResetErr != nil {
+		return nil, m.consumeResetErr
+	}
+	if m.passwordResetToken == nil ||
+		m.passwordResetToken.TokenHash != tokenHash ||
+		m.passwordResetToken.UsedAt != nil ||
+		!m.passwordResetToken.ExpiresAt.After(usedAt) {
+		return nil, sql.ErrNoRows
+	}
+	m.passwordResetToken.UsedAt = &usedAt
+	token := *m.passwordResetToken
+	return &token, nil
 }
 
 func (m *mockAuthRepo) CreateAuditLog(ctx context.Context, log *models.AuditLog) error {

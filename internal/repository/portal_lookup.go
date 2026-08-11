@@ -44,6 +44,12 @@ func (p *PortalLookup) FindParentLinksByParentID(ctx context.Context, parentID s
 	return p.parentStudentRepo.FindByParentID(ctx, parentID)
 }
 
+// FindParentStudentLinkByParentAndStudent returns the relationship used to
+// authorize a parent request for one specific student.
+func (p *PortalLookup) FindParentStudentLinkByParentAndStudent(ctx context.Context, parentID, studentID string) (*models.ParentStudentLink, error) {
+	return p.parentStudentRepo.FindByParentAndStudent(ctx, parentID, studentID)
+}
+
 // FindPortalPreferences returns preferences for a user.
 func (p *PortalLookup) FindPortalPreferences(ctx context.Context, userID string) (*models.PortalPreferences, error) {
 	return p.portalPreferencesRepo.FindByUserID(ctx, userID)

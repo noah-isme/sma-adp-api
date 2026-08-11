@@ -98,13 +98,19 @@ func main() {
 
 	authRepo := repository.NewUserRepository(db)
 	teacherRepo := repository.NewTeacherRepository(db)
-	authSvc := service.NewAuthService(authRepo, teacherRepo, nil, logr, service.AuthConfig{
-		AccessTokenSecret:  cfg.JWT.Secret,
-		AccessTokenExpiry:  cfg.JWT.Expiration,
-		RefreshTokenExpiry: cfg.JWT.RefreshExpiration,
-		Issuer:             "sma-adp-api",
-		Audience:           []string{"sma-adp-clients"},
-	})
+	passwordResetDelivery := service.PasswordResetEmailDelivery(service.NoopPasswordResetEmailDelivery{})
+	if cfg.Env != config.EnvProduction {
+		passwordResetDelivery = service.NewLoggingPasswordResetEmailDelivery(logr)
+	}
+	authSvc := service.NewAuthServiceWithEmailDelivery(authRepo, teacherRepo, nil, logr, service.AuthConfig{
+		AccessTokenSecret:     cfg.JWT.Secret,
+		AccessTokenExpiry:     cfg.JWT.Expiration,
+		RefreshTokenExpiry:    cfg.JWT.RefreshExpiration,
+		PasswordResetTokenTTL: cfg.PasswordReset.TokenTTL,
+		PasswordResetURL:      cfg.PasswordReset.URL,
+		Issuer:                "sma-adp-api",
+		Audience:              []string{"sma-adp-clients"},
+	}, passwordResetDelivery)
 	authHandler := internalhandler.NewAuthHandler(authSvc)
 
 	// Initialize student repo early for portal auth
@@ -221,6 +227,7 @@ func main() {
 		portalBehaviorSvc,
 		portalCalendarSvc,
 		portalHomeroomSvc,
+		portalLookup,
 	)
 
 	// Register Portal Data Routes

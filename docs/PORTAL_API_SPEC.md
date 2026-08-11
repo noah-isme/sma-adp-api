@@ -1075,16 +1075,18 @@ X-RateLimit-Reset: 1730000000
 
 ### For Students (STUDENT role):
 - Can only access own data (`studentId` from JWT claims)
-- `studentId` query parameter is ignored
+- A `studentId` query parameter is optional when it matches the claim; a different
+  value is rejected with `403 Forbidden`
 - Announcements: audience = `STUDENT` or `ALL`
 - Calendar: audience = `STUDENT` or `ALL` + class-specific events
 
 ### For Parents (PARENT role):
 - Can access data for linked children only
 - Must specify `studentId` query param for single-student endpoints
-- Without `studentId`, returns aggregated data for all linked children
-- Announcements: audience = `PARENT` or `ALL` + class-specific for each child
-- Calendar: audience = `PARENT` or `ALL` + class-specific for each child
+- Missing `studentId` is rejected with `400 Bad Request`; this version does not
+  expose an aggregate response for all linked children
+- Announcements: audience = `SISWA` or `ALL` + class-specific announcements
+- Calendar: audience = `SISWA` or `ALL` + class-specific events
 - Permissions controlled by `parent_students` link flags (`can_view_grades`, etc.)
 
 ---

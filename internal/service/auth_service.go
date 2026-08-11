@@ -3,10 +3,14 @@ package service
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"database/sql"
 	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -29,6 +33,8 @@ type authUserRepository interface {
 	CreateRefreshToken(ctx context.Context, token *models.RefreshToken) error
 	FindRefreshToken(ctx context.Context, token string) (*models.RefreshToken, error)
 	RevokeRefreshToken(ctx context.Context, id string, revokedAt time.Time) error
+	CreatePasswordResetToken(ctx context.Context, token *models.PasswordResetToken) error
+	ConsumePasswordResetToken(ctx context.Context, tokenHash string, usedAt time.Time) (*models.PasswordResetToken, error)
 	CreateAuditLog(ctx context.Context, log *models.AuditLog) error
 }
 
@@ -38,12 +44,14 @@ type authTeacherLookup interface {
 
 // AuthConfig defines configuration for authentication flows.
 type AuthConfig struct {
-	AccessTokenSecret  string
-	AccessTokenExpiry  time.Duration
-	RefreshTokenExpiry time.Duration
-	Issuer             string
-	Audience           []string
-	SingleSession      bool
+	AccessTokenSecret     string
+	AccessTokenExpiry     time.Duration
+	RefreshTokenExpiry    time.Duration
+	PasswordResetTokenTTL time.Duration
+	PasswordResetURL      string
+	Issuer                string
+	Audience              []string
+	SingleSession         bool
 }
 
 // AuthService provides authentication use cases.
@@ -53,17 +61,41 @@ type AuthService struct {
 	validator     *validator.Validate
 	logger        *zap.Logger
 	config        AuthConfig
+	emailDelivery PasswordResetEmailDelivery
 }
 
 // NewAuthService constructs an AuthService instance.
 func NewAuthService(repo authUserRepository, teacherLookup authTeacherLookup, validate *validator.Validate, logger *zap.Logger, config AuthConfig) *AuthService {
+	return NewAuthServiceWithEmailDelivery(repo, teacherLookup, validate, logger, config, NoopPasswordResetEmailDelivery{})
+}
+
+// NewAuthServiceWithEmailDelivery constructs an AuthService with an injected
+// password-reset delivery implementation. The default constructor remains
+// network-free for tests and callers that do not configure email delivery.
+func NewAuthServiceWithEmailDelivery(repo authUserRepository, teacherLookup authTeacherLookup, validate *validator.Validate, logger *zap.Logger, config AuthConfig, emailDelivery PasswordResetEmailDelivery) *AuthService {
 	if logger == nil {
 		logger = zap.NewNop()
 	}
 	if validate == nil {
 		validate = validator.New()
 	}
-	return &AuthService{repo: repo, teacherLookup: teacherLookup, validator: validate, logger: logger, config: config}
+	if emailDelivery == nil {
+		emailDelivery = NoopPasswordResetEmailDelivery{}
+	}
+	if config.PasswordResetTokenTTL <= 0 {
+		config.PasswordResetTokenTTL = time.Hour
+	}
+	if strings.TrimSpace(config.PasswordResetURL) == "" {
+		config.PasswordResetURL = "http://localhost:5173/admin/reset-password"
+	}
+	return &AuthService{
+		repo:          repo,
+		teacherLookup: teacherLookup,
+		validator:     validate,
+		logger:        logger,
+		config:        config,
+		emailDelivery: emailDelivery,
+	}
 }
 
 // Login authenticates a user and returns issued tokens.
@@ -329,22 +361,115 @@ func (s *AuthService) ValidateToken(tokenString string) (*models.JWTClaims, erro
 	return claims, nil
 }
 
-// ForgotPassword initiates the reset flow. Phase 1 stub.
+// ForgotPassword initiates the admin reset flow. User lookup failures for a
+// missing email intentionally result in success so the endpoint cannot be
+// used to enumerate accounts.
 func (s *AuthService) ForgotPassword(ctx context.Context, req models.ResetPasswordRequest) error {
 	if err := s.validator.Struct(req); err != nil {
 		return appErrors.Wrap(err, appErrors.ErrValidation.Code, appErrors.ErrValidation.Status, "invalid forgot password payload")
 	}
-	s.logger.Info("password reset requested", zap.String("email", req.Email))
+
+	email := strings.ToLower(strings.TrimSpace(req.Email))
+	user, err := s.repo.FindByEmail(ctx, email)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil
+		}
+		return appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to look up password reset account")
+	}
+	if user == nil || !user.Active {
+		return nil
+	}
+
+	rawToken, err := generatePasswordResetToken()
+	if err != nil {
+		return appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to generate password reset token")
+	}
+	now := time.Now().UTC()
+	expiresAt := now.Add(s.config.PasswordResetTokenTTL)
+	resetToken := &models.PasswordResetToken{
+		ID:        uuid.NewString(),
+		UserID:    user.ID,
+		TokenHash: hashPasswordResetToken(rawToken),
+		ExpiresAt: expiresAt,
+		CreatedAt: now,
+	}
+	if err := s.repo.CreatePasswordResetToken(ctx, resetToken); err != nil {
+		return appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to persist password reset token")
+	}
+
+	resetURL := addPasswordResetToken(s.config.PasswordResetURL, rawToken)
+	if err := s.emailDelivery.SendPasswordReset(ctx, user.Email, resetURL, expiresAt); err != nil {
+		// Keep the public response generic even if a configured provider fails;
+		// otherwise delivery errors would reveal that the account exists.
+		s.logger.Error("failed to deliver password reset email", zap.Error(err), zap.String("user_id", user.ID))
+	}
+
+	s.logger.Info("password reset requested", zap.String("user_id", user.ID))
 	return nil
 }
 
-// ResetPassword completes the reset flow. Phase 1 stub.
+// ResetPassword atomically consumes a valid reset token before updating the
+// bcrypt password hash. The repository's conditional UPDATE makes a token
+// single-use even when two reset requests race.
 func (s *AuthService) ResetPassword(ctx context.Context, req models.ConfirmResetPasswordRequest) error {
 	if err := s.validator.Struct(req); err != nil {
 		return appErrors.Wrap(err, appErrors.ErrValidation.Code, appErrors.ErrValidation.Status, "invalid reset password payload")
 	}
-	s.logger.Info("reset password token consumed", zap.String("token", req.Token))
+
+	resetToken, err := s.repo.ConsumePasswordResetToken(ctx, hashPasswordResetToken(req.Token), time.Now().UTC())
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return appErrors.Clone(appErrors.ErrUnauthorized, "invalid or expired password reset token")
+		}
+		return appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to consume password reset token")
+	}
+
+	newHash, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to hash password")
+	}
+	if err := s.repo.UpdatePassword(ctx, resetToken.UserID, string(newHash), time.Now().UTC()); err != nil {
+		return appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to update password")
+	}
+	if err := s.repo.RevokeUserRefreshTokens(ctx, resetToken.UserID); err != nil {
+		s.logger.Warn("failed to revoke refresh tokens after password reset", zap.Error(err))
+	}
+
+	if err := s.repo.CreateAuditLog(ctx, &models.AuditLog{
+		UserID:     &resetToken.UserID,
+		Action:     models.AuditActionPasswordReset,
+		Resource:   "auth",
+		ResourceID: &resetToken.UserID,
+		NewValues:  types.JSONText(`{"status":"reset"}`),
+	}); err != nil {
+		s.logger.Warn("failed to record password reset audit log", zap.Error(err))
+	}
+
 	return nil
+}
+
+const passwordResetTokenBytes = 32
+
+func generatePasswordResetToken() (string, error) {
+	buf := make([]byte, passwordResetTokenBytes)
+	if _, err := rand.Read(buf); err != nil {
+		return "", err
+	}
+	return base64.RawURLEncoding.EncodeToString(buf), nil
+}
+
+func hashPasswordResetToken(token string) string {
+	digest := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(digest[:])
+}
+
+func addPasswordResetToken(baseURL, rawToken string) string {
+	separator := "?"
+	if strings.Contains(baseURL, "?") {
+		separator = "&"
+	}
+	return baseURL + separator + url.Values{"token": []string{rawToken}}.Encode()
 }
 
 func (s *AuthService) resolveTeacherID(ctx context.Context, user *models.User) string {

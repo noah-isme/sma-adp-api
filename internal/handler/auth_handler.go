@@ -172,7 +172,7 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 		return
 	}
 
-	response.JSON(c, http.StatusAccepted, gin.H{"message": "if the email exists, a reset link will be sent"}, nil)
+	response.JSON(c, http.StatusAccepted, gin.H{"message": "Jika email terdaftar, tautan reset akan dikirim"}, nil)
 }
 
 // ResetPassword godoc

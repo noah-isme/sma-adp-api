@@ -22,6 +22,7 @@ type Config struct {
 	Database      DatabaseConfig
 	Redis         RedisConfig
 	JWT           JWTConfig
+	PasswordReset PasswordResetConfig
 	CORS          CORSConfig
 	Log           LogConfig
 	Analytics     AnalyticsConfig
@@ -58,6 +59,12 @@ type JWTConfig struct {
 	Secret            string
 	Expiration        time.Duration
 	RefreshExpiration time.Duration
+}
+
+// PasswordResetConfig controls the public admin password-reset link.
+type PasswordResetConfig struct {
+	TokenTTL time.Duration
+	URL      string
 }
 
 type CORSConfig struct {
@@ -193,6 +200,11 @@ func Load() (*Config, error) {
 		RefreshExpiration: parseDuration(v.GetString("REFRESH_TOKEN_EXPIRATION"), 7*24*time.Hour),
 	}
 
+	cfg.PasswordReset = PasswordResetConfig{
+		TokenTTL: parseDuration(v.GetString("PASSWORD_RESET_TOKEN_TTL"), time.Hour),
+		URL:      v.GetString("PASSWORD_RESET_URL"),
+	}
+
 	cfg.CORS = CORSConfig{AllowedOrigins: splitAndTrim(v.GetString("ALLOWED_ORIGINS"))}
 
 	cfg.Log = LogConfig{
@@ -298,6 +310,8 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("JWT_SECRET", "dev_secret")
 	v.SetDefault("JWT_EXPIRATION", "24h")
 	v.SetDefault("REFRESH_TOKEN_EXPIRATION", "168h")
+	v.SetDefault("PASSWORD_RESET_TOKEN_TTL", "1h")
+	v.SetDefault("PASSWORD_RESET_URL", "http://localhost:5173/admin/reset-password")
 
 	v.SetDefault("ALLOWED_ORIGINS", "")
 	v.SetDefault("LOG_LEVEL", "info")

@@ -6,6 +6,23 @@
 - **T0 + 14d:** Begin legacy teardown (pipelines, routing, secrets).
 
 ## Mandatory Steps
+0. **Read-only preflight**
+   - Run `make decommission-preflight` against the staging `.env` before changing
+     routing or retiring the legacy service.
+   - For CI/static validation without reachable upstreams, run
+     `make decommission-preflight PREFLIGHT_ARGS=--skip-http`.
+   - The command requires `ROUTE_TO_GO=true`, `LEGACY_READONLY=true`,
+     `CANARY_PERCENTAGE=100`, non-default signing secrets, and explicit CORS
+     origins. It never changes deployment state.
+
+   Repository support artifacts:
+   - [`scripts/decommission_preflight.py`](../scripts/decommission_preflight.py)
+     contains the read-only checks and optional health probes.
+   - [`monitoring/prometheus/sma-api-alerts.yml`](../../monitoring/prometheus/sma-api-alerts.yml)
+     defines the cutover error, latency, cache, and database alerts.
+   - [`monitoring/`](../../monitoring/) contains the dashboard and structural
+     validator; live Prometheus and Alertmanager wiring remains an environment
+     task.
 1. **Pipelines & Deployments**
    - Disable NestJS CI/CD jobs.
    - Archive legacy deployment manifests; upload snapshot to `ops/archive`.

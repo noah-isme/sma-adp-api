@@ -1,6 +1,6 @@
 DB_URL ?= postgresql://postgres:postgres@localhost:5432/admin_panel_sma?sslmode=disable
 
-.PHONY: help setup dev build test test-coverage migrate-create migrate-up migrate-down docker-up docker-down swag validate-swagger-routes compatibility-smoke lint fmt contract-test shadow-compare toggle-go rollback seed seed-reset
+.PHONY: help setup dev build test test-coverage migrate-create migrate-up migrate-down docker-up docker-down swag validate-swagger-routes compatibility-smoke lint fmt contract-test shadow-compare toggle-go rollback seed seed-reset decommission-preflight
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' \
@@ -90,3 +90,6 @@ validate-swagger-routes: ## Verify every API gateway route has a generated Swagg
 
 compatibility-smoke: ## Verify compatibility routes and optionally run seeded HTTP smoke
 	python3 scripts/compatibility_smoke.py
+
+decommission-preflight: ## Validate read-only cutover and legacy retirement prerequisites
+	python3 scripts/decommission_preflight.py $(PREFLIGHT_ARGS)

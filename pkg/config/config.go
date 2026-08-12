@@ -66,9 +66,10 @@ type JWTConfig struct {
 
 // PasswordResetConfig controls the public admin password-reset link.
 type PasswordResetConfig struct {
-	TokenTTL time.Duration
-	URL      string
-	Subject  string
+	TokenTTL  time.Duration
+	URL       string
+	PortalURL string
+	Subject   string
 }
 
 // SMTPConfig configures the SMTP transport used by password-reset delivery.
@@ -221,9 +222,10 @@ func Load() (*Config, error) {
 	}
 
 	cfg.PasswordReset = PasswordResetConfig{
-		TokenTTL: parseDuration(v.GetString("PASSWORD_RESET_TOKEN_TTL"), time.Hour),
-		URL:      v.GetString("PASSWORD_RESET_URL"),
-		Subject:  v.GetString("PASSWORD_RESET_EMAIL_SUBJECT"),
+		TokenTTL:  parseDuration(v.GetString("PASSWORD_RESET_TOKEN_TTL"), time.Hour),
+		URL:       v.GetString("PASSWORD_RESET_URL"),
+		PortalURL: v.GetString("PORTAL_PASSWORD_RESET_URL"),
+		Subject:   v.GetString("PASSWORD_RESET_EMAIL_SUBJECT"),
 	}
 
 	smtpUsername := v.GetString("SMTP_USER")
@@ -350,6 +352,7 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("REFRESH_TOKEN_EXPIRATION", "168h")
 	v.SetDefault("PASSWORD_RESET_TOKEN_TTL", "1h")
 	v.SetDefault("PASSWORD_RESET_URL", "http://localhost:5173/admin/reset-password")
+	v.SetDefault("PORTAL_PASSWORD_RESET_URL", "http://localhost:5173/portal/reset-password")
 	v.SetDefault("PASSWORD_RESET_EMAIL_SUBJECT", "Atur ulang kata sandi Admin SMA")
 
 	v.SetDefault("SMTP_ENABLED", false)

@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -22,11 +23,13 @@ import (
 
 // PortalAuthConfig defines configuration for portal authentication flows.
 type PortalAuthConfig struct {
-	AccessTokenSecret  string
-	AccessTokenExpiry  time.Duration
-	RefreshTokenExpiry time.Duration
-	Issuer             string
-	Audience           []string
+	AccessTokenSecret     string
+	AccessTokenExpiry     time.Duration
+	RefreshTokenExpiry    time.Duration
+	PasswordResetTokenTTL time.Duration
+	PasswordResetURL      string
+	Issuer                string
+	Audience              []string
 }
 
 // PortalUserLookup defines the interface for looking up portal-specific user data.
@@ -45,11 +48,12 @@ type PortalUserLookup interface {
 
 // PortalAuthService provides authentication use cases for parent/student portal.
 type PortalAuthService struct {
-	userRepo     authUserRepository
-	portalLookup PortalUserLookup
-	validator    *validator.Validate
-	logger       *zap.Logger
-	config       PortalAuthConfig
+	userRepo      authUserRepository
+	portalLookup  PortalUserLookup
+	validator     *validator.Validate
+	logger        *zap.Logger
+	config        PortalAuthConfig
+	emailDelivery PasswordResetEmailDelivery
 }
 
 // NewPortalAuthService constructs a PortalAuthService instance.
@@ -60,18 +64,42 @@ func NewPortalAuthService(
 	logger *zap.Logger,
 	config PortalAuthConfig,
 ) *PortalAuthService {
+	return NewPortalAuthServiceWithEmailDelivery(userRepo, portalLookup, validate, logger, config, NoopPasswordResetEmailDelivery{})
+}
+
+// NewPortalAuthServiceWithEmailDelivery constructs a portal auth service with
+// an injected password-reset delivery implementation. The default constructor
+// remains network-free for tests and development callers.
+func NewPortalAuthServiceWithEmailDelivery(
+	userRepo authUserRepository,
+	portalLookup PortalUserLookup,
+	validate *validator.Validate,
+	logger *zap.Logger,
+	config PortalAuthConfig,
+	emailDelivery PasswordResetEmailDelivery,
+) *PortalAuthService {
 	if logger == nil {
 		logger = zap.NewNop()
 	}
 	if validate == nil {
 		validate = validator.New()
 	}
+	if emailDelivery == nil {
+		emailDelivery = NoopPasswordResetEmailDelivery{}
+	}
+	if config.PasswordResetTokenTTL <= 0 {
+		config.PasswordResetTokenTTL = time.Hour
+	}
+	if config.PasswordResetURL == "" {
+		config.PasswordResetURL = "http://localhost:5173/portal/reset-password"
+	}
 	return &PortalAuthService{
-		userRepo:     userRepo,
-		portalLookup: portalLookup,
-		validator:    validate,
-		logger:       logger,
-		config:       config,
+		userRepo:      userRepo,
+		portalLookup:  portalLookup,
+		validator:     validate,
+		logger:        logger,
+		config:        config,
+		emailDelivery: emailDelivery,
 	}
 }
 
@@ -282,8 +310,45 @@ func (s *PortalAuthService) PortalForgotPassword(ctx context.Context, req models
 	if err := s.validator.Struct(req); err != nil {
 		return appErrors.Wrap(err, appErrors.ErrValidation.Code, appErrors.ErrValidation.Status, "invalid forgot password payload")
 	}
-	s.logger.Info("portal password reset requested", zap.String("email", req.Email))
-	// TODO: Implement email sending with reset token
+
+	// Keep the response generic for missing, inactive, and non-portal accounts
+	// so this endpoint cannot be used to enumerate users.
+	email := strings.ToLower(strings.TrimSpace(req.Email))
+	user, err := s.userRepo.FindByEmail(ctx, email)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil
+		}
+		return appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to look up portal password reset account")
+	}
+	if user == nil || !user.Active || (user.Role != models.RoleOrtu && user.Role != models.RoleSiswa) {
+		return nil
+	}
+
+	rawToken, err := generatePasswordResetToken()
+	if err != nil {
+		return appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to generate portal password reset token")
+	}
+	now := time.Now().UTC()
+	expiresAt := now.Add(s.config.PasswordResetTokenTTL)
+	resetToken := &models.PasswordResetToken{
+		ID:        uuid.NewString(),
+		UserID:    user.ID,
+		TokenHash: hashPasswordResetToken(rawToken),
+		ExpiresAt: expiresAt,
+		CreatedAt: now,
+	}
+	if err := s.userRepo.CreatePasswordResetToken(ctx, resetToken); err != nil {
+		return appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to persist portal password reset token")
+	}
+
+	resetURL := addPasswordResetToken(s.config.PasswordResetURL, rawToken)
+	if err := s.emailDelivery.SendPasswordReset(ctx, user.Email, resetURL, expiresAt); err != nil {
+		// Do not expose provider failures or the account's existence through the
+		// public response. The token remains usable if delivery is retried.
+		s.logger.Error("failed to deliver portal password reset email", zap.Error(err), zap.String("user_id", user.ID))
+	}
+	s.logger.Info("portal password reset requested", zap.String("user_id", user.ID))
 	return nil
 }
 
@@ -292,8 +357,45 @@ func (s *PortalAuthService) PortalResetPassword(ctx context.Context, req models.
 	if err := s.validator.Struct(req); err != nil {
 		return appErrors.Wrap(err, appErrors.ErrValidation.Code, appErrors.ErrValidation.Status, "invalid reset password payload")
 	}
-	s.logger.Info("portal reset password token consumed", zap.String("token", req.Token))
-	// TODO: Implement token validation and password reset
+
+	resetToken, err := s.userRepo.ConsumePasswordResetToken(ctx, hashPasswordResetToken(req.Token), time.Now().UTC())
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return appErrors.Clone(appErrors.ErrUnauthorized, "invalid or expired password reset token")
+		}
+		return appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to consume portal password reset token")
+	}
+
+	user, err := s.userRepo.FindByID(ctx, resetToken.UserID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return appErrors.Clone(appErrors.ErrUnauthorized, "portal account no longer exists")
+		}
+		return appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to load portal account")
+	}
+	if user.Role != models.RoleOrtu && user.Role != models.RoleSiswa {
+		return appErrors.Clone(appErrors.ErrForbidden, "password reset restricted to parents and students")
+	}
+
+	newHash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to hash portal password")
+	}
+	if err := s.userRepo.UpdatePassword(ctx, user.ID, string(newHash), time.Now().UTC()); err != nil {
+		return appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to update portal password")
+	}
+	if err := s.userRepo.RevokeUserRefreshTokens(ctx, user.ID); err != nil {
+		s.logger.Warn("failed to revoke portal refresh tokens after password reset", zap.Error(err), zap.String("user_id", user.ID))
+	}
+	if err := s.userRepo.CreateAuditLog(ctx, &models.AuditLog{
+		UserID:     &user.ID,
+		Action:     models.AuditActionPasswordReset,
+		Resource:   "portal_auth",
+		ResourceID: &user.ID,
+		NewValues:  types.JSONText(`{"status":"reset"}`),
+	}); err != nil {
+		s.logger.Warn("failed to record portal password reset audit log", zap.Error(err), zap.String("user_id", user.ID))
+	}
 	return nil
 }
 
@@ -487,13 +589,29 @@ func (s *PortalAuthService) buildPortalUserInfo(ctx context.Context, user *model
 		if err == nil && len(links) > 0 {
 			students := make([]models.StudentSummary, 0, len(links))
 			for _, link := range links {
-				// TODO: Fetch student details for each link
-				// This will be populated when the student service is integrated
-				students = append(students, models.StudentSummary{
-					ID: link.StudentID,
-				})
+				if link == nil || link.ParentID != user.ID {
+					continue
+				}
+				student, studentErr := s.portalLookup.FindStudentByID(ctx, link.StudentID)
+				if studentErr != nil || student == nil {
+					s.logger.Warn("failed to enrich linked portal student", zap.String("student_id", link.StudentID), zap.Error(studentErr))
+					continue
+				}
+				summary := models.StudentSummary{
+					ID:             student.ID,
+					NIS:            student.NIS,
+					FullName:       student.FullName,
+					BirthDate:      student.BirthDate.Format("2006-01-02"),
+					Gender:         student.Gender,
+					ClassName:      student.CurrentClassName,
+					CurrentTerm:    student.CurrentTermID,
+					CurrentClassID: student.CurrentClassID,
+				}
+				students = append(students, summary)
 			}
-			info.LinkedStudents = students
+			if len(students) > 0 {
+				info.LinkedStudents = students
+			}
 		}
 	}
 

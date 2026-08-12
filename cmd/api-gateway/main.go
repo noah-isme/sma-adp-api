@@ -158,13 +158,15 @@ func main() {
 
 	// Portal Auth Service
 	portalAuthConfig := service.PortalAuthConfig{
-		AccessTokenSecret:  cfg.JWT.Secret,
-		AccessTokenExpiry:  cfg.JWT.Expiration,
-		RefreshTokenExpiry: cfg.JWT.RefreshExpiration,
-		Issuer:             "sma-adp-api",
-		Audience:           []string{"sma-adp-clients"},
+		AccessTokenSecret:     cfg.JWT.Secret,
+		AccessTokenExpiry:     cfg.JWT.Expiration,
+		RefreshTokenExpiry:    cfg.JWT.RefreshExpiration,
+		PasswordResetTokenTTL: cfg.PasswordReset.TokenTTL,
+		PasswordResetURL:      cfg.PasswordReset.PortalURL,
+		Issuer:                "sma-adp-api",
+		Audience:              []string{"sma-adp-clients"},
 	}
-	portalAuthSvc := service.NewPortalAuthService(authRepo, portalLookup, nil, logr, portalAuthConfig)
+	portalAuthSvc := service.NewPortalAuthServiceWithEmailDelivery(authRepo, portalLookup, nil, logr, portalAuthConfig, passwordResetDelivery)
 	portalAuthHandler := internalhandler.NewPortalAuthHandler(portalAuthSvc)
 
 	authRoutes := api.Group("/auth")

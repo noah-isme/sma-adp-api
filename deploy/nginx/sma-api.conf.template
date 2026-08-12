@@ -1,0 +1,94 @@
+# Cloudflare -> Nginx -> Go API/legacy upstream.
+# The official Nginx entrypoint renders this template with envsubst.
+
+upstream go_api {
+    server api:8080 max_fails=3 fail_timeout=10s;
+    keepalive 32;
+}
+
+upstream legacy_api {
+    server ${LEGACY_UPSTREAM} max_fails=3 fail_timeout=10s;
+    keepalive 32;
+}
+
+# Cloudflare supplies the stable client address. Fall back to the direct peer
+# for staging. The hash keeps a client on one upstream during a canary stage.
+map "${DOLLAR}http_cf_connecting_ip" ${DOLLAR}segment_seed {
+    ""      ${DOLLAR}remote_addr;
+    default ${DOLLAR}http_cf_connecting_ip;
+}
+
+split_clients "${DOLLAR}segment_seed" ${DOLLAR}canary_backend {
+    ${CANARY_PERCENTAGE}% go_api;
+    *                  legacy_api;
+}
+
+map "${ROUTE_TO_GO}" ${DOLLAR}route_backend {
+    "true"  ${DOLLAR}canary_backend;
+    default legacy_api;
+}
+
+server {
+    listen 8080 default_server;
+    server_name _;
+    return 301 https://${DOLLAR}host${DOLLAR}request_uri;
+}
+
+server {
+    listen 8443 ssl http2 default_server;
+    server_name ${SERVER_NAME};
+
+    ssl_certificate     /etc/sma/tls/fullchain.pem;
+    ssl_certificate_key /etc/sma/tls/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_session_timeout 1d;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_tickets off;
+
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-Frame-Options DENY always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+
+    # Health and readiness are pinned to Go so an edge check cannot be green
+    # while the Go upstream is unavailable. Prometheus reaches /metrics over
+    # the internal network; it is not exposed through Cloudflare.
+    location = /health {
+        proxy_pass http://go_api/health;
+        proxy_set_header Host ${DOLLAR}host;
+        proxy_set_header X-Request-ID ${DOLLAR}request_id;
+    }
+
+    location = /ready {
+        proxy_pass http://go_api/ready;
+        proxy_set_header Host ${DOLLAR}host;
+        proxy_set_header X-Request-ID ${DOLLAR}request_id;
+    }
+
+    location = /metrics {
+        deny all;
+        return 404;
+    }
+
+    location ^~ /internal/ {
+        deny all;
+        return 404;
+    }
+
+    location ^~ /debug/ {
+        deny all;
+        return 404;
+    }
+
+    location ~ ^/api/v1/auth/(login|refresh|forgot-password|reset-password)${DOLLAR} {
+        limit_req zone=auth_limit burst=10 nodelay;
+        proxy_pass http://${DOLLAR}route_backend;
+        include /etc/nginx/proxy_params;
+    }
+
+    location / {
+        limit_req zone=api_limit burst=60 nodelay;
+        proxy_pass http://${DOLLAR}route_backend;
+        include /etc/nginx/proxy_params;
+    }
+}

@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"os"
 	"strings"
 	"time"
 
@@ -23,6 +24,7 @@ type Config struct {
 	Redis         RedisConfig
 	JWT           JWTConfig
 	PasswordReset PasswordResetConfig
+	SMTP          SMTPConfig
 	CORS          CORSConfig
 	Log           LogConfig
 	Analytics     AnalyticsConfig
@@ -53,6 +55,7 @@ type RedisConfig struct {
 	Port     int
 	Password string
 	DB       int
+	TLS      bool
 }
 
 type JWTConfig struct {
@@ -65,6 +68,22 @@ type JWTConfig struct {
 type PasswordResetConfig struct {
 	TokenTTL time.Duration
 	URL      string
+	Subject  string
+}
+
+// SMTPConfig configures the SMTP transport used by password-reset delivery.
+// TLSMode accepts starttls, tls (implicit TLS), or none (for local test
+// servers only). A non-empty host and sender enable SMTP delivery in
+// production; otherwise the gateway retains its safe no-op fallback.
+type SMTPConfig struct {
+	Enabled  bool
+	Host     string
+	Port     int
+	Username string
+	Password string
+	From     string
+	TLSMode  string
+	Timeout  time.Duration
 }
 
 type CORSConfig struct {
@@ -165,7 +184,7 @@ func Load() (*Config, error) {
 
 	if err := v.ReadInConfig(); err != nil {
 		var notFound viper.ConfigFileNotFoundError
-		if !errors.As(err, &notFound) {
+		if !errors.As(err, &notFound) && !os.IsNotExist(err) {
 			return nil, err
 		}
 	}
@@ -192,6 +211,7 @@ func Load() (*Config, error) {
 		Port:     v.GetInt("REDIS_PORT"),
 		Password: v.GetString("REDIS_PASSWORD"),
 		DB:       v.GetInt("REDIS_DB"),
+		TLS:      v.GetBool("REDIS_TLS"),
 	}
 
 	cfg.JWT = JWTConfig{
@@ -203,6 +223,24 @@ func Load() (*Config, error) {
 	cfg.PasswordReset = PasswordResetConfig{
 		TokenTTL: parseDuration(v.GetString("PASSWORD_RESET_TOKEN_TTL"), time.Hour),
 		URL:      v.GetString("PASSWORD_RESET_URL"),
+		Subject:  v.GetString("PASSWORD_RESET_EMAIL_SUBJECT"),
+	}
+
+	smtpUsername := v.GetString("SMTP_USER")
+	if smtpUsername == "" {
+		// SMTP_USERNAME is accepted as an explicit alias for deployments that
+		// use the longer name; SMTP_USER remains the documented setting.
+		smtpUsername = v.GetString("SMTP_USERNAME")
+	}
+	cfg.SMTP = SMTPConfig{
+		Enabled:  v.GetBool("SMTP_ENABLED"),
+		Host:     v.GetString("SMTP_HOST"),
+		Port:     v.GetInt("SMTP_PORT"),
+		Username: smtpUsername,
+		Password: v.GetString("SMTP_PASSWORD"),
+		From:     v.GetString("SMTP_FROM"),
+		TLSMode:  v.GetString("SMTP_TLS_MODE"),
+		Timeout:  parseDuration(v.GetString("SMTP_TIMEOUT"), 10*time.Second),
 	}
 
 	cfg.CORS = CORSConfig{AllowedOrigins: splitAndTrim(v.GetString("ALLOWED_ORIGINS"))}
@@ -312,6 +350,17 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("REFRESH_TOKEN_EXPIRATION", "168h")
 	v.SetDefault("PASSWORD_RESET_TOKEN_TTL", "1h")
 	v.SetDefault("PASSWORD_RESET_URL", "http://localhost:5173/admin/reset-password")
+	v.SetDefault("PASSWORD_RESET_EMAIL_SUBJECT", "Atur ulang kata sandi Admin SMA")
+
+	v.SetDefault("SMTP_ENABLED", false)
+	v.SetDefault("SMTP_HOST", "")
+	v.SetDefault("SMTP_PORT", 587)
+	v.SetDefault("SMTP_USER", "")
+	v.SetDefault("SMTP_USERNAME", "")
+	v.SetDefault("SMTP_PASSWORD", "")
+	v.SetDefault("SMTP_FROM", "")
+	v.SetDefault("SMTP_TLS_MODE", "starttls")
+	v.SetDefault("SMTP_TIMEOUT", "10s")
 
 	v.SetDefault("ALLOWED_ORIGINS", "")
 	v.SetDefault("LOG_LEVEL", "info")

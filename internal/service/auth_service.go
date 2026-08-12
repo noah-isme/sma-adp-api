@@ -98,6 +98,13 @@ func NewAuthServiceWithEmailDelivery(repo authUserRepository, teacherLookup auth
 	}
 }
 
+// RefreshTokenExpiry exposes the configured refresh-token lifetime to the HTTP
+// handler so the browser cookie expires no later than the persisted session.
+// Token issuance and validation remain owned by AuthService.
+func (s *AuthService) RefreshTokenExpiry() time.Duration {
+	return s.config.RefreshTokenExpiry
+}
+
 // Login authenticates a user and returns issued tokens.
 func (s *AuthService) Login(ctx context.Context, req models.LoginRequest) (*models.LoginResponse, error) {
 	if err := s.validator.Struct(req); err != nil {
@@ -264,7 +271,8 @@ func (s *AuthService) RefreshToken(ctx context.Context, req models.RefreshTokenR
 	}, nil
 }
 
-// Logout revokes the provided refresh token.
+// Logout revokes the provided refresh token after confirming that it belongs
+// to the authenticated access-token subject.
 func (s *AuthService) Logout(ctx context.Context, refreshToken string, userID string, meta models.LoginRequest) error {
 	storedToken, err := s.repo.FindRefreshToken(ctx, refreshToken)
 	if err != nil {
@@ -276,6 +284,34 @@ func (s *AuthService) Logout(ctx context.Context, refreshToken string, userID st
 
 	if storedToken.UserID != userID {
 		return appErrors.Clone(appErrors.ErrForbidden, "token does not belong to user")
+	}
+
+	return s.revokeLogoutToken(ctx, storedToken, userID, meta)
+}
+
+// LogoutByRefreshToken revokes a browser session using only its HttpOnly
+// refresh cookie. Logout is deliberately idempotent for this path: an absent,
+// expired, or already-revoked cookie is treated as a completed logout. The
+// cookie is not accepted as an authentication credential anywhere else.
+func (s *AuthService) LogoutByRefreshToken(ctx context.Context, refreshToken string, meta models.LoginRequest) error {
+	if refreshToken == "" {
+		return nil
+	}
+
+	storedToken, err := s.repo.FindRefreshToken(ctx, refreshToken)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil
+		}
+		return appErrors.Wrap(err, appErrors.ErrInternal.Code, appErrors.ErrInternal.Status, "failed to load refresh token")
+	}
+
+	return s.revokeLogoutToken(ctx, storedToken, storedToken.UserID, meta)
+}
+
+func (s *AuthService) revokeLogoutToken(ctx context.Context, storedToken *models.RefreshToken, userID string, meta models.LoginRequest) error {
+	if storedToken == nil {
+		return nil
 	}
 
 	if err := s.repo.RevokeRefreshToken(ctx, storedToken.ID, time.Now().UTC()); err != nil {

@@ -1413,15 +1413,7 @@ const docTemplate = `{
         },
         "/auth/logout": {
             "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
                 "description": "Revoke refresh token",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1429,29 +1421,9 @@ const docTemplate = `{
                     "Authentication"
                 ],
                 "summary": "Logout current session",
-                "parameters": [
-                    {
-                        "description": "Refresh token",
-                        "name": "payload",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                ],
                 "responses": {
                     "204": {
                         "description": "No Content",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope"
                         }
@@ -1493,9 +1465,6 @@ const docTemplate = `{
         "/auth/refresh": {
             "post": {
                 "description": "Exchange refresh token for new access token",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1503,17 +1472,6 @@ const docTemplate = `{
                     "Authentication"
                 ],
                 "summary": "Refresh access token",
-                "parameters": [
-                    {
-                        "description": "Refresh payload",
-                        "name": "payload",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/github_com_noah-isme_sma-adp-api_internal_models.RefreshTokenRequest"
-                        }
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "OK",

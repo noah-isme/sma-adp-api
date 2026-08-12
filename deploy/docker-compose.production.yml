@@ -1,0 +1,260 @@
+name: sma-production
+
+# Production topology:
+# Cloudflare (Full Strict TLS/WAF) -> Nginx (this file) -> Go API.
+# PostgreSQL and Redis are managed services and are deliberately not defined
+# here. Their endpoints and credentials are injected through SMA_ENV_FILE.
+services:
+  api:
+    image: "${SMA_API_IMAGE:?Set SMA_API_IMAGE to an immutable image@sha256:digest}"
+    restart: unless-stopped
+    env_file:
+      - "${SMA_ENV_FILE:-/etc/sma/sma-api.env}"
+    environment:
+      ENV: production
+      PORT: "8080"
+      DB_SSL_MODE: require
+      REDIS_TLS: "true"
+      ROUTE_TO_GO: "${ROUTE_TO_GO:-false}"
+      SHADOW_TRAFFIC: "${SHADOW_TRAFFIC:-false}"
+      LEGACY_READONLY: "${LEGACY_READONLY:-false}"
+      CANARY_PERCENTAGE: "${CANARY_PERCENTAGE:-0}"
+    expose:
+      - "8080"
+    networks:
+      - app
+    read_only: true
+    user: "65532:65532"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 768M
+          pids: 256
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    mem_limit: 768m
+    cpus: 1.0
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/healthcheck"]
+      interval: 10s
+      timeout: 3s
+      start_period: 20s
+      retries: 5
+
+  # The current report queue is in-process. Keep this profile disabled until
+  # the dedicated worker entrypoint is shipped; it is included to make the
+  # release image and resource contract explicit and cannot receive ingress.
+  worker:
+    profiles: ["worker"]
+    image: "${SMA_WORKER_IMAGE:?Set SMA_WORKER_IMAGE to an immutable image@sha256:digest}"
+    restart: unless-stopped
+    env_file:
+      - "${SMA_ENV_FILE:-/etc/sma/sma-api.env}"
+    environment:
+      ENV: production
+      PORT: "8081"
+      DB_SSL_MODE: require
+      REDIS_TLS: "true"
+      ENABLE_REPORTS: "true"
+    expose:
+      - "8081"
+    networks:
+      - app
+    read_only: true
+    user: "65532:65532"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 768M
+          pids: 256
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    mem_limit: 768m
+    cpus: 1.0
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/healthcheck"]
+      interval: 10s
+      timeout: 3s
+      start_period: 20s
+      retries: 5
+
+  nginx:
+    image: "${NGINX_IMAGE:?Set NGINX_IMAGE to an immutable image@sha256:digest}"
+    restart: unless-stopped
+    environment:
+      SERVER_NAME: "${SERVER_NAME:?Set SERVER_NAME to the public API hostname}"
+      LEGACY_UPSTREAM: "${LEGACY_UPSTREAM:?Set LEGACY_UPSTREAM to the legacy private host:port}"
+      ROUTE_TO_GO: "${ROUTE_TO_GO:-false}"
+      CANARY_PERCENTAGE: "${CANARY_PERCENTAGE:-0}"
+      DOLLAR: "$"
+      NGINX_ENVSUBST_OUTPUT_DIR: /tmp/nginx-conf
+    ports:
+      - "80:8080"
+      - "443:8443"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - edge
+      - app
+    read_only: true
+    user: "101:101"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /var/cache/nginx:rw,noexec,nosuid,size=32m
+      - /var/run:rw,noexec,nosuid,size=1m
+      - /tmp:rw,noexec,nosuid,size=2m
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 256M
+          pids: 128
+        reservations:
+          cpus: "0.10"
+          memory: 64M
+    mem_limit: 256m
+    cpus: 1.0
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/sma-api.conf.template:/etc/nginx/templates/sma-api.conf.template:ro
+      - ./nginx/proxy_params:/etc/nginx/proxy_params:ro
+      - "${TLS_DIR:-/etc/sma/tls}/fullchain.pem:/etc/sma/tls/fullchain.pem:ro"
+      - "${TLS_DIR:-/etc/sma/tls}/privkey.pem:/etc/sma/tls/privkey.pem:ro"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      start_period: 10s
+      retries: 5
+
+  prometheus:
+    image: "${PROMETHEUS_IMAGE:?Set PROMETHEUS_IMAGE to an immutable image@sha256:digest}"
+    restart: unless-stopped
+    networks:
+      - app
+      - observability
+    read_only: true
+    user: "65534:65534"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.enable-lifecycle"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../../monitoring/prometheus/sma-api-alerts.yml:/etc/prometheus/sma-api-alerts.yml:ro
+      - prometheus_data:/prometheus
+    depends_on:
+      api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+        reservations:
+          cpus: "0.10"
+          memory: 128M
+
+  alertmanager:
+    image: "${ALERTMANAGER_IMAGE:?Set ALERTMANAGER_IMAGE to an immutable image@sha256:digest}"
+    restart: unless-stopped
+    networks:
+      - observability
+    read_only: true
+    user: "65534:65534"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - "--storage.path=/alertmanager"
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256M
+        reservations:
+          cpus: "0.05"
+          memory: 64M
+
+  grafana:
+    image: "${GRAFANA_IMAGE:?Set GRAFANA_IMAGE to an immutable image@sha256:digest}"
+    restart: unless-stopped
+    networks:
+      - observability
+    environment:
+      GF_SECURITY_ADMIN_USER: "${GRAFANA_ADMIN_USER:?Set GRAFANA_ADMIN_USER in the deployment secret}"
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in the deployment secret}"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: "${GRAFANA_ROOT_URL:-https://grafana.example.com}"
+    user: "472:472"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    ports:
+      - "127.0.0.1:3001:3000"
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../../monitoring/grafana/sma-api-observability.json:/var/lib/grafana/dashboards/sma-api-observability.json:ro
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+        reservations:
+          cpus: "0.10"
+          memory: 128M
+
+networks:
+  edge:
+    driver: bridge
+  app:
+    driver: bridge
+    internal: true
+  observability:
+    driver: bridge
+    internal: true
+
+volumes:
+  prometheus_data:
+  alertmanager_data:
+  grafana_data:

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -11,6 +12,60 @@ import (
 	appErrors "github.com/noah-isme/sma-adp-api/pkg/errors"
 	"github.com/noah-isme/sma-adp-api/pkg/response"
 )
+
+const (
+	// refreshCookieName is deliberately not prefixed with __Host- because the
+	// cookie is scoped to the authentication endpoints rather than the whole
+	// host. Omitting Domain keeps it host-only.
+	refreshCookieName = "refresh_token"
+	refreshCookiePath = "/api/v1/auth"
+)
+
+// loginHTTPResponse and refreshHTTPResponse intentionally do not expose the
+// refresh token. The service still returns it so that its use cases remain
+// compatible with existing callers and unit tests; only this browser-facing
+// HTTP boundary moves the value into an HttpOnly cookie.
+type loginHTTPResponse struct {
+	AccessToken string          `json:"access_token"`
+	ExpiresIn   int64           `json:"expires_in"`
+	User        models.UserInfo `json:"user"`
+	IssuedAt    time.Time       `json:"issued_at"`
+}
+
+type refreshHTTPResponse struct {
+	AccessToken string    `json:"access_token"`
+	ExpiresIn   int64     `json:"expires_in"`
+	IssuedAt    time.Time `json:"issued_at"`
+}
+
+func setRefreshCookie(c *gin.Context, token string, expiry time.Duration) {
+	cookie := &http.Cookie{
+		Name:     refreshCookieName,
+		Value:    token,
+		Path:     refreshCookiePath,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
+	}
+	if expiry > 0 {
+		cookie.MaxAge = int(expiry / time.Second)
+		cookie.Expires = time.Now().UTC().Add(expiry)
+	}
+	http.SetCookie(c.Writer, cookie)
+}
+
+func clearRefreshCookie(c *gin.Context) {
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     refreshCookieName,
+		Value:    "",
+		Path:     refreshCookiePath,
+		MaxAge:   -1,
+		Expires:  time.Unix(1, 0).UTC(),
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
+	})
+}
 
 // AuthHandler wires HTTP endpoints to the auth service.
 type AuthHandler struct {
@@ -48,26 +103,32 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	response.JSON(c, http.StatusOK, res, nil)
+	setRefreshCookie(c, res.RefreshToken, h.service.RefreshTokenExpiry())
+	response.JSON(c, http.StatusOK, loginHTTPResponse{
+		AccessToken: res.AccessToken,
+		ExpiresIn:   res.ExpiresIn,
+		User:        res.User,
+		IssuedAt:    res.IssuedAt,
+	}, nil)
 }
 
 // Refresh godoc
 // @Summary Refresh access token
 // @Description Exchange refresh token for new access token
 // @Tags Authentication
-// @Accept json
 // @Produce json
-// @Param payload body models.RefreshTokenRequest true "Refresh payload"
 // @Success 200 {object} response.Envelope
 // @Failure 400 {object} response.Envelope
 // @Failure 401 {object} response.Envelope
 // @Router /auth/refresh [post]
 func (h *AuthHandler) Refresh(c *gin.Context) {
-	var req models.RefreshTokenRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.Error(c, appErrors.Wrap(err, appErrors.ErrValidation.Code, http.StatusBadRequest, "invalid refresh payload"))
+	refreshToken, err := c.Cookie(refreshCookieName)
+	if err != nil || refreshToken == "" {
+		response.Error(c, appErrors.Clone(appErrors.ErrUnauthorized, "refresh token cookie required"))
 		return
 	}
+
+	req := models.RefreshTokenRequest{RefreshToken: refreshToken}
 	req.IP = c.ClientIP()
 	req.UserAgent = c.GetHeader("User-Agent")
 
@@ -77,38 +138,50 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 		return
 	}
 
-	response.JSON(c, http.StatusOK, res, nil)
+	setRefreshCookie(c, res.RefreshToken, h.service.RefreshTokenExpiry())
+	response.JSON(c, http.StatusOK, refreshHTTPResponse{
+		AccessToken: res.AccessToken,
+		ExpiresIn:   res.ExpiresIn,
+		IssuedAt:    res.IssuedAt,
+	}, nil)
 }
 
 // Logout godoc
 // @Summary Logout current session
 // @Description Revoke refresh token
 // @Tags Authentication
-// @Accept json
 // @Produce json
-// @Param payload body map[string]string true "Refresh token"
-// @Security BearerAuth
 // @Success 204 {object} response.Envelope
-// @Failure 401 {object} response.Envelope
 // @Router /auth/logout [post]
 func (h *AuthHandler) Logout(c *gin.Context) {
-	claims, ok := c.Get(middleware.ContextUserKey)
-	if !ok {
-		response.Error(c, appErrors.ErrUnauthorized)
-		return
-	}
-	jwtClaims := claims.(*models.JWTClaims)
+	refreshToken, _ := c.Cookie(refreshCookieName)
+	// Clear the browser cookie even when the persisted token is already
+	// expired/revoked or the request is missing authentication claims.
+	clearRefreshCookie(c)
 
-	var payload struct {
-		RefreshToken string `json:"refresh_token" binding:"required"`
-	}
-	if err := c.ShouldBindJSON(&payload); err != nil {
-		response.Error(c, appErrors.Wrap(err, appErrors.ErrValidation.Code, http.StatusBadRequest, "refresh token required"))
+	if refreshToken == "" {
+		// Logout is intentionally idempotent from the browser's perspective:
+		// there is nothing left to revoke when the cookie is absent.
+		response.NoContent(c)
 		return
 	}
 
 	meta := models.LoginRequest{IP: c.ClientIP(), UserAgent: c.GetHeader("User-Agent")}
-	if err := h.service.Logout(c.Request.Context(), payload.RefreshToken, jwtClaims.UserID, meta); err != nil {
+	if claims, ok := c.Get(middleware.ContextUserKey); ok {
+		jwtClaims, validClaims := claims.(*models.JWTClaims)
+		if !validClaims || jwtClaims == nil {
+			response.Error(c, appErrors.ErrUnauthorized)
+			return
+		}
+		if err := h.service.Logout(c.Request.Context(), refreshToken, jwtClaims.UserID, meta); err != nil {
+			response.Error(c, err)
+			return
+		}
+		response.NoContent(c)
+		return
+	}
+
+	if err := h.service.LogoutByRefreshToken(c.Request.Context(), refreshToken, meta); err != nil {
 		response.Error(c, err)
 		return
 	}

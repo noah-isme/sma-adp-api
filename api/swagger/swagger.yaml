@@ -2581,18 +2581,7 @@ paths:
       - Authentication
   /auth/logout:
     post:
-      consumes:
-      - application/json
       description: Revoke refresh token
-      parameters:
-      - description: Refresh token
-        in: body
-        name: payload
-        required: true
-        schema:
-          additionalProperties:
-            type: string
-          type: object
       produces:
       - application/json
       responses:
@@ -2600,12 +2589,6 @@ paths:
           description: No Content
           schema:
             $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
-      security:
-      - BearerAuth: []
       summary: Logout current session
       tags:
       - Authentication
@@ -2630,16 +2613,7 @@ paths:
       - Authentication
   /auth/refresh:
     post:
-      consumes:
-      - application/json
       description: Exchange refresh token for new access token
-      parameters:
-      - description: Refresh payload
-        in: body
-        name: payload
-        required: true
-        schema:
-          $ref: '#/definitions/github_com_noah-isme_sma-adp-api_internal_models.RefreshTokenRequest'
       produces:
       - application/json
       responses:

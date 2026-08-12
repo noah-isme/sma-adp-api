@@ -1,0 +1,12 @@
+.git
+.agents
+.env
+.env.*
+bin
+tmp
+exports
+archives
+coverage.out
+coverage.html
+graphify-out
+session-*.md

@@ -239,18 +239,22 @@ Production:  https://api.yourdomain.com/api/v1
 
 ```json
 {
-  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "expiresIn": 86400,
-  "tokenType": "Bearer",
-  "user": {
-    "id": "usr_abc123",
-    "email": "admin@example.com",
-    "fullName": "Admin User",
-    "role": "ADMIN"
+  "data": {
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "expires_in": 86400,
+    "user": {
+      "id": "usr_abc123",
+      "email": "admin@example.com",
+      "full_name": "Admin User",
+      "role": "ADMIN"
+    }
   }
 }
 ```
+
+The refresh token is delivered only as an `HttpOnly; Secure; SameSite=Strict`
+cookie named `refresh_token`; it is never returned in browser JSON or stored by
+the frontend.
 
 **Error Responses:**
 
@@ -263,23 +267,18 @@ Production:  https://api.yourdomain.com/api/v1
 
 #### 2. POST /auth/refresh
 
-**Description**: Get new access token using refresh token
-
-**Request:**
-
-```json
-{
-  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
-```
+**Description**: Get a new access token using the browser-managed refresh cookie.
+The request has no JSON body and must include credentials.
 
 **Response (200 OK):**
 
 ```json
 {
-  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "expiresIn": 86400,
-  "tokenType": "Bearer"
+  "data": {
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "expires_in": 86400,
+    "token_type": "Bearer"
+  }
 }
 ```
 
@@ -292,29 +291,10 @@ Production:  https://api.yourdomain.com/api/v1
 
 #### 3. POST /auth/logout
 
-**Description**: Logout user and revoke refresh token
+**Description**: Revoke the browser refresh session and clear its cookie. The
+endpoint is public and idempotent so it remains usable after access-token expiry.
 
-**Headers:**
-
-```
-Authorization: Bearer {accessToken}
-```
-
-**Request:**
-
-```json
-{
-  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
-```
-
-**Response (200 OK):**
-
-```json
-{
-  "message": "Logout successful"
-}
-```
+**Response (204 No Content):** No response body.
 
 ---
 
@@ -403,9 +383,16 @@ is atomically marked used during reset, so it cannot be reused. The new
 password is stored as a bcrypt hash and all existing refresh tokens are
 revoked. The link base is configured with `PASSWORD_RESET_URL`. Email delivery
 is injected into the auth service; local development uses a non-network
-logging delivery and tests use a recording fake. Production currently uses the
-safe no-op delivery until a real `PasswordResetEmailDelivery` provider is
-injected; configuring `PASSWORD_RESET_*` alone does not send email.
+logging delivery and tests use a recording fake. In production, SMTP delivery
+is selected when `SMTP_ENABLED=true`; production startup fails closed when SMTP
+delivery is not explicitly enabled, so reset requests cannot silently become
+undeliverable.
+Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`,
+`SMTP_FROM`, `SMTP_TLS_MODE` (`starttls`, `tls`, or `none` for local test
+servers), and `SMTP_TIMEOUT`. The service fails fast on invalid SMTP settings,
+binds delivery to the request context and timeout, and never logs the reset URL
+or token. The no-op/logging implementations are development and test fallbacks
+only; they are not valid production release configurations.
 
 ---
 

@@ -12,7 +12,7 @@ This consolidated report merges findings from the August 6, 2026 gap analysis an
 
 | Item ID | Category / Description | Status | Resolution Details |
 |---|---|---|---|
-| **G-01** | Auth Contract Alignment (Refresh & Logout) | [x] Resolved | Aligned request/response payload contracts: admin client (`apps/admin/src/main.tsx`, `authProvider.ts`, `dataProvider.ts`) now sends `refresh_token` in body for refresh and logout, unwraps API response envelope, handles snake_case (`access_token`/`refresh_token`) keys, and Go backend (`auth_handler.go`) revokes refresh tokens in DB upon logout. |
+| **G-01** | Auth Contract Alignment (Refresh & Logout) | [x] Resolved | Browser auth now keeps the access token in memory and sends the HttpOnly `refresh_token` cookie with credentials for refresh/logout. Login and refresh JSON responses omit refresh tokens; the Go handler rotates/revokes the cookie and logout remains idempotent after access-token expiry. |
 | **G-02** | Feature Flag Drift & Discovery | [x] Resolved | Runtime `/api/v1/features` endpoint made authoritative for frontend resource selection (`selectResources()` in `main.tsx`) with per-feature `VITE_ENABLE_*` build-time fallback precedence and explicit false overrides documented in README. |
 | **G-03** | Student & Teacher Roster Filter Alignment | [x] Resolved | Added `status`, `sortField`, `sortOrder` query parameter aliases in `student_handler.go` and `teacher_handler.go`, and implemented documented roster filters (gender, track, subject, homeroom, availability). |
 | **G-04** | Grade Report Filter & Aggregation Completeness | [x] Resolved | Enriched query joins in `grade_handler.go` & `grade_repository.go`, implemented status (PASS/REMEDIAL/FAIL), scoreMin/scoreMax, search, teacher filters, frontend sort aliases, shared grade thresholds, and database-backed `COUNT(*)` totals for pagination. |
@@ -20,7 +20,7 @@ This consolidated report merges findings from the August 6, 2026 gap analysis an
 | **G-06** | Security Claims Reconciliation | [x] Resolved | Removed unsupported rate-limit, lockout, and Argon2 claims from application docs; documented bcrypt hashing and external WAF/ingress gateway responsibilities for rate limiting. |
 | **G-07** | Stale API Versioning Documentation | [x] Resolved | Replaced outdated NestJS-to-Go migration/v2 references in `API_VERSIONING_GUIDE.md` with current dated v1/Go contract guides. |
 | **G-08** | Monorepo Checklist Reconciliation | [x] Resolved | Archived outdated implementation checklist (`checklist.md`); replaced with current cross-repository status linked to `PROJECT_STATUS.md`. |
-| **G-09** | Swagger Annotation & Public Route Drift | [x] Resolved | Corrected public route security annotations in Swagger, cleaned up duplicate swagger route annotations in `teacher_handler.go`, updated `@Param` annotations, regenerated Swagger, and validated 135 paths / 22 compatibility routes via `make validate-swagger-routes`. |
+| **G-09** | Swagger Annotation & Public Route Drift | [x] Resolved | Corrected public route security annotations in Swagger, cleaned up duplicate swagger route annotations in `teacher_handler.go`, updated `@Param` annotations, regenerated Swagger, and validated 136 paths / 22 compatibility routes via `make validate-swagger-routes`. |
 | **G-10** | Audit Log Persistence | [x] Resolved | Created database migration (`000002_refresh_tokens_and_audit_logs.up.sql`), Go models (`models.AuditLog`), database repository (`UserRepository.CreateAuditLog`), and updated audit middleware to persist log entries to PostgreSQL DB via parameterized SQL `INSERT INTO audit_logs...`. |
 | **G-11** | Stale Gap Report Supersedence & Consolidation | [x] Resolved | Merged findings from Aug 6 and Aug 9 reports into consolidated `/home/noah/project/sma/GAP_ANALYSIS_REPORT.md` at root, marking G-01 through G-10 complete with resolution details, preserving secondary backlog items, and archiving the full Aug 9 report content in a dedicated section at the end. |
 
@@ -30,7 +30,7 @@ This consolidated report merges findings from the August 6, 2026 gap analysis an
 
 ### 1. Authentication & Session Lifecycle (G-01)
 - **Status:** [x] Resolved
-- **Details:** Frontend auth provider (`apps/admin/src/providers/authProvider.ts`), data provider (`dataProvider.ts`), and initialization (`apps/admin/src/main.tsx`) updated to send `refresh_token` JSON body on token refresh and logout (`POST /api/v1/auth/logout`). The backend handler `auth_handler.go` revokes tokens in PostgreSQL DB upon logout. Response envelopes (`{ data: { access_token, refresh_token } }`) are properly unwrapped, with support for both camelCase and snake_case token keys.
+- **Details:** Frontend auth provider (`apps/admin/src/providers/authProvider.ts`) and data provider (`dataProvider.ts`) keep access tokens in memory, include credentials for refresh, and clear legacy token keys. The browser-only `refresh_token` cookie is rotated/revoked by `auth_handler.go`; login/refresh JSON responses contain no refresh token and logout is safe after access-token expiry.
 
 ### 2. Feature Gating & Discovery (G-02)
 - **Status:** [x] Resolved
@@ -46,7 +46,7 @@ This consolidated report merges findings from the August 6, 2026 gap analysis an
 
 ### 5. Documentation & Swagger Alignment (G-06, G-07, G-08, G-09)
 - **Status:** [x] Resolved
-- **Details:** All unauthenticated routes (`/health`, `/ready`, `/features`, `/auth/login`, `/auth/refresh`) properly annotated in Swagger without `@Security BearerAuth`. Cleaned up duplicate route annotations in `teacher_handler.go`. Swagger validation script confirms 135 paths and 22 compatibility operations. Outdated NestJS/v2 migration guides and checklists archived and updated with links to `PROJECT_STATUS.md`.
+- **Details:** All unauthenticated routes (`/health`, `/ready`, `/features`, `/auth/login`, `/auth/refresh`, `/auth/logout`) properly annotated in Swagger without `@Security BearerAuth`. Cleaned up duplicate route annotations in `teacher_handler.go`. Swagger validation script confirms 136 paths and 22 compatibility operations. Outdated NestJS/v2 migration guides and checklists archived and updated with links to `PROJECT_STATUS.md`.
 
 ### 6. Audit Logging (G-10)
 - **Status:** [x] Resolved

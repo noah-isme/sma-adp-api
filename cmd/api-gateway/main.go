@@ -51,6 +51,21 @@ func main() {
 
 	if cfg.Env == config.EnvProduction {
 		gin.SetMode(gin.ReleaseMode)
+		if cfg.JWT.Secret == "" || cfg.JWT.Secret == "dev_secret" || cfg.JWT.Secret == "change_me_in_prod" || cfg.JWT.Secret == "REPLACE_IN_SECRET_STORE" {
+			logr.Sugar().Fatal("JWT_SECRET must be set to a non-development secret in production")
+		}
+		if cfg.Database.SSLMode != "require" {
+			logr.Sugar().Fatal("DB_SSL_MODE=require is required in production")
+		}
+		if len(cfg.CORS.AllowedOrigins) == 0 {
+			logr.Sugar().Fatal("ALLOWED_ORIGINS must contain the production admin origin")
+		}
+		if cfg.PasswordReset.URL == "" {
+			logr.Sugar().Fatal("PASSWORD_RESET_URL must be set in production")
+		}
+		if cfg.SMTP.TLSMode != "starttls" && cfg.SMTP.TLSMode != "tls" {
+			logr.Sugar().Fatal("SMTP_TLS_MODE must be starttls or tls in production")
+		}
 	}
 
 	metricsSvc := service.NewMetricsService()
@@ -101,6 +116,23 @@ func main() {
 	passwordResetDelivery := service.PasswordResetEmailDelivery(service.NoopPasswordResetEmailDelivery{})
 	if cfg.Env != config.EnvProduction {
 		passwordResetDelivery = service.NewLoggingPasswordResetEmailDelivery(logr)
+	} else {
+		if !cfg.SMTP.Enabled {
+			logr.Sugar().Fatal("SMTP_ENABLED=true is required in production so password-reset requests are deliverable")
+		}
+		passwordResetDelivery, err = service.NewSMTPPasswordResetEmailDelivery(service.SMTPPasswordResetEmailConfig{
+			Host:     cfg.SMTP.Host,
+			Port:     cfg.SMTP.Port,
+			Username: cfg.SMTP.Username,
+			Password: cfg.SMTP.Password,
+			From:     cfg.SMTP.From,
+			TLSMode:  cfg.SMTP.TLSMode,
+			Timeout:  cfg.SMTP.Timeout,
+			Subject:  cfg.PasswordReset.Subject,
+		})
+		if err != nil {
+			logr.Sugar().Fatalw("failed to configure password reset SMTP delivery", "error", err)
+		}
 	}
 	authSvc := service.NewAuthServiceWithEmailDelivery(authRepo, teacherRepo, nil, logr, service.AuthConfig{
 		AccessTokenSecret:     cfg.JWT.Secret,
@@ -140,10 +172,12 @@ func main() {
 	authRoutes.POST("/refresh", authHandler.Refresh)
 	authRoutes.POST("/forgot-password", authHandler.ForgotPassword)
 	authRoutes.POST("/reset-password", authHandler.ResetPassword)
+	// Logout only revokes the HttpOnly refresh cookie and is safe to call after
+	// an access token expires, so it must not be behind the JWT middleware.
+	authRoutes.POST("/logout", authHandler.Logout)
 	protectedAuth := authRoutes.Group("")
 	protectedAuth.Use(internalmiddleware.JWT(authSvc))
 	protectedAuth.GET("/me", authHandler.Me)
-	protectedAuth.POST("/logout", authHandler.Logout)
 	protectedAuth.POST("/change-password", authHandler.ChangePassword)
 
 	// Portal Auth Routes (public)

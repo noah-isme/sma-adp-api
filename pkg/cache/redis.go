@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"time"
 
@@ -12,13 +13,7 @@ import (
 
 // NewRedis returns a configured Redis client.
 func NewRedis(cfg config.RedisConfig) (*redis.Client, error) {
-	addr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
-
-	client := redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: cfg.Password,
-		DB:       cfg.DB,
-	})
+	client := redis.NewClient(redisOptions(cfg))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -29,4 +24,16 @@ func NewRedis(cfg config.RedisConfig) (*redis.Client, error) {
 	}
 
 	return client, nil
+}
+
+func redisOptions(cfg config.RedisConfig) *redis.Options {
+	options := &redis.Options{
+		Addr:     fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
+		Password: cfg.Password,
+		DB:       cfg.DB,
+	}
+	if cfg.TLS {
+		options.TLSConfig = &tls.Config{MinVersion: tls.VersionTLS12, ServerName: cfg.Host}
+	}
+	return options
 }

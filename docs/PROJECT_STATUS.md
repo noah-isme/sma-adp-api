@@ -15,17 +15,18 @@ Sumber kebenaran teknis:
 - Cutover/rollback: `docs/operations.md`
 - Decommission: `docs/decommission.md`
 
-### Latest compatibility verification (2026-08-09)
+### Latest compatibility verification (2026-08-12)
 
-- `python3 scripts/validate_swagger_routes.py` passed (135 generated paths cover
+- `python3 scripts/validate_swagger_routes.py` passed (136 generated paths cover
   all gateway routes).
 - `python3 scripts/compatibility_smoke.py` passed its static check (22 required
   compatibility operations are present in both gateway and Swagger). Seeded
   compatibility smoke was not run (`RUN_COMPATIBILITY_SMOKE=1` is required).
-- Regenerated `api/swagger` after adding security annotations and the corrected
-  roster/export query contracts.
-- Focused Go tests passed for `internal/handler`, `internal/repository`, and
-  `internal/service`, including refresh-token revocation.
+- Full Go tests and `go vet ./...` passed, including cookie-session, SMTP,
+  migration-integrity, and managed-Redis TLS coverage.
+- Frontend Vitest (163 tests), TypeScript typecheck, and production builds passed.
+- Browser auth uses an HttpOnly refresh cookie and memory-only access tokens;
+  production startup fails closed for missing SMTP or allowed-origin settings.
 - The prior seeded run on 2026-08-06 remains historical evidence only; its
   non-fatal audit JSON persistence warning and all seeded claims must be rerun
   before production sign-off.

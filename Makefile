@@ -1,6 +1,6 @@
 DB_URL ?= postgresql://postgres:postgres@localhost:5432/admin_panel_sma?sslmode=disable
 
-.PHONY: help setup dev build test test-coverage migrate-create migrate-up migrate-down docker-up docker-down swag validate-swagger-routes compatibility-smoke lint fmt contract-test shadow-compare toggle-go rollback seed seed-reset decommission-preflight
+.PHONY: help setup dev build test test-coverage migrate-create migrate-up migrate-down docker-up docker-down swag validate-swagger-routes compatibility-smoke lint fmt contract-test shadow-compare toggle-go rollback seed seed-reset decommission-preflight migration-integrity backup-verify deploy-validate rollback-release
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' \
@@ -93,3 +93,15 @@ compatibility-smoke: ## Verify compatibility routes and optionally run seeded HT
 
 decommission-preflight: ## Validate read-only cutover and legacy retirement prerequisites
 	python3 scripts/decommission_preflight.py $(PREFLIGHT_ARGS)
+
+migration-integrity: ## Run read-only migration and referential-integrity checks
+	go run ./scripts/migration_integrity --dsn "$(DB_URL)" $(INTEGRITY_ARGS)
+
+backup-verify: ## Create/check a PostgreSQL backup (use BACKUP_ARGS for restore drills)
+	DATABASE_URL="$(DB_URL)" ./deploy/verify-backup.sh $(BACKUP_ARGS)
+
+deploy-validate: ## Validate production Compose, Nginx, image, and monitoring artifacts
+	python3 deploy/validate.py
+
+rollback-release: ## Validate or execute a digest-pinned release rollback
+	./deploy/rollback.sh $(RELEASE_ENV) $(ROLLBACK_ARGS)

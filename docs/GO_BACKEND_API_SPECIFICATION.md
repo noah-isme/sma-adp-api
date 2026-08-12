@@ -35,8 +35,9 @@ The implemented Go backend (`sma-adp-api`) wraps **every** JSON success response
 
 - **Success:** `{ "data": <resource or array>, "pagination": {...}, "meta": {...} }` (see `pkg/response/response.go`).
 - **Error:** `{ "error": { "code": "...", "message": "...", ... } }`.
-- Field names are **snake_case**: `access_token`, `refresh_token`, `expires_in`, `full_name`, `created_at`, etc.
+- Field names are **snake_case**: `access_token`, `expires_in`, `full_name`, `created_at`, etc. The refresh token is not returned in browser JSON responses.
 - `POST`/`PUT`/`PATCH` create/update return `201`/`200` with the resource inside `data`; `DELETE` and password changes return `204 No Content` (empty body).
+- Browser authentication uses an `HttpOnly; Secure; SameSite=Strict` `refresh_token` cookie scoped to `/api/v1/auth`. Clients must send credentials on refresh/logout; the access token remains in memory.
 
 Example — `POST /api/v1/auth/login` actual response:
 
@@ -44,7 +45,6 @@ Example — `POST /api/v1/auth/login` actual response:
 {
   "data": {
     "access_token": "eyJhbGciOiJIUzI1NiIs...",
-    "refresh_token": "eyJhbGciOiJIUzI1NiIs...",
     "expires_in": 3600,
     "issued_at": "2026-07-12T00:00:00Z",
     "user": {
@@ -82,7 +82,6 @@ Canonical live examples are in the repository root `README.md` ("Contoh curl end
 {
   "data": {
     "access_token": "eyJhbGciOiJIUzI1NiIs...",
-    "refresh_token": "eyJhbGciOiJIUzI1NiIs...",
     "expires_in": 3600,
     "issued_at": "2026-07-12T00:00:00Z",
     "user": {
@@ -131,12 +130,11 @@ Authorization: Bearer {accessToken}
 
 **Refresh access token**
 
-**Request:**
+The browser sends the `refresh_token` HttpOnly cookie automatically. There is no
+JSON request body and clients must include credentials.
 
-```json
-{
-  "refresh_token": "eyJhbGciOiJIUzI1NiIs..."
-}
+```http
+Cookie: refresh_token=<browser-managed-value>
 ```
 
 **Response (200):**
@@ -145,7 +143,6 @@ Authorization: Bearer {accessToken}
 {
   "data": {
     "access_token": "eyJhbGciOiJIUzI1NiIs...",
-    "refresh_token": "eyJhbGciOiJIUzI1NiIs...",
     "expires_in": 3600,
     "issued_at": "2026-07-12T00:00:00Z"
   }
@@ -158,22 +155,11 @@ Authorization: Bearer {accessToken}
 
 **Logout current user**
 
-**Headers:**
+Logout is a public, idempotent endpoint so it remains callable after the
+short-lived access token expires. The browser sends its refresh cookie; the
+server revokes that session when present and always clears the cookie.
 
-```
-Authorization: Bearer {accessToken}
-```
-
-**Request:**
-
-```json
-{
-  "refresh_token": "eyJhbGciOiJIUzI1NiIs..."
-}
-```
-
-**Response (204):** No content. The refresh token is revoked for the
-authenticated user; a later refresh attempt with that token is rejected.
+**Response (204):** No content.
 
 ---
 

@@ -23,8 +23,8 @@ func (NoopPasswordResetEmailDelivery) SendPasswordReset(context.Context, string,
 }
 
 // LoggingPasswordResetEmailDelivery is intended for local development. It
-// exposes the generated link in application logs, but never sends a network
-// request. Production callers should inject a provider-backed implementation.
+// never sends a network request and intentionally omits the generated link
+// from logs because that link contains a one-time reset token.
 type LoggingPasswordResetEmailDelivery struct {
 	logger *zap.Logger
 }
@@ -38,10 +38,9 @@ func NewLoggingPasswordResetEmailDelivery(logger *zap.Logger) *LoggingPasswordRe
 	return &LoggingPasswordResetEmailDelivery{logger: logger}
 }
 
-func (d *LoggingPasswordResetEmailDelivery) SendPasswordReset(_ context.Context, recipient, resetURL string, expiresAt time.Time) error {
+func (d *LoggingPasswordResetEmailDelivery) SendPasswordReset(_ context.Context, recipient, _ string, expiresAt time.Time) error {
 	d.logger.Info("password reset email delivery suppressed in development",
 		zap.String("recipient", recipient),
-		zap.String("reset_url", resetURL),
 		zap.Time("expires_at", expiresAt),
 	)
 	return nil

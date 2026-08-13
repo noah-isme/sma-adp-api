@@ -2,6 +2,8 @@ package config
 
 import (
 	"errors"
+	"fmt"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -325,7 +327,57 @@ func Load() (*Config, error) {
 		DefaultCalendarTermID:  v.GetString("CONFIG_DEFAULT_CALENDAR_TERM_ID"),
 	}
 
+	if cfg.Env == EnvProduction {
+		if err := ValidateProduction(cfg); err != nil {
+			return nil, err
+		}
+	}
+
 	return cfg, nil
+}
+
+// ValidateProduction checks configuration values that must never fall back to
+// local-development defaults in a production process. The gateway still
+// performs its dependency-specific checks (database TLS, SMTP, and so on).
+func ValidateProduction(cfg *Config) error {
+	if cfg == nil {
+		return errors.New("production configuration is nil")
+	}
+	if err := validateProductionURL("PORTAL_PASSWORD_RESET_URL", cfg.PasswordReset.PortalURL); err != nil {
+		return err
+	}
+	return nil
+}
+
+func validateProductionURL(name, value string) error {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return fmt.Errorf("%s must be set in production", name)
+	}
+
+	parsed, err := url.ParseRequestURI(value)
+	if err != nil || parsed.Scheme != "https" || parsed.Host == "" || parsed.Hostname() == "" || parsed.User != nil {
+		return fmt.Errorf("%s must be an absolute HTTPS URL in production", name)
+	}
+
+	lower := strings.ToLower(value)
+	for _, marker := range []string{
+		"localhost",
+		"127.0.0.1",
+		"[::1]",
+		"example.com",
+		"example.test",
+		"example.invalid",
+		"replace_in_",
+		"replace-in-",
+		"changeme",
+	} {
+		if strings.Contains(lower, marker) {
+			return fmt.Errorf("%s must not use a placeholder host or value in production", name)
+		}
+	}
+
+	return nil
 }
 
 func setDefaults(v *viper.Viper) {

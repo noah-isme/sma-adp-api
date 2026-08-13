@@ -20,6 +20,7 @@ COMPOSE_PATH = ROOT / "docker-compose.production.yml"
 NGINX_PATH = ROOT / "nginx" / "sma-api.conf.template"
 NGINX_MAIN_PATH = ROOT / "nginx" / "nginx.conf"
 RELEASE_ENV_PATH = ROOT / "env.production.example"
+BACKUP_PATH = ROOT / "backup.sh"
 
 
 class ValidationError(RuntimeError):
@@ -94,6 +95,9 @@ def validate_compose(document: dict[str, Any] | None = None) -> None:
     require("./nginx/proxy_params:/etc/nginx/proxy_params:ro" in nginx.get("volumes", []), "Nginx proxy headers must be mounted")
     require("api" in nginx.get("depends_on", {}), "Nginx must wait for the Go API")
     require("app" in nginx.get("networks", []) and "edge" in nginx.get("networks", []), "Nginx needs edge and app networks")
+    healthcheck = nginx.get("healthcheck", {}).get("test", [])
+    healthcheck_text = " ".join(str(item) for item in healthcheck)
+    require("127.0.0.1:8080/health" in healthcheck_text, "Nginx healthcheck must probe its 8080 listener")
 
     worker_profiles = services["worker"].get("profiles", [])
     require("worker" in worker_profiles, "worker profile must be explicit while the queue is in-process")
@@ -106,8 +110,24 @@ def validate_compose(document: dict[str, Any] | None = None) -> None:
 def validate_nginx() -> None:
     template = NGINX_PATH.read_text(encoding="utf-8")
     main = NGINX_MAIN_PATH.read_text(encoding="utf-8")
-    for token in ("upstream go_api", "upstream legacy_api", "split_clients", "CANARY_PERCENTAGE", "ROUTE_TO_GO", "limit_req zone=auth_limit", "ssl_protocols TLSv1.2 TLSv1.3", "location = /health", "location = /ready"):
+    for token in (
+        "upstream go_api",
+        "upstream legacy_api",
+        "split_clients",
+        "CANARY_PERCENTAGE",
+        "ROUTE_TO_GO",
+        "limit_req zone=auth_limit",
+        "ssl_protocols TLSv1.2 TLSv1.3",
+        "location = /health",
+        "location = /ready",
+        "add_header Permissions-Policy",
+        "add_header Content-Security-Policy",
+    ):
         require(token in template, f"Nginx template missing {token}")
+    require("map $http_cf_connecting_ip $sma_client_ip" in main, "Nginx must canonicalise the Cloudflare client IP")
+    require("limit_req_zone $sma_client_ip" in main, "Nginx limits must use the canonical client IP")
+    require("limit_req_status 429;" in main, "Nginx rate limits must return HTTP 429")
+    require("X-XSS-Protection" not in template and "X-XSS-Protection" not in main, "obsolete X-XSS-Protection must not be configured")
     require("proxy_pass http://${DOLLAR}route_backend" in template, "Nginx must route through the cutover backend")
     require("include /tmp/nginx-conf/*.conf" in main, "Nginx must render templates into a writable non-root path")
 
@@ -133,6 +153,15 @@ def validate_monitoring() -> None:
     require("/var/lib/grafana/dashboards" in dashboard, "Grafana dashboard provisioning is incomplete")
 
 
+def validate_backup() -> None:
+    content = BACKUP_PATH.read_text(encoding="utf-8")
+    require("verify-backup.sh" in content, "backup wrapper must use the verified dump primitive")
+    require("rclone copyto" in content, "backup wrapper must upload each artifact through rclone")
+    require("SMA_BACKUP_ENCRYPTED" in content, "backup wrapper must require an encrypted remote")
+    require("restore-integrity.json" in content, "backup wrapper must upload restore evidence when present")
+    require("rclone purge" not in content and "rclone delete" not in content, "backup wrapper must not delete remote backups")
+
+
 def validate_release_example() -> None:
     content = RELEASE_ENV_PATH.read_text(encoding="utf-8")
     for key in ("SMA_API_IMAGE", "SMA_WORKER_IMAGE", "NGINX_IMAGE", "PROMETHEUS_IMAGE", "ALERTMANAGER_IMAGE", "GRAFANA_IMAGE"):
@@ -143,6 +172,7 @@ def validate_release_example() -> None:
     require("JWT_SECRET=REPLACE_IN_SECRET_STORE" in content, "release example must keep JWT_SECRET in the secret store")
     require("REFRESH_TOKEN_EXPIRATION=" in content, "release example must set refresh-token lifetime")
     require(re.search(r"^PASSWORD_RESET_URL=https://\S+", content, re.MULTILINE) is not None, "release example must set the password-reset URL")
+    require(re.search(r"^PORTAL_PASSWORD_RESET_URL=https://\S+", content, re.MULTILINE) is not None, "release example must set the portal password-reset URL")
     require(re.search(r"^ALLOWED_ORIGINS=https://[^\s,]+", content, re.MULTILINE) is not None, "release example must pin an explicit admin CORS origin")
     require("SMTP_ENABLED=true" in content, "release example must enable SMTP password-reset delivery")
     require(re.search(r"^SMTP_TLS_MODE=(starttls|tls)$", content, re.MULTILINE) is not None, "release example must use encrypted SMTP transport")
@@ -150,12 +180,13 @@ def validate_release_example() -> None:
 
 
 def validate() -> None:
-    for path in (COMPOSE_PATH, NGINX_PATH, NGINX_MAIN_PATH, RELEASE_ENV_PATH):
+    for path in (COMPOSE_PATH, NGINX_PATH, NGINX_MAIN_PATH, RELEASE_ENV_PATH, BACKUP_PATH):
         require(path.is_file(), f"missing deployment artifact: {path}")
     validate_compose()
     validate_nginx()
     validate_dockerfiles()
     validate_monitoring()
+    validate_backup()
     validate_release_example()
 
 

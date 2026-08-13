@@ -76,3 +76,162 @@ type AnalyticsSystemMetrics struct {
 	Goroutines               int       `json:"goroutines"`
 	GeneratedAt              time.Time `json:"generated_at"`
 }
+
+// AnalyticsClassStudent is a ranked student row in a class analytics response.
+// All response fields intentionally use snake_case to match the API contract.
+type AnalyticsClassStudent struct {
+	StudentID            string  `db:"student_id" json:"student_id"`
+	StudentName          string  `db:"student_name" json:"student_name"`
+	NIS                  string  `db:"nis" json:"nis"`
+	GPA                  float64 `db:"gpa" json:"gpa"`
+	AttendancePercentage float64 `db:"attendance_percentage" json:"attendance_percentage"`
+	Rank                 int     `db:"rank" json:"rank"`
+}
+
+// AnalyticsClassSubject is a subject aggregate for a class analytics response.
+type AnalyticsClassSubject struct {
+	SubjectID     string  `db:"subject_id" json:"subject_id"`
+	SubjectName   string  `db:"subject_name" json:"subject_name"`
+	TotalStudents int     `db:"total_students" json:"total_students"`
+	AverageGrade  float64 `db:"avg_grade" json:"average_grade"`
+	PassRate      float64 `db:"pass_rate" json:"pass_rate"`
+}
+
+// AnalyticsClassAnalytics contains the class-level drilldown and its detail rows.
+type AnalyticsClassAnalytics struct {
+	ClassID            string                  `db:"class_id" json:"class_id"`
+	ClassName          string                  `db:"class_name" json:"class_name"`
+	Grade              string                  `db:"grade" json:"grade"`
+	Track              string                  `db:"track" json:"track"`
+	TermID             string                  `db:"term_id" json:"term_id"`
+	TermName           string                  `db:"term_name" json:"term_name"`
+	TotalStudents      int                     `db:"total_students" json:"total_students"`
+	TotalSubjects      int                     `db:"total_subjects" json:"total_subjects"`
+	AverageAttendance  float64                 `db:"avg_attendance_rate" json:"average_attendance_rate"`
+	AverageGrade       float64                 `db:"avg_grade" json:"average_grade"`
+	StudentsPassed     int                     `db:"students_passed" json:"students_passed"`
+	StudentsFailed     int                     `db:"students_failed" json:"students_failed"`
+	Students           []AnalyticsClassStudent `json:"students"`
+	SubjectPerformance []AnalyticsClassSubject `json:"subject_performance"`
+}
+
+// AnalyticsStudentSubject is a subject-level row in a student drilldown.
+type AnalyticsStudentSubject struct {
+	SubjectID   string  `db:"subject_id" json:"subject_id"`
+	SubjectName string  `db:"subject_name" json:"subject_name"`
+	SubjectCode string  `db:"subject_code" json:"subject_code"`
+	FinalGrade  float64 `db:"final_grade" json:"final_grade"`
+}
+
+// AnalyticsStudentPerformance contains grade metrics for one student.
+type AnalyticsStudentPerformance struct {
+	GPA              float64 `json:"gpa"`
+	Rank             int     `json:"rank"`
+	TotalRank        int     `json:"total_rank"`
+	SubjectsEnrolled int     `json:"subjects_enrolled"`
+	SubjectsPassed   int     `json:"subjects_passed"`
+	SubjectsFailed   int     `json:"subjects_failed"`
+	LowestGrade      float64 `json:"lowest_grade"`
+	HighestGrade     float64 `json:"highest_grade"`
+}
+
+// AnalyticsStudentAttendance contains attendance metrics for one student.
+type AnalyticsStudentAttendance struct {
+	Percentage float64 `json:"percentage"`
+	TotalDays  int     `json:"total_days"`
+	Present    int     `json:"present"`
+	Sick       int     `json:"sick"`
+	Permission int     `json:"permission"`
+	Absent     int     `json:"absent"`
+}
+
+// AnalyticsStudentBehavior contains behaviour metrics for one student.
+type AnalyticsStudentBehavior struct {
+	TotalPoints   int `json:"total_points"`
+	PositiveNotes int `json:"positive_notes"`
+	NegativeNotes int `json:"negative_notes"`
+	NeutralNotes  int `json:"neutral_notes"`
+}
+
+// AnalyticsStudentAnalytics contains the student-level drilldown.
+type AnalyticsStudentAnalytics struct {
+	StudentID        string                      `db:"student_id" json:"student_id"`
+	NIS              string                      `db:"nis" json:"nis"`
+	StudentName      string                      `db:"full_name" json:"student_name"`
+	ClassID          string                      `db:"class_id" json:"class_id"`
+	ClassName        string                      `db:"class_name" json:"class_name"`
+	TermID           string                      `db:"term_id" json:"term_id"`
+	TermName         string                      `db:"term_name" json:"term_name"`
+	Performance      AnalyticsStudentPerformance `json:"performance"`
+	Attendance       AnalyticsStudentAttendance  `json:"attendance"`
+	Behavior         AnalyticsStudentBehavior    `json:"behavior"`
+	SubjectBreakdown []AnalyticsStudentSubject   `json:"subject_breakdown"`
+}
+
+// AnalyticsSubjectSummary contains overall statistics for one subject scope.
+type AnalyticsSubjectSummary struct {
+	TotalStudents int     `json:"total_students"`
+	AverageGrade  float64 `json:"average_grade"`
+	GradeStddev   float64 `json:"grade_stddev"`
+	MinGrade      float64 `json:"min_grade"`
+	MaxGrade      float64 `json:"max_grade"`
+	PassedCount   int     `json:"passed_count"`
+	FailedCount   int     `json:"failed_count"`
+	PassRate      float64 `json:"pass_rate"`
+}
+
+// AnalyticsSubjectClass is a subject aggregate grouped by class.
+type AnalyticsSubjectClass struct {
+	ClassID       string  `db:"class_id" json:"class_id"`
+	ClassName     string  `db:"class_name" json:"class_name"`
+	TotalStudents int     `db:"total_students" json:"total_students"`
+	AverageGrade  float64 `db:"avg_grade" json:"average_grade"`
+	PassRate      float64 `db:"pass_rate" json:"pass_rate"`
+}
+
+// AnalyticsSubjectPerformer is a top student row for a subject.
+type AnalyticsSubjectPerformer struct {
+	StudentID   string  `db:"student_id" json:"student_id"`
+	StudentName string  `db:"student_name" json:"student_name"`
+	ClassID     string  `db:"class_id" json:"class_id"`
+	ClassName   string  `db:"class_name" json:"class_name"`
+	Grade       float64 `db:"final_grade" json:"grade"`
+}
+
+// AnalyticsSubjectAnalytics contains subject-level statistics and drilldown rows.
+type AnalyticsSubjectAnalytics struct {
+	SubjectID         string                      `db:"subject_id" json:"subject_id"`
+	SubjectName       string                      `db:"subject_name" json:"subject_name"`
+	TermID            string                      `db:"term_id" json:"term_id"`
+	Overall           AnalyticsSubjectSummary     `json:"overall"`
+	ByClass           []AnalyticsSubjectClass     `json:"by_class"`
+	GradeDistribution map[string]int              `json:"grade_distribution"`
+	TopPerformers     []AnalyticsSubjectPerformer `json:"top_performers"`
+}
+
+// AnalyticsLeaderboardFilter scopes a leaderboard query.
+type AnalyticsLeaderboardFilter struct {
+	TermID  string
+	ClassID string
+	Limit   int
+}
+
+// AnalyticsLeaderboardEntry is shared by GPA, attendance, and behaviour leaderboards.
+type AnalyticsLeaderboardEntry struct {
+	Rank        int     `db:"rank" json:"rank"`
+	StudentID   string  `db:"student_id" json:"student_id"`
+	StudentName string  `db:"student_name" json:"student_name"`
+	NIS         string  `db:"nis" json:"nis"`
+	ClassID     string  `db:"class_id" json:"class_id"`
+	ClassName   string  `db:"class_name" json:"class_name"`
+	Score       float64 `db:"score" json:"score"`
+	Points      int     `db:"points" json:"points,omitempty"`
+}
+
+// AnalyticsLeaderboard is the response envelope data for a leaderboard endpoint.
+type AnalyticsLeaderboard struct {
+	TermID      string                      `json:"term_id"`
+	ClassID     string                      `json:"class_id,omitempty"`
+	Metric      string                      `json:"metric"`
+	Leaderboard []AnalyticsLeaderboardEntry `json:"leaderboard"`
+}

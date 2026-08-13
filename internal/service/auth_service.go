@@ -527,9 +527,14 @@ func (s *AuthService) resolveTeacherID(ctx context.Context, user *models.User) s
 func (s *AuthService) generateAccessToken(user *models.User, teacherID string) (string, time.Time, error) {
 	issuedAt := time.Now().UTC()
 	expiresAt := issuedAt.Add(s.config.AccessTokenExpiry)
+	studentID := ""
+	if user != nil && user.StudentID != nil {
+		studentID = *user.StudentID
+	}
 	claims := &models.JWTClaims{
 		UserID:    user.ID,
 		TeacherID: teacherID,
+		StudentID: studentID,
 		Role:      user.Role,
 		Email:     user.Email,
 		FullName:  user.FullName,

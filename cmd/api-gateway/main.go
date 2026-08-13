@@ -79,9 +79,15 @@ func main() {
 
 	r := gin.New()
 	r.Use(gin.Recovery())
+	r.Use(internalmiddleware.SecurityHeaders(cfg.Env == config.EnvProduction))
 	r.Use(reqidmiddleware.Middleware())
 	r.Use(logger.GinMiddleware(logr))
 	r.Use(corsmiddleware.New(cfg.CORS.AllowedOrigins))
+	r.Use(internalmiddleware.RateLimiterMiddleware(internalmiddleware.RateLimiterConfig{
+		RequestsPerMinute: 120,
+		Burst:             60,
+		MaxClients:        10000,
+	}))
 	cutoverSvc := service.NewCutoverService(cfg.Cutover, metricsSvc)
 
 	r.Use(internalmiddleware.CutoverStage(cutoverSvc))
@@ -425,17 +431,12 @@ func main() {
 	}
 
 	var analyticsSvc *service.AnalyticsService
+	var analyticsHandler *internalhandler.AnalyticsHandler
 	if cfg.Analytics.Enabled {
 		cacheSvc := service.NewCacheService(cacheRepo, metricsSvc, cfg.Analytics.CacheTTL, logr, cacheRepo != nil)
 		analyticsSvc = service.NewAnalyticsService(analyticsRepo, cacheSvc, metricsSvc, logr)
-		analyticsHandler := internalhandler.NewAnalyticsHandler(analyticsSvc)
-
-		analyticsGroup := api.Group("/analytics")
-		analyticsGroup.Use(internalmiddleware.WithResponseMeta())
-		analyticsGroup.GET("/attendance", analyticsHandler.Attendance)
-		analyticsGroup.GET("/grades", analyticsHandler.Grades)
-		analyticsGroup.GET("/behavior", analyticsHandler.Behavior)
-		analyticsGroup.GET("/system", analyticsHandler.System)
+		analyticsHandler = internalhandler.NewAnalyticsHandler(analyticsSvc)
+		analyticsSvc.SetObjectAuthorizer(service.NewDatabaseAnalyticsAuthorizer(assignmentRepo, enrollmentRepo))
 
 		registerPprof(r)
 	}
@@ -532,6 +533,21 @@ func main() {
 
 	secured := api.Group("")
 	secured.Use(internalmiddleware.JWT(authSvc))
+
+	if analyticsHandler != nil {
+		analyticsGroup := secured.Group("/analytics")
+		analyticsGroup.Use(internalmiddleware.WithResponseMeta())
+		analyticsGroup.GET("/attendance", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), analyticsHandler.Attendance)
+		analyticsGroup.GET("/grades", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), analyticsHandler.Grades)
+		analyticsGroup.GET("/behavior", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), analyticsHandler.Behavior)
+		analyticsGroup.GET("/system", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), analyticsHandler.System)
+		analyticsGroup.GET("/class/:class_id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), analyticsHandler.Class)
+		analyticsGroup.GET("/student/:student_id", internalmiddleware.RBAC(string(models.RoleStudent), string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), analyticsHandler.Student)
+		analyticsGroup.GET("/subject/:subject_id", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), analyticsHandler.Subject)
+		analyticsGroup.GET("/leaderboard/gpa", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), analyticsHandler.LeaderboardGPA)
+		analyticsGroup.GET("/leaderboard/attendance", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), analyticsHandler.LeaderboardAttendance)
+		analyticsGroup.GET("/leaderboard/behavior", internalmiddleware.RBAC(string(models.RoleTeacher), string(models.RoleAdmin), string(models.RoleSuperAdmin)), analyticsHandler.LeaderboardBehavior)
+	}
 
 	usersGroup := secured.Group("/users")
 	usersGroup.GET("", internalmiddleware.RBAC(string(models.RoleAdmin), string(models.RoleSuperAdmin)), userHandler.List)

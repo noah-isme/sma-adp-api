@@ -2,7 +2,10 @@ import subprocess
 import unittest
 from pathlib import Path
 
-import validate
+try:
+    from deploy import validate
+except ModuleNotFoundError:  # direct `python deploy/test_validate.py`
+    import validate
 
 
 class DeploymentValidatorTests(unittest.TestCase):
@@ -23,7 +26,7 @@ class DeploymentValidatorTests(unittest.TestCase):
 
     def test_shell_hooks_parse_and_help(self):
         root = Path(__file__).resolve().parent
-        for script in (root / "verify-backup.sh", root / "rollback.sh"):
+        for script in (root / "backup.sh", root / "verify-backup.sh", root / "rollback.sh"):
             subprocess.run(["bash", "-n", str(script)], check=True)
             result = subprocess.run([str(script), "--help"], check=True, capture_output=True, text=True)
             self.assertIn("Usage:", result.stdout)

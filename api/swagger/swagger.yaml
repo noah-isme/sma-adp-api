@@ -1745,6 +1745,31 @@ paths:
       summary: Behavior analytics
       tags:
       - Analytics
+  /analytics/class/{class_id}:
+    get:
+      parameters:
+      - description: Class ID
+        in: path
+        name: class_id
+        required: true
+        type: string
+      - description: Term ID
+        in: query
+        name: term_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Class analytics drilldown
+      tags:
+      - Analytics
   /analytics/grades:
     get:
       parameters:
@@ -1773,6 +1798,147 @@ paths:
       security:
       - BearerAuth: []
       summary: Grade analytics
+      tags:
+      - Analytics
+  /analytics/leaderboard/attendance:
+    get:
+      parameters:
+      - description: Term ID
+        in: query
+        name: term_id
+        required: true
+        type: string
+      - description: Class ID
+        in: query
+        name: class_id
+        type: string
+      - default: 10
+        description: Number of rows (1-100)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Attendance leaderboard
+      tags:
+      - Analytics
+  /analytics/leaderboard/behavior:
+    get:
+      parameters:
+      - description: Term ID
+        in: query
+        name: term_id
+        required: true
+        type: string
+      - description: Class ID
+        in: query
+        name: class_id
+        type: string
+      - default: 10
+        description: Number of rows (1-100)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Behavior leaderboard
+      tags:
+      - Analytics
+  /analytics/leaderboard/gpa:
+    get:
+      parameters:
+      - description: Term ID
+        in: query
+        name: term_id
+        required: true
+        type: string
+      - description: Class ID
+        in: query
+        name: class_id
+        type: string
+      - default: 10
+        description: Number of rows (1-100)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: GPA leaderboard
+      tags:
+      - Analytics
+  /analytics/student/{student_id}:
+    get:
+      parameters:
+      - description: Student ID
+        in: path
+        name: student_id
+        required: true
+        type: string
+      - description: Term ID
+        in: query
+        name: term_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Student analytics drilldown
+      tags:
+      - Analytics
+  /analytics/subject/{subject_id}:
+    get:
+      parameters:
+      - description: Subject ID
+        in: path
+        name: subject_id
+        required: true
+        type: string
+      - description: Term ID
+        in: query
+        name: term_id
+        required: true
+        type: string
+      - description: Class ID
+        in: query
+        name: class_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_noah-isme_sma-adp-api_pkg_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Subject analytics drilldown
       tags:
       - Analytics
   /analytics/system:

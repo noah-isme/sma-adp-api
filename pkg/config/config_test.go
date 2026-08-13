@@ -11,6 +11,7 @@ func TestLoadParsesPasswordResetSMTPSettings(t *testing.T) {
 	t.Setenv("ENV", EnvProduction)
 	t.Setenv("PASSWORD_RESET_TOKEN_TTL", "45m")
 	t.Setenv("PASSWORD_RESET_URL", "https://admin.example.test/reset-password")
+	t.Setenv("PORTAL_PASSWORD_RESET_URL", "https://portal.school.id/portal/reset-password")
 	t.Setenv("PASSWORD_RESET_EMAIL_SUBJECT", "Reset kata sandi")
 	t.Setenv("SMTP_ENABLED", "true")
 	t.Setenv("SMTP_HOST", "smtp.example.test")
@@ -28,6 +29,7 @@ func TestLoadParsesPasswordResetSMTPSettings(t *testing.T) {
 
 	require.Equal(t, 45*time.Minute, cfg.PasswordReset.TokenTTL)
 	require.Equal(t, "https://admin.example.test/reset-password", cfg.PasswordReset.URL)
+	require.Equal(t, "https://portal.school.id/portal/reset-password", cfg.PasswordReset.PortalURL)
 	require.Equal(t, "Reset kata sandi", cfg.PasswordReset.Subject)
 	require.Equal(t, SMTPConfig{
 		Enabled:  true,
@@ -41,6 +43,23 @@ func TestLoadParsesPasswordResetSMTPSettings(t *testing.T) {
 	}, cfg.SMTP)
 	require.Equal(t, []string{"https://admin.example.test"}, cfg.CORS.AllowedOrigins)
 	require.True(t, cfg.Redis.TLS)
+}
+
+func TestValidateProductionRejectsUnsafePortalResetURL(t *testing.T) {
+	base := &Config{Env: EnvProduction}
+
+	for _, value := range []string{"", "http://portal.school.id/reset", "https://localhost/reset", "https://portal.example.com/reset"} {
+		base.PasswordReset.PortalURL = value
+		require.Error(t, ValidateProduction(base), value)
+	}
+}
+
+func TestValidateProductionAcceptsHTTPSPortalResetURL(t *testing.T) {
+	cfg := &Config{
+		Env:           EnvProduction,
+		PasswordReset: PasswordResetConfig{PortalURL: "https://portal.school.id/reset-password"},
+	}
+	require.NoError(t, ValidateProduction(cfg))
 }
 
 func TestLoadUsesSafeSMTPDefaults(t *testing.T) {

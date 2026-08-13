@@ -207,11 +207,13 @@ func TestAuthServiceChangePassword(t *testing.T) {
 func TestValidateToken(t *testing.T) {
 	repo := &mockAuthRepo{}
 	svc := NewAuthService(repo, nil, validator.New(), zap.NewNop(), AuthConfig{AccessTokenSecret: "secret", AccessTokenExpiry: time.Hour, RefreshTokenExpiry: time.Hour})
-	user := &models.User{ID: "u1", Email: "user@example.com", Role: models.RoleAdmin}
+	studentID := "student-1"
+	user := &models.User{ID: "u1", Email: "user@example.com", Role: models.RoleStudent, StudentID: &studentID}
 	token, _, err := svc.generateAccessToken(user, "")
 	require.NoError(t, err)
 
 	claims, err := svc.ValidateToken(token)
 	require.NoError(t, err)
 	assert.Equal(t, user.ID, claims.UserID)
+	assert.Equal(t, studentID, claims.StudentID)
 }

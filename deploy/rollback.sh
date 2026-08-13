@@ -8,11 +8,11 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: rollback.sh RELEASE_ENV [--dry-run]
+Usage: rollback.sh RELEASE_ENV [--dry-run] [--health-url URL]
 
-RELEASE_ENV must contain SMA_API_IMAGE, SMA_WORKER_IMAGE, NGINX_IMAGE and the
-managed-service settings consumed by docker-compose.production.yml. Images must
-use @sha256:<64 hex characters>. Use --dry-run to validate without restarting.
+RELEASE_ENV must contain SMA_API_IMAGE and NGINX_IMAGE plus the managed-service
+settings consumed by docker-compose.production.yml. Images must use
+@sha256:<64 hex characters>. Use --dry-run to validate without restarting.
 
 Optional environment:
   COMPOSE_FILE       compose file (default: deploy/docker-compose.production.yml)
@@ -23,6 +23,7 @@ EOF
 
 release_env="${1:-}"
 dry_run=false
+health_url_override=""
 if [[ "$release_env" == "--help" || "$release_env" == "-h" ]]; then
   usage
   exit 0
@@ -35,6 +36,11 @@ shift
 while (($# > 0)); do
   case "$1" in
     --dry-run) dry_run=true; shift ;;
+    --health-url)
+      [[ $# -ge 2 ]] || { echo "--health-url requires a value" >&2; exit 2; }
+      health_url_override="$2"
+      shift 2
+      ;;
     *) echo "unknown option: $1" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -43,7 +49,7 @@ compose_file="${COMPOSE_FILE:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/dock
 [[ -f "$release_env" ]] || { echo "release env not found: $release_env" >&2; exit 2; }
 [[ -f "$compose_file" ]] || { echo "compose file not found: $compose_file" >&2; exit 2; }
 
-for key in SMA_API_IMAGE SMA_WORKER_IMAGE NGINX_IMAGE; do
+for key in SMA_API_IMAGE NGINX_IMAGE; do
   value="$(awk -F= -v key="$key" '$1 == key {print substr($0, index($0, "=") + 1); exit}' "$release_env")"
   if [[ ! "$value" =~ @sha256:[0-9a-fA-F]{64}$ ]]; then
     echo "$key must be pinned to image@sha256:<64 hex characters>" >&2
@@ -66,7 +72,7 @@ cp -- "$release_env" "$release_env.rollback.$stamp"
 echo "Starting pinned rollback release"
 SMA_ENV_FILE="$release_env" docker compose "${compose_args[@]}" up -d --no-deps api nginx
 
-health_url="${HEALTH_URL:-}"
+health_url="${health_url_override:-${HEALTH_URL:-}}"
 if [[ -z "$health_url" ]]; then
   server_name="$(awk -F= '$1 == "SERVER_NAME" {print substr($0, index($0, "=") + 1); exit}' "$release_env")"
   health_url="https://${server_name}/ready"

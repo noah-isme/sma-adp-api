@@ -4,6 +4,9 @@ name: sma-production
 # Cloudflare (Full Strict TLS/WAF) -> Nginx (this file) -> Go API.
 # PostgreSQL and Redis are managed services and are deliberately not defined
 # here. Their endpoints and credentials are injected through SMA_ENV_FILE.
+#
+# The default 2 GB VPS footprint is only api + nginx. The worker and the
+# Prometheus/Alertmanager/Grafana stack are explicit opt-in profiles.
 services:
   api:
     image: "${SMA_API_IMAGE:?Set SMA_API_IMAGE to an immutable image@sha256:digest}"
@@ -15,10 +18,25 @@ services:
       PORT: "8080"
       DB_SSL_MODE: require
       REDIS_TLS: "true"
-      ROUTE_TO_GO: "${ROUTE_TO_GO:-false}"
-      SHADOW_TRAFFIC: "${SHADOW_TRAFFIC:-false}"
-      LEGACY_READONLY: "${LEGACY_READONLY:-false}"
-      CANARY_PERCENTAGE: "${CANARY_PERCENTAGE:-0}"
+      # This deployment is a fresh direct launch. Keep the API's cutover
+      # metadata in the full state even though Nginx has no legacy upstream.
+      ROUTE_TO_GO: "true"
+      SHADOW_TRAFFIC: "false"
+      LEGACY_READONLY: "true"
+      CANARY_PERCENTAGE: "100"
+      # Core-first production profile. These values intentionally override
+      # accidental settings in the env file; expand a module deliberately.
+      ENABLE_ALL_FEATURES: "false"
+      ENABLE_ANALYTICS: "true"
+      ENABLE_DASHBOARD: "true"
+      ENABLE_SCHEDULER: "false"
+      ENABLE_REPORTS: "false"
+      ENABLE_MUTATIONS: "true"
+      ENABLE_ARCHIVES: "false"
+      ENABLE_HOMEROOMS: "true"
+      ENABLE_CONFIGURATION_API: "true"
+      ENABLE_CALENDAR_ALIAS: "true"
+      ENABLE_ATTENDANCE_ALIAS: "true"
     expose:
       - "8080"
     networks:
@@ -42,6 +60,12 @@ services:
           memory: 256M
     mem_limit: 768m
     cpus: 1.0
+    pids_limit: 256
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
     healthcheck:
       test: ["CMD", "/usr/local/bin/healthcheck"]
       interval: 10s
@@ -87,6 +111,12 @@ services:
           memory: 256M
     mem_limit: 768m
     cpus: 1.0
+    pids_limit: 256
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
     healthcheck:
       test: ["CMD", "/usr/local/bin/healthcheck"]
       interval: 10s
@@ -99,9 +129,6 @@ services:
     restart: unless-stopped
     environment:
       SERVER_NAME: "${SERVER_NAME:?Set SERVER_NAME to the public API hostname}"
-      LEGACY_UPSTREAM: "${LEGACY_UPSTREAM:?Set LEGACY_UPSTREAM to the legacy private host:port}"
-      ROUTE_TO_GO: "${ROUTE_TO_GO:-false}"
-      CANARY_PERCENTAGE: "${CANARY_PERCENTAGE:-0}"
       DOLLAR: "$"
       NGINX_ENVSUBST_OUTPUT_DIR: /tmp/nginx-conf
     ports:
@@ -134,6 +161,12 @@ services:
           memory: 64M
     mem_limit: 256m
     cpus: 1.0
+    pids_limit: 128
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/sma-api.conf.template:/etc/nginx/templates/sma-api.conf.template:ro
@@ -148,6 +181,7 @@ services:
       retries: 5
 
   prometheus:
+    profiles: ["observability"]
     image: "${PROMETHEUS_IMAGE:?Set PROMETHEUS_IMAGE to an immutable image@sha256:digest}"
     restart: unless-stopped
     networks:
@@ -183,6 +217,7 @@ services:
           memory: 128M
 
   alertmanager:
+    profiles: ["observability"]
     image: "${ALERTMANAGER_IMAGE:?Set ALERTMANAGER_IMAGE to an immutable image@sha256:digest}"
     restart: unless-stopped
     networks:
@@ -211,6 +246,7 @@ services:
           memory: 64M
 
   grafana:
+    profiles: ["observability"]
     image: "${GRAFANA_IMAGE:?Set GRAFANA_IMAGE to an immutable image@sha256:digest}"
     restart: unless-stopped
     networks:

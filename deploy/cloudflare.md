@@ -1,14 +1,16 @@
 # Cloudflare origin and edge checklist
 
-The public request path is Cloudflare → the VPS Nginx listener. Cloudflare is
-the only internet-facing origin client; PostgreSQL, Redis, Prometheus,
-Alertmanager, Grafana, and the legacy upstream stay private.
+The public request path is Cloudflare → the VPS Nginx listener → the Go API.
+Cloudflare is the only internet-facing origin client; PostgreSQL, Redis, and
+the optional observability profile stay private.
 
 ## Origin TLS
 
 1. Issue a Cloudflare Origin Certificate for `api.example.com` (and any API
    subdomain used during staging). Install the certificate and key under
-   `/etc/sma/tls` with mode `0640` and `0600` respectively.
+   `/etc/sma/tls` with owner/group `101:101` and mode `0640`; Nginx runs as
+   that non-root container identity. Keep the directory and parent `/etc/sma`
+   modes `0750` so the bind-mounted key is readable only by Nginx and root.
 2. Set the zone SSL/TLS mode to **Full (strict)** and minimum TLS version to
    **TLS 1.2**. The following API calls are exact read-back checks; use a
    scoped API token and do not put it in a repository file:
@@ -32,19 +34,19 @@ Alertmanager, Grafana, and the legacy upstream stay private.
 
 ## DNS and origin firewall
 
-- Create proxied (orange-cloud) A/AAAA records for `api.example.com` pointing
+- Create a proxied (orange-cloud) A/AAAA record for `api.example.com` pointing
   to the VPS. Keep the VPS origin address out of public application docs.
 - Permit inbound 80/443 only from the published Cloudflare IP ranges at the
   VPS firewall. Permit SSH only from the operations network. Do not expose
   5432, 6379, 9090, 9093, or 3000.
 - Configure Nginx to trust the Cloudflare client address only after the origin
-  firewall rule is active. Nginx uses `CF-Connecting-IP` for stable canary
-  hashing and forwards `X-Forwarded-For` to both upstreams.
+  firewall rule is active. Nginx uses `CF-Connecting-IP` for rate limiting and
+  forwards the proxy headers to the single Go upstream.
 
 ## WAF and rate limits
 
 Enable Cloudflare Managed WAF rules and create an API rate-limit rule before
-the first canary:
+the first production request:
 
 | Match | Threshold | Action |
 | --- | ---: | --- |
@@ -57,8 +59,9 @@ These Cloudflare limits are an outer guard. The Nginx template also applies
 429 response as evidence.
 
 Use a custom WAF rule to challenge clearly automated abuse, but do not block
-the frontend’s known API methods. Do not enable request mirroring: state-
-changing requests must have exactly one upstream consumer.
+the frontend’s known API methods. Nginx has one Go upstream and request
+mirroring is not part of this launch; state-changing requests therefore have
+exactly one consumer.
 
 ## Verification commands
 
@@ -71,5 +74,6 @@ curl --fail --show-error https://api.example.com/ready
 ```
 
 The evidence must show a Cloudflare `cf-ray`, origin security headers, Full
-Strict TLS, and 200 responses from `/health` and `/ready`. `/metrics`,
-`/internal/*`, and `/debug/*` must return 404 from the public hostname.
+Strict TLS, and 200 responses from `/health` and `/ready`. `/metrics`, `/docs`,
+`/internal/*`, `/debug/*`, and `/api/v1/portal/*` must return 404 from the
+public hostname.

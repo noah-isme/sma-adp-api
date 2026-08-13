@@ -21,6 +21,8 @@ NGINX_PATH = ROOT / "nginx" / "sma-api.conf.template"
 NGINX_MAIN_PATH = ROOT / "nginx" / "nginx.conf"
 RELEASE_ENV_PATH = ROOT / "env.production.example"
 BACKUP_PATH = ROOT / "backup.sh"
+MONITOR_PATH = ROOT / "monitor.sh"
+BOOTSTRAP_PATH = ROOT / "vps-bootstrap.sh"
 
 
 class ValidationError(RuntimeError):
@@ -70,24 +72,37 @@ def validate_compose(document: dict[str, Any] | None = None) -> None:
     document = load_compose() if document is None else document
     services = document.get("services")
     require(isinstance(services, dict), "compose needs services")
-    require({"api", "worker", "nginx", "prometheus", "alertmanager", "grafana"} <= set(services), "missing production service")
+    require({"api", "nginx"} <= set(services), "missing default production service")
     require(not ({"postgres", "redis"} & set(services)), "PostgreSQL and Redis must remain managed external services")
 
-    for service_name in ("api", "worker", "nginx", "prometheus", "alertmanager", "grafana"):
+    optional_services = {"worker", "prometheus", "alertmanager", "grafana"} & set(services)
+    for service_name in ("api", "nginx", *sorted(optional_services)):
         service = services[service_name]
         require(isinstance(service, dict), f"{service_name} must be a mapping")
         validate_resources(service, service_name)
 
-    for service_name in ("api", "worker", "nginx"):
+    for service_name in ("api", "nginx"):
         validate_hardening(services[service_name], service_name)
 
-    for service_name in ("api", "worker", "nginx", "prometheus", "alertmanager", "grafana"):
+    for service_name in ("api", "nginx", *sorted(optional_services)):
         validate_image_input(str(services[service_name].get("image", "")), f"{service_name}.image")
+
+    if "worker" in services:
+        require("worker" in services["worker"].get("profiles", []), "worker profile must be explicit while the queue is in-process")
+    for service_name in ("prometheus", "alertmanager", "grafana"):
+        if service_name in services:
+            require("observability" in services[service_name].get("profiles", []), f"{service_name} must be opt-in")
 
     api_environment = services["api"].get("environment", {})
     require(api_environment.get("ENV") == "production", "api must set ENV=production")
     require(api_environment.get("DB_SSL_MODE") == "require", "api must require PostgreSQL TLS")
     require(api_environment.get("REDIS_TLS") == "true", "api must require Redis TLS")
+    require(api_environment.get("ROUTE_TO_GO") == "true", "api must launch in direct Go mode")
+    require(api_environment.get("ENABLE_ALL_FEATURES") == "false", "api must keep ENABLE_ALL_FEATURES=false")
+    for key in ("ENABLE_ANALYTICS", "ENABLE_DASHBOARD", "ENABLE_MUTATIONS", "ENABLE_HOMEROOMS", "ENABLE_CONFIGURATION_API", "ENABLE_CALENDAR_ALIAS", "ENABLE_ATTENDANCE_ALIAS"):
+        require(api_environment.get(key) == "true", f"api core profile must enable {key}")
+    for key in ("ENABLE_SCHEDULER", "ENABLE_REPORTS", "ENABLE_ARCHIVES"):
+        require(api_environment.get(key) == "false", f"api core profile must disable {key}")
 
     nginx = services["nginx"]
     ports = {str(port) for port in nginx.get("ports", [])}
@@ -99,12 +114,10 @@ def validate_compose(document: dict[str, Any] | None = None) -> None:
     healthcheck_text = " ".join(str(item) for item in healthcheck)
     require("127.0.0.1:8080/health" in healthcheck_text, "Nginx healthcheck must probe its 8080 listener")
 
-    worker_profiles = services["worker"].get("profiles", [])
-    require("worker" in worker_profiles, "worker profile must be explicit while the queue is in-process")
-
     networks = document.get("networks", {})
     require(networks.get("app", {}).get("internal") is True, "app network must be internal")
-    require(networks.get("observability", {}).get("internal") is True, "observability network must be internal")
+    if optional_services & {"prometheus", "alertmanager", "grafana"}:
+        require(networks.get("observability", {}).get("internal") is True, "observability network must be internal")
 
 
 def validate_nginx() -> None:
@@ -112,10 +125,7 @@ def validate_nginx() -> None:
     main = NGINX_MAIN_PATH.read_text(encoding="utf-8")
     for token in (
         "upstream go_api",
-        "upstream legacy_api",
-        "split_clients",
-        "CANARY_PERCENTAGE",
-        "ROUTE_TO_GO",
+        "proxy_pass http://go_api;",
         "limit_req zone=auth_limit",
         "ssl_protocols TLSv1.2 TLSv1.3",
         "location = /health",
@@ -128,7 +138,9 @@ def validate_nginx() -> None:
     require("limit_req_zone $sma_client_ip" in main, "Nginx limits must use the canonical client IP")
     require("limit_req_status 429;" in main, "Nginx rate limits must return HTTP 429")
     require("X-XSS-Protection" not in template and "X-XSS-Protection" not in main, "obsolete X-XSS-Protection must not be configured")
-    require("proxy_pass http://${DOLLAR}route_backend" in template, "Nginx must route through the cutover backend")
+    for forbidden in ("upstream legacy_api", "split_clients", "LEGACY_UPSTREAM", "route_backend", "CANARY_PERCENTAGE"):
+        require(forbidden not in template, f"Nginx must not contain legacy/canary routing: {forbidden}")
+    require("proxy_pass http://${DOLLAR}route_backend" not in template, "Nginx must route directly to Go")
     require("include /tmp/nginx-conf/*.conf" in main, "Nginx must render templates into a writable non-root path")
 
 
@@ -162,6 +174,17 @@ def validate_backup() -> None:
     require("rclone purge" not in content and "rclone delete" not in content, "backup wrapper must not delete remote backups")
 
 
+def validate_vps_scripts() -> None:
+    for path in (MONITOR_PATH, BOOTSTRAP_PATH):
+        require(path.is_file(), f"missing VPS operations script: {path}")
+        require(path.read_text(encoding="utf-8").startswith("#!/usr/bin/env bash"), f"{path.name} must be a Bash script")
+    monitor = MONITOR_PATH.read_text(encoding="utf-8")
+    require("public readiness" in monitor and "SMA_BACKUP_MAX_AGE_HOURS" in monitor, "VPS monitor must check readiness and backup age")
+    bootstrap = BOOTSTRAP_PATH.read_text(encoding="utf-8")
+    require("ufw default deny incoming" in bootstrap, "VPS bootstrap must default-deny inbound traffic")
+    require("cloudflare-ip-file" in bootstrap and "ssh-cidr" in bootstrap, "VPS bootstrap must require scoped firewall inputs")
+
+
 def validate_release_example() -> None:
     content = RELEASE_ENV_PATH.read_text(encoding="utf-8")
     for key in ("SMA_API_IMAGE", "SMA_WORKER_IMAGE", "NGINX_IMAGE", "PROMETHEUS_IMAGE", "ALERTMANAGER_IMAGE", "GRAFANA_IMAGE"):
@@ -176,6 +199,9 @@ def validate_release_example() -> None:
     require(re.search(r"^ALLOWED_ORIGINS=https://[^\s,]+", content, re.MULTILINE) is not None, "release example must pin an explicit admin CORS origin")
     require("SMTP_ENABLED=true" in content, "release example must enable SMTP password-reset delivery")
     require(re.search(r"^SMTP_TLS_MODE=(starttls|tls)$", content, re.MULTILINE) is not None, "release example must use encrypted SMTP transport")
+    require("SERVER_NAME=api.example.com" in content, "release example must identify the API hostname")
+    require("ROUTE_TO_GO=true" in content and "LEGACY_UPSTREAM" not in content, "release example must use direct Go routing")
+    require("ENABLE_ALL_FEATURES=false" in content, "release example must disable all-features mode")
     require("REPLACE_IN_SECRET_STORE" in content, "release example must keep secrets out of git")
 
 
@@ -187,6 +213,7 @@ def validate() -> None:
     validate_dockerfiles()
     validate_monitoring()
     validate_backup()
+    validate_vps_scripts()
     validate_release_example()
 
 

@@ -26,10 +26,25 @@ class DeploymentValidatorTests(unittest.TestCase):
 
     def test_shell_hooks_parse_and_help(self):
         root = Path(__file__).resolve().parent
-        for script in (root / "backup.sh", root / "verify-backup.sh", root / "rollback.sh"):
+        for script in (
+            root / "backup.sh",
+            root / "verify-backup.sh",
+            root / "rollback.sh",
+            root / "monitor.sh",
+            root / "vps-bootstrap.sh",
+        ):
             subprocess.run(["bash", "-n", str(script)], check=True)
             result = subprocess.run([str(script), "--help"], check=True, capture_output=True, text=True)
             self.assertIn("Usage:", result.stdout)
+
+    def test_default_services_are_direct_and_observability_is_opt_in(self):
+        document = validate.load_compose()
+        services = document["services"]
+        self.assertEqual(set(services["api"]["environment"]) & {"ROUTE_TO_GO"}, {"ROUTE_TO_GO"})
+        self.assertEqual(services["api"]["environment"]["ROUTE_TO_GO"], "true")
+        self.assertNotIn("LEGACY_UPSTREAM", services["nginx"].get("environment", {}))
+        for name in ("prometheus", "alertmanager", "grafana"):
+            self.assertIn("observability", services[name]["profiles"])
 
 
 if __name__ == "__main__":

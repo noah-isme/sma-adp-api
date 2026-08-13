@@ -4,7 +4,8 @@
 `verify-backup.sh`. It creates a custom-format dump, verifies the catalogue and
 checksum, writes JSON evidence, and uploads those artifacts to an operator-
 configured `rclone` `crypt` remote. It never deletes local or remote files;
-retention is owned by the storage provider's lifecycle policy.
+retention is owned by the storage provider's lifecycle policy. The default VPS
+monitor fails if no successful dump is present within 26 hours.
 
 ## Configure the encrypted remote
 
@@ -26,8 +27,11 @@ rclone remote is not `type = crypt`.
 
 ## systemd schedule
 
-Install the script under `/opt/sma/deploy/backup.sh`, store the environment in
-`/etc/sma/backup.env` with mode `0600`, and use a dedicated service account.
+Install `backup.sh` and `verify-backup.sh` under `/opt/sma/deploy/`, owned by
+`root:sma-backup` with mode `0750`. The bootstrap creates the `sma-backup`
+service account, the encrypted-backup directory, and the `rclone` package.
+Store the environment in `/etc/sma/backup.env` with mode `0640` and group
+`sma-backup`; do not reuse `/etc/sma/sma-api.env`, which contains API secrets.
 
 `/etc/systemd/system/sma-backup.service`:
 

@@ -17,7 +17,7 @@ This consolidated report merges findings from the August 6, 2026 gap analysis an
 | **G-03** | Student & Teacher Roster Filter Alignment | [x] Resolved | Added `status`, `sortField`, `sortOrder` query parameter aliases in `student_handler.go` and `teacher_handler.go`, and implemented documented roster filters (gender, track, subject, homeroom, availability). |
 | **G-04** | Grade Report Filter & Aggregation Completeness | [x] Resolved | Enriched query joins in `grade_handler.go` & `grade_repository.go`, implemented status (PASS/REMEDIAL/FAIL), scoreMin/scoreMax, search, teacher filters, frontend sort aliases, shared grade thresholds, and database-backed `COUNT(*)` totals for pagination. |
 | **G-05** | Grade CSV Status Filter | [x] Resolved | Replaced `export_compatibility_handler.go` status filter `AND 1=1` no-op with shared PASS/REMEDIAL/FAIL predicate logic matching the grade report. |
-| **G-06** | Security Claims Reconciliation | [x] Resolved | Removed unsupported rate-limit, lockout, and Argon2 claims from application docs; documented bcrypt hashing and external WAF/ingress gateway responsibilities for rate limiting. |
+| **G-06** | Security Claims Reconciliation | [x] Resolved | Documented bcrypt hashing and layered rate limiting: a Go token-bucket fallback plus canonical Cloudflare/Nginx edge controls. Login lockout and Argon2 remain intentionally out of scope. |
 | **G-07** | Stale API Versioning Documentation | [x] Resolved | Replaced outdated NestJS-to-Go migration/v2 references in `API_VERSIONING_GUIDE.md` with current dated v1/Go contract guides. |
 | **G-08** | Monorepo Checklist Reconciliation | [x] Resolved | Archived outdated implementation checklist (`checklist.md`); replaced with current cross-repository status linked to `PROJECT_STATUS.md`. |
 | **G-09** | Swagger Annotation & Public Route Drift | [x] Resolved | Corrected public route security annotations in Swagger, cleaned up duplicate swagger route annotations in `teacher_handler.go`, updated `@Param` annotations, regenerated Swagger, and validated 136 paths / 22 compatibility routes via `make validate-swagger-routes`. |
@@ -69,7 +69,7 @@ The following secondary non-blocking items remain tracked for future releases:
 
 2. **Operations & Production Infrastructure:**
    - Canary deployment automated metric thresholds in production environment WAF.
-   - Production external rate-limiting rule definitions at Nginx/Cloudflare ingress tier.
+   - Production evidence for the configured Nginx/Cloudflare rate-limit rules and backup schedule.
 
 ---
 

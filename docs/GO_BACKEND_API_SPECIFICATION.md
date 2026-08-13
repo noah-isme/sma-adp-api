@@ -358,7 +358,7 @@ Optional API capabilities are disabled by default. The frontend must expose a pa
 | Go API flag | Admin flag | Capability |
 | --- | --- | --- |
 | `ENABLE_DASHBOARD` + `ENABLE_ANALYTICS` | `VITE_ENABLE_DASHBOARD` + `VITE_ENABLE_ANALYTICS` | Dashboard endpoints (including dashboard analytics sections) |
-| `ENABLE_ANALYTICS` | `VITE_ENABLE_ANALYTICS` | Standalone `/analytics/*` API (attendance, grades, behavior, system) |
+| `ENABLE_ANALYTICS` | `VITE_ENABLE_ANALYTICS` | Standalone `/analytics/*` API (summaries, drilldowns, and leaderboards) |
 | `ENABLE_SCHEDULER` | `VITE_ENABLE_SCHEDULER` | Schedule generator and preferences UI |
 | `ENABLE_REPORTS` | `VITE_ENABLE_REPORTS` | Report generation/export endpoints |
 | `ENABLE_MUTATIONS` | `VITE_ENABLE_MUTATIONS` | Student mutation workflows |
@@ -1427,6 +1427,30 @@ for historical reporting.
 
 **Alias for /api/v1/dashboard**
 
+### Analytics drilldowns and leaderboards
+
+When `ENABLE_ANALYTICS=true`, the following endpoints are available under the
+authenticated API group. Query parameters and response fields use `snake_case`;
+successful responses use the standard `{data, pagination, meta}` envelope.
+
+| Method and path | Required scope | Query parameters |
+| --- | --- | --- |
+| `GET /api/v1/analytics/class/{class_id}` | Admin or assigned teacher | `term_id` |
+| `GET /api/v1/analytics/student/{student_id}` | Admin, assigned teacher, or the student themselves | `term_id` |
+| `GET /api/v1/analytics/subject/{subject_id}` | Admin or assigned teacher | `term_id`, optional `class_id` |
+| `GET /api/v1/analytics/leaderboard/gpa` | Admin or assigned teacher | `term_id`, optional `class_id`, `limit` (1–100, default 10) |
+| `GET /api/v1/analytics/leaderboard/attendance` | Admin or assigned teacher | `term_id`, optional `class_id`, `limit` (1–100, default 10) |
+| `GET /api/v1/analytics/leaderboard/behavior` | Admin or assigned teacher | `term_id`, optional `class_id`, `limit` (1–100, default 10) |
+
+Teacher requests are checked against `teacher_assignments` before cache lookup;
+student requests are restricted to the `student_id` linked to the JWT. Missing
+term/resource tuples return `404`, and invalid or missing `term_id`/`limit`
+values return `400`.
+
+Operational setup, materialized-view refresh, authorization boundaries, and
+cutover verification are documented in
+[`ANALYTICS_OPERATIONS_RUNBOOK.md`](ANALYTICS_OPERATIONS_RUNBOOK.md).
+
 ---
 
 ## 📄 13. Reports & Export
@@ -1934,11 +1958,13 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 ## 🎯 Rate Limiting
 
-The Go application does not currently enforce application-level rate limits or
-login lockout. The API reserves `429 Too Many Requests` for a deployment gateway,
-WAF, or middleware that owns those controls. Production runbooks must name that
-owner and record the configured limits; this specification does not claim fixed
-anonymous/authenticated/admin quotas.
+The gateway applies a per-client in-process token bucket (120 requests/minute,
+burst 60) and returns `429 Too Many Requests` with `Retry-After`,
+`X-RateLimit-Limit`, and `X-RateLimit-Remaining` headers when exhausted. Nginx
+and Cloudflare remain the distributed edge controls; their limits should be
+kept at least as strict as the application fallback and keyed to the canonical
+client IP. The in-process limiter is intentionally defense-in-depth and does
+not replace a shared WAF/edge policy or provide login lockout semantics.
 
 ---
 

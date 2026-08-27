@@ -30,7 +30,7 @@ jobs:
       - name: Install tools
         run: |
           go install github.com/swaggo/swag/cmd/swag@latest
-          go install github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+          go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
       - name: Lint & Vet
         run: go vet ./...
       - name: Run unit tests
@@ -101,7 +101,7 @@ jobs:
           go-version: '1.21'
       - name: Install migration tool
         run: |
-          go install github.com/golang-migrate/migrate/v4/cmd/migrate@v4.17.1
+          go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.17.1
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - name: Wait for PostgreSQL
         run: |
@@ -192,6 +192,10 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.21'
+      - name: Install migration tool
+        run: |
+          go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.17.1
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - name: Start Postgres & Redis
         run: |
           docker compose -f docker/docker-compose.yml up -d

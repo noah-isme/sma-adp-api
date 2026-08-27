@@ -172,7 +172,25 @@ jobs:
         run: |
           set -euo pipefail
           curl --fail --silent --show-error --max-time 10 "$HEALTH_URL"
-          curl --fail --silent --show-error --max-time 10 "$API_BASE_URL/features" | jq -e '.data.features != null' >/dev/null
+          features=$(curl --fail --silent --show-error --max-time 10 "$API_BASE_URL/features")
+          printf '%s' "$features" | jq -e '
+            .data.features
+            | select(
+                .analytics == true
+                and .dashboard == true
+                and .mutations == true
+                and .homerooms == true
+                and .configuration == true
+                and .calendarAlias == true
+                and .attendanceAlias == true
+                and .audit == true
+                and .lessonAttendance == true
+                and .scheduler == false
+                and .reports == false
+                and .archives == false
+                and .documents == false
+              )
+          ' >/dev/null
           for path in /metrics /docs /docs/ /internal/ping-go /api/v1/portal/auth/login; do
             status=$(curl --silent --show-error --max-time 10 -o /dev/null -w '%{http_code}' "${API_BASE_URL%/api/v1}$path")
             [[ "$status" == 404 ]] || { echo "$path returned $status; expected 404" >&2; exit 1; }

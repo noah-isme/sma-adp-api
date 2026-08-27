@@ -7,34 +7,141 @@ on:
     - cron: '0 2 * * *'
   workflow_dispatch:
 
+concurrency:
+  group: contract-tests-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   contract:
+    name: Contract Tests (Postman/Newman)
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: "${{ github.run_id }}"
+          POSTGRES_DB: admin_panel_sma
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d admin_panel_sma"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
     env:
-      LEGACY_HEALTH_URL: http://localhost:8080/health
-      GO_HEALTH_URL: http://localhost:8080/health
+      BASE_URL: http://localhost:8080/api/v1
+      GATEWAY_URL: http://localhost:8080
+      ENV: development
+      PORT: "8080"
+      API_PREFIX: /api/v1
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASSWORD: "${{ github.run_id }}"
+      DB_NAME: admin_panel_sma
+      DB_SSL_MODE: disable
+      DB_URL: "postgresql://postgres:${{ github.run_id }}@localhost:5432/admin_panel_sma?sslmode=disable"
+      REDIS_HOST: localhost
+      REDIS_PORT: "6379"
+      REDIS_DB: "0"
+      REDIS_TLS: "false"
+      JWT_SECRET: ci-only-contract-secret
+      PASSWORD_RESET_URL: http://localhost:5173/admin/reset-password
+      PORTAL_PASSWORD_RESET_URL: http://localhost:5173/portal/reset-password
+      ALLOWED_ORIGINS: http://localhost:5173
+      LOG_LEVEL: warn
+      LOG_FORMAT: json
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version: '1.21'
-      - name: Build
-        run: go build ./...
-      - name: Start API
+      - name: Install migration tool
         run: |
-          go run ./cmd/api-gateway &
+          go install github.com/golang-migrate/migrate/v4/cmd/migrate@v4.17.1
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - name: Wait for PostgreSQL
+        run: |
+          for attempt in $(seq 1 30); do
+            if pg_isready -h localhost -p 5432 -U postgres -d admin_panel_sma; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "PostgreSQL did not become ready" >&2
+          exit 1
+      - name: Apply migrations
+        run: migrate -path migrations -database "$DB_URL" up
+      - name: Seed contract fixtures
+        run: psql "$DB_URL" -v ON_ERROR_STOP=1 -f scripts/seed.sql
+      - name: Build API
+        run: go build ./...
+      - name: Start API server
+        run: |
+          go run ./cmd/api-gateway > api.log 2>&1 &
           echo $! > api.pid
-          sleep 5
+      - name: Wait for API readiness
+        run: |
+          api_pid=$(cat api.pid)
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --show-error --max-time 3 http://localhost:8080/ready >/dev/null; then
+              exit 0
+            fi
+            if ! kill -0 "$api_pid" 2>/dev/null; then
+              cat api.log
+              exit 1
+            fi
+            sleep 2
+          done
+          cat api.log
+          echo "API failed readiness within 120 seconds" >&2
+          exit 1
+      - name: Login to get ACCESS_TOKEN
+        run: |
+          response_file=$(mktemp)
+          curl --fail --silent --show-error -X POST http://localhost:8080/api/v1/auth/login \
+            -H "Content-Type: application/json" \
+            -d '{"email":"superadmin@sma.test","password":"admin123"}' > "$response_file"
+          token=$(jq -er '.data.access_token // empty' "$response_file")
+          test -n "$token"
+          echo "ACCESS_TOKEN=$token" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
       - name: Install Newman
         run: npm install -g newman
-      - name: Run contract tests
-        run: newman run tests/contract/contract.postman_collection.json --env-var baseUrl=http://localhost:8080
-      - name: Stop API
+      - name: Run contract tests (Public Gateway + Core Protected Smoke)
+        run: |
+          newman run tests/contract/contract.postman_collection.json \
+            --env-var baseUrl=$BASE_URL \
+            --env-var gatewayUrl=$GATEWAY_URL \
+            --env-var accessToken=$ACCESS_TOKEN \
+            --folder "Public Gateway" \
+            --folder "Core Protected Smoke" \
+            --reporters cli,junit \
+            --reporter-junit-export contract-test-results.xml
+      - name: Print API log on failure
+        if: failure()
+        run: test ! -f api.log || cat api.log
+      - name: Upload contract test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: contract-test-results
+          path: contract-test-results.xml
+      - name: Stop API server
         if: always()
         run: |
           if [ -f api.pid ]; then
-            kill $(cat api.pid)
+            kill $(cat api.pid) || true
           fi

@@ -23,6 +23,7 @@ RELEASE_ENV_PATH = ROOT / "env.production.example"
 BACKUP_PATH = ROOT / "backup.sh"
 MONITOR_PATH = ROOT / "monitor.sh"
 BOOTSTRAP_PATH = ROOT / "vps-bootstrap.sh"
+STAGING_DEPLOY_PATH = ROOT / "staging-deploy.sh"
 
 
 class ValidationError(RuntimeError):
@@ -175,7 +176,7 @@ def validate_backup() -> None:
 
 
 def validate_vps_scripts() -> None:
-    for path in (MONITOR_PATH, BOOTSTRAP_PATH):
+    for path in (MONITOR_PATH, BOOTSTRAP_PATH, STAGING_DEPLOY_PATH):
         require(path.is_file(), f"missing VPS operations script: {path}")
         require(path.read_text(encoding="utf-8").startswith("#!/usr/bin/env bash"), f"{path.name} must be a Bash script")
     monitor = MONITOR_PATH.read_text(encoding="utf-8")
@@ -183,6 +184,10 @@ def validate_vps_scripts() -> None:
     bootstrap = BOOTSTRAP_PATH.read_text(encoding="utf-8")
     require("ufw default deny incoming" in bootstrap, "VPS bootstrap must default-deny inbound traffic")
     require("cloudflare-ip-file" in bootstrap and "ssh-cidr" in bootstrap, "VPS bootstrap must require scoped firewall inputs")
+    staging = STAGING_DEPLOY_PATH.read_text(encoding="utf-8")
+    require("--api-image" in staging and "@sha256:" in staging, "staging deploy must require a digest-pinned API image")
+    require("--health-url" in staging and "migration-integrity" in staging, "staging deploy must verify readiness and migration integrity")
+    require("rollback.sh" in staging and "previous" in staging, "staging deploy must retain a rollback release")
 
 
 def validate_release_example() -> None:

@@ -1,0 +1,222 @@
+name: Deploy API to staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref to build and deploy
+        required: true
+        default: main
+        type: string
+      api_base_url:
+        description: Staging API base URL, including /api/v1
+        required: true
+        type: string
+      health_url:
+        description: Staging HTTPS readiness URL
+        required: true
+        type: string
+      root_dir:
+        description: VPS release root prepared by vps-bootstrap.sh
+        required: true
+        default: /opt/sma
+        type: string
+      runtime_env_file:
+        description: Existing secret-bearing staging env file on the VPS
+        required: true
+        default: /etc/sma-staging/sma-api.env
+        type: string
+
+concurrency:
+  group: staging-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  deploy:
+    name: Build, promote, and smoke-test staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment:
+      name: staging
+      url: ${{ inputs.api_base_url }}
+    env:
+      REGISTRY_OWNER: ${{ github.repository_owner }}
+      STAGING_VPS_HOST: ${{ secrets.STAGING_VPS_HOST }}
+      STAGING_VPS_USER: ${{ secrets.STAGING_VPS_USER }}
+      STAGING_VPS_SSH_KEY: ${{ secrets.STAGING_VPS_SSH_KEY }}
+      STAGING_VPS_KNOWN_HOSTS: ${{ secrets.STAGING_VPS_KNOWN_HOSTS }}
+      STAGING_E2E_EMAIL: ${{ secrets.STAGING_E2E_EMAIL }}
+      STAGING_E2E_PASSWORD: ${{ secrets.STAGING_E2E_PASSWORD }}
+      API_BASE_URL: ${{ inputs.api_base_url }}
+      HEALTH_URL: ${{ inputs.health_url }}
+      ROOT_DIR: ${{ inputs.root_dir }}
+      RUNTIME_ENV_FILE: ${{ inputs.runtime_env_file }}
+    steps:
+      - name: Checkout selected release ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 1
+
+      - name: Resolve release SHA
+        id: source
+        run: |
+          set -euo pipefail
+          RELEASE_SHA=$(git rev-parse HEAD)
+          echo "RELEASE_SHA=$RELEASE_SHA" >> "$GITHUB_ENV"
+          echo "Building release $RELEASE_SHA"
+
+      - name: Validate staging inputs
+        run: |
+          set -euo pipefail
+          [[ "$STAGING_VPS_HOST" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "unsafe staging host" >&2; exit 2; }
+          [[ "$STAGING_VPS_USER" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "unsafe staging user" >&2; exit 2; }
+          [[ -n "$STAGING_VPS_SSH_KEY" ]] || { echo "STAGING_VPS_SSH_KEY is required" >&2; exit 2; }
+          [[ -n "$STAGING_VPS_KNOWN_HOSTS" ]] || { echo "STAGING_VPS_KNOWN_HOSTS is required" >&2; exit 2; }
+          [[ "$ROOT_DIR" =~ ^/[A-Za-z0-9._/-]+$ && "$ROOT_DIR" != "/" ]] || { echo "unsafe staging root" >&2; exit 2; }
+          [[ "$RUNTIME_ENV_FILE" =~ ^/[A-Za-z0-9._/-]+$ && "$RUNTIME_ENV_FILE" != "/" ]] || { echo "unsafe staging env path" >&2; exit 2; }
+          [[ "$API_BASE_URL" =~ ^https://[A-Za-z0-9._~:/?&=%+-]+/api/v1/?$ ]] || { echo "API base URL must be HTTPS and end in /api/v1" >&2; exit 2; }
+          [[ "$HEALTH_URL" =~ ^https://[A-Za-z0-9._~:/?&=%+-]+/ready/?$ ]] || { echo "health URL must be HTTPS and end in /ready" >&2; exit 2; }
+          [[ -n "$STAGING_E2E_EMAIL" && -n "$STAGING_E2E_PASSWORD" ]] || { echo "staging E2E credentials are required" >&2; exit 2; }
+
+      - name: Validate deployment bundle
+        run: python3 deploy/validate.py
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+
+      - name: Build and publish immutable API image
+        run: |
+          set -euo pipefail
+          registry_owner=$(printf '%s' "$REGISTRY_OWNER" | tr '[:upper:]' '[:lower:]')
+          image_ref="ghcr.io/$registry_owner/sma-api:staging-$RELEASE_SHA"
+          docker buildx build \
+            --platform linux/amd64 \
+            --file deploy/Dockerfile.api \
+            --build-arg VERSION="$RELEASE_SHA" \
+            --tag "$image_ref" \
+            --push \
+            .
+          api_digest=$(docker buildx imagetools inspect "$image_ref" | awk '$1 == "Digest:" {print $2; exit}')
+          [[ "$api_digest" =~ ^sha256:[0-9a-fA-F]{64}$ ]] || { echo "registry did not return an immutable digest" >&2; exit 1; }
+          echo "STAGING_API_IMAGE=$image_ref@$api_digest" >> "$GITHUB_ENV"
+          echo "Published $image_ref@$api_digest"
+
+      - name: Build migration integrity binary and release bundle
+        run: |
+          set -euo pipefail
+          bundle_dir=$(mktemp -d)
+          mkdir -p "$bundle_dir/deploy/nginx" "$bundle_dir/migrations"
+          cp deploy/docker-compose.production.yml "$bundle_dir/deploy/"
+          cp deploy/rollback.sh deploy/verify-backup.sh deploy/staging-deploy.sh "$bundle_dir/deploy/"
+          cp deploy/nginx/nginx.conf deploy/nginx/proxy_params deploy/nginx/sma-api.conf.template "$bundle_dir/deploy/nginx/"
+          cp migrations/*.sql "$bundle_dir/migrations/"
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+            go build -trimpath -ldflags="-s -w" \
+            -o "$bundle_dir/migration-integrity" ./scripts/migration_integrity
+          chmod 0750 "$bundle_dir/deploy/"*.sh "$bundle_dir/migration-integrity"
+          tar --sort=name --mtime='UTC 1970-01-01' -czf "$RUNNER_TEMP/sma-staging-release.tgz" -C "$bundle_dir" .
+
+      - name: Prepare pinned SSH
+        run: |
+          set -euo pipefail
+          ssh_dir="$RUNNER_TEMP/sma-ssh"
+          install -d -m 700 "$ssh_dir"
+          printf '%s\n' "$STAGING_VPS_SSH_KEY" > "$ssh_dir/id_ed25519"
+          printf '%s\n' "$STAGING_VPS_KNOWN_HOSTS" > "$ssh_dir/known_hosts"
+          chmod 600 "$ssh_dir/id_ed25519" "$ssh_dir/known_hosts"
+          echo "STAGING_SSH_DIR=$ssh_dir" >> "$GITHUB_ENV"
+
+      - name: Promote release on staging VPS
+        run: |
+          set -euo pipefail
+          target="$STAGING_VPS_USER@$STAGING_VPS_HOST"
+          release_dir="$ROOT_DIR/releases/staging-$RELEASE_SHA"
+          remote_tmp="/tmp/sma-staging-$RELEASE_SHA"
+          ssh_opts=(-i "$STAGING_SSH_DIR/id_ed25519" -o UserKnownHostsFile="$STAGING_SSH_DIR/known_hosts" -o StrictHostKeyChecking=yes)
+
+          ssh "${ssh_opts[@]}" "$target" "install -d -m 0700 '$remote_tmp'"
+          scp "${ssh_opts[@]}" "$RUNNER_TEMP/sma-staging-release.tgz" "$target:$remote_tmp/release.tgz"
+          ssh "${ssh_opts[@]}" "$target" \
+            "sudo install -d -m 0750 '$release_dir' && \
+             sudo tar -xzf '$remote_tmp/release.tgz' -C '$release_dir' && \
+             sudo chmod 0750 '$release_dir/deploy/'*.sh '$release_dir/migration-integrity' && \
+             sudo '$release_dir/deploy/staging-deploy.sh' \
+               --release-dir '$release_dir' \
+               --env-file '$RUNTIME_ENV_FILE' \
+               --api-image '$STAGING_API_IMAGE' \
+               --health-url '$HEALTH_URL' \
+               --project-name sma-staging"
+
+          ssh "${ssh_opts[@]}" "$target" \
+            "sudo cp '$release_dir/migration-integrity.json' '$remote_tmp/migration-integrity.json' && \
+             sudo cp '$release_dir/backup-evidence.json' '$remote_tmp/backup-evidence.json' && \
+             sudo chmod 0644 '$remote_tmp/migration-integrity.json' '$remote_tmp/backup-evidence.json'"
+          scp "${ssh_opts[@]}" "$target:$remote_tmp/migration-integrity.json" "$RUNNER_TEMP/migration-integrity.json"
+          scp "${ssh_opts[@]}" "$target:$remote_tmp/backup-evidence.json" "$RUNNER_TEMP/backup-evidence.json"
+          ssh "${ssh_opts[@]}" "$target" "rm -rf -- '$remote_tmp'"
+
+      - name: Verify staging edge and feature discovery
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 10 "$HEALTH_URL"
+          curl --fail --silent --show-error --max-time 10 "$API_BASE_URL/features" | jq -e '.data.features != null' >/dev/null
+          for path in /metrics /docs /docs/ /internal/ping-go /api/v1/portal/auth/login; do
+            status=$(curl --silent --show-error --max-time 10 -o /dev/null -w '%{http_code}' "${API_BASE_URL%/api/v1}$path")
+            [[ "$status" == 404 ]] || { echo "$path returned $status; expected 404" >&2; exit 1; }
+          done
+
+      - name: Authenticate staging smoke user
+        run: |
+          set -euo pipefail
+          response_file="$RUNNER_TEMP/staging-login.json"
+          curl --fail --silent --show-error -X POST "$API_BASE_URL/auth/login" \
+            -H "Content-Type: application/json" \
+            -d "{\"email\":\"$STAGING_E2E_EMAIL\",\"password\":\"$STAGING_E2E_PASSWORD\"}" \
+            > "$response_file"
+          token=$(jq -er '.data.access_token // empty' "$response_file")
+          test -n "$token"
+          echo "::add-mask::$token"
+          echo "ACCESS_TOKEN=$token" >> "$GITHUB_ENV"
+
+      - name: Set up Node for Newman
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Newman
+        run: npm install -g newman
+
+      - name: Run staging contract smoke
+        run: |
+          newman run tests/contract/contract.postman_collection.json \
+            --env-var baseUrl="$API_BASE_URL" \
+            --env-var gatewayUrl="${API_BASE_URL%/api/v1}" \
+            --env-var accessToken="$ACCESS_TOKEN" \
+            --folder "Public Gateway" \
+            --folder "Core Protected Smoke" \
+            --reporters cli,junit \
+            --reporter-junit-export "$RUNNER_TEMP/staging-contract-results.xml"
+
+      - name: Upload staging evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-release-evidence-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/migration-integrity.json
+            ${{ runner.temp }}/backup-evidence.json
+            ${{ runner.temp }}/staging-contract-results.xml
+          if-no-files-found: ignore

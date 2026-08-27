@@ -16,6 +16,7 @@ settings consumed by docker-compose.production.yml. Images must use
 
 Optional environment:
   COMPOSE_FILE       compose file (default: deploy/docker-compose.production.yml)
+  COMPOSE_PROJECT_NAME compose project name (default: Compose directory name)
   HEALTH_URL         edge readiness URL (default: https://$SERVER_NAME/ready)
   RUN_SMOKE          set true to run make compatibility-smoke after health
 EOF
@@ -59,6 +60,9 @@ done
 
 compose_dir="$(cd "$(dirname "$compose_file")" && pwd)"
 compose_args=(--env-file "$release_env" -f "$compose_file")
+if [[ -n "${COMPOSE_PROJECT_NAME:-}" ]]; then
+  compose_args+=(--project-name "$COMPOSE_PROJECT_NAME")
+fi
 if [[ "$dry_run" == true ]]; then
   echo "Validating rollback release without changing deployment state"
   SMA_ENV_FILE="$release_env" docker compose "${compose_args[@]}" config >/dev/null

@@ -30,6 +30,7 @@ class DeploymentValidatorTests(unittest.TestCase):
             root / "backup.sh",
             root / "verify-backup.sh",
             root / "rollback.sh",
+            root / "staging-deploy.sh",
             root / "monitor.sh",
             root / "vps-bootstrap.sh",
         ):

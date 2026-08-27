@@ -28,6 +28,7 @@ type Config struct {
 	PasswordReset PasswordResetConfig
 	SMTP          SMTPConfig
 	CORS          CORSConfig
+	RateLimit     RateLimitConfig
 	Log           LogConfig
 	Analytics     AnalyticsConfig
 	Dashboard     DashboardConfig
@@ -91,6 +92,14 @@ type SMTPConfig struct {
 
 type CORSConfig struct {
 	AllowedOrigins []string
+}
+
+// RateLimitConfig controls the in-process defense-in-depth limiter. The edge
+// proxy remains the primary distributed rate-limit boundary in production.
+type RateLimitConfig struct {
+	RequestsPerMinute int
+	Burst             int
+	MaxClients        int
 }
 
 type LogConfig struct {
@@ -248,6 +257,12 @@ func Load() (*Config, error) {
 	}
 
 	cfg.CORS = CORSConfig{AllowedOrigins: splitAndTrim(v.GetString("ALLOWED_ORIGINS"))}
+
+	cfg.RateLimit = RateLimitConfig{
+		RequestsPerMinute: v.GetInt("RATE_LIMIT_REQUESTS_PER_MINUTE"),
+		Burst:             v.GetInt("RATE_LIMIT_BURST"),
+		MaxClients:        v.GetInt("RATE_LIMIT_MAX_CLIENTS"),
+	}
 
 	cfg.Log = LogConfig{
 		Level:  v.GetString("LOG_LEVEL"),
@@ -418,6 +433,9 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("SMTP_TIMEOUT", "10s")
 
 	v.SetDefault("ALLOWED_ORIGINS", "")
+	v.SetDefault("RATE_LIMIT_REQUESTS_PER_MINUTE", 120)
+	v.SetDefault("RATE_LIMIT_BURST", 60)
+	v.SetDefault("RATE_LIMIT_MAX_CLIENTS", 10000)
 	v.SetDefault("LOG_LEVEL", "info")
 	v.SetDefault("LOG_FORMAT", "json")
 

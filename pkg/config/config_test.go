@@ -23,6 +23,9 @@ func TestLoadParsesPasswordResetSMTPSettings(t *testing.T) {
 	t.Setenv("SMTP_TIMEOUT", "3s")
 	t.Setenv("ALLOWED_ORIGINS", "https://admin.example.test")
 	t.Setenv("REDIS_TLS", "true")
+	t.Setenv("RATE_LIMIT_REQUESTS_PER_MINUTE", "600")
+	t.Setenv("RATE_LIMIT_BURST", "120")
+	t.Setenv("RATE_LIMIT_MAX_CLIENTS", "2500")
 
 	cfg, err := Load()
 	require.NoError(t, err)
@@ -43,6 +46,7 @@ func TestLoadParsesPasswordResetSMTPSettings(t *testing.T) {
 	}, cfg.SMTP)
 	require.Equal(t, []string{"https://admin.example.test"}, cfg.CORS.AllowedOrigins)
 	require.True(t, cfg.Redis.TLS)
+	require.Equal(t, RateLimitConfig{RequestsPerMinute: 600, Burst: 120, MaxClients: 2500}, cfg.RateLimit)
 }
 
 func TestValidateProductionRejectsUnsafePortalResetURL(t *testing.T) {

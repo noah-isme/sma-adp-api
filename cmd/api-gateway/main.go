@@ -84,9 +84,9 @@ func main() {
 	r.Use(logger.GinMiddleware(logr))
 	r.Use(corsmiddleware.New(cfg.CORS.AllowedOrigins))
 	r.Use(internalmiddleware.RateLimiterMiddleware(internalmiddleware.RateLimiterConfig{
-		RequestsPerMinute: 120,
-		Burst:             60,
-		MaxClients:        10000,
+		RequestsPerMinute: cfg.RateLimit.RequestsPerMinute,
+		Burst:             cfg.RateLimit.Burst,
+		MaxClients:        cfg.RateLimit.MaxClients,
 	}))
 	cutoverSvc := service.NewCutoverService(cfg.Cutover, metricsSvc)
 

@@ -46,10 +46,25 @@ jobs:
           psql "postgresql://postgres:postgres@localhost:5432/admin_panel_sma?sslmode=disable" -f scripts/seed.sql
       - name: Build and start API
         run: |
-          go run ./cmd/api-gateway &
+          set -euo pipefail
+          go run ./cmd/api-gateway > api.log 2>&1 &
           echo $! > api.pid
-          sleep 5
-          curl -f http://localhost:8080/health || (echo "API failed to start" && exit 1)
+          api_pid=$(cat api.pid)
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://localhost:8080/ready >/dev/null; then
+              echo "API is ready"
+              exit 0
+            fi
+            if ! kill -0 "$api_pid" 2>/dev/null; then
+              cat api.log
+              echo "API failed to start" >&2
+              exit 1
+            fi
+            sleep 2
+          done
+          cat api.log
+          echo "API failed readiness within 120 seconds" >&2
+          exit 1
       - name: Login to get ACCESS_TOKEN
         run: |
           RESPONSE=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \

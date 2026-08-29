@@ -146,7 +146,7 @@ jobs:
             ENV_FILE="$3"
             HEALTH_URL="$4"
             CURRENT_LINK="$ROOT_DIR/current"
-            BACKUP_DIR="${ROOT_DIR}/backups/$(basename "$RELEASE_DIR")"
+            BACKUP_DIR="${HOME}/backups/$(basename "$RELEASE_DIR")"
             MIGRATE_BIN="/usr/local/bin/migrate"
 
             # Safely extract database settings without executing unquoted values

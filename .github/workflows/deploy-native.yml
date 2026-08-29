@@ -209,7 +209,7 @@ jobs:
 
             # D. Atomic Symlink Switch & Service Restart
             echo "--- Switching active release symlink to $RELEASE_DIR ---"
-            ln -sfn "$RELEASE_DIR" "$CURRENT_LINK"
+            ln -sfn "$RELEASE_DIR" "$CURRENT_LINK" 2>/dev/null || sudo ln -sfn "$RELEASE_DIR" "$CURRENT_LINK"
 
             echo "--- Restarting native systemd service (sma-api) ---"
             sudo systemctl restart sma-api

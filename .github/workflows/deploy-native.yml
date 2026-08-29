@@ -151,7 +151,7 @@ jobs:
 
             # Safely extract database settings without executing unquoted values
             get_env() {
-              awk -F= -v key="$1" '$1 == key {print substr($0, index($0, "=") + 1); exit}' "$ENV_FILE" | tr -d '\r"'
+              awk -v key="$1" '{gsub(/^[[:space:]]+/, "")} $0 ~ "^"key"=" {print substr($0, length(key)+2); exit}' "$ENV_FILE" | tr -d '\r"'
             }
             DB_CONN="$(get_env DATABASE_URL)"
             if [ -z "$DB_CONN" ]; then

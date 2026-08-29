@@ -149,13 +149,23 @@ jobs:
             BACKUP_DIR="/var/backups/sma/$(basename "$RELEASE_DIR")"
             MIGRATE_BIN="/usr/local/bin/migrate"
 
-            # Parse database URL
-            set -a
-            . "$ENV_FILE"
-            set +a
-            DB_CONN="${DATABASE_URL:-${DB_URL:-}}"
+            # Safely extract database settings without executing unquoted values
+            get_env() {
+              awk -F= -v key="$1" '$1 == key {print substr($0, index($0, "=") + 1); exit}' "$ENV_FILE" | tr -d '\r"'
+            }
+            DB_CONN="$(get_env DATABASE_URL)"
             if [ -z "$DB_CONN" ]; then
-              DB_CONN="postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE:-require}"
+              DB_CONN="$(get_env DB_URL)"
+            fi
+            if [ -z "$DB_CONN" ]; then
+              DB_USER="$(get_env DB_USER)"
+              DB_PASS="$(get_env DB_PASSWORD)"
+              DB_HOST="$(get_env DB_HOST)"
+              DB_PORT="$(get_env DB_PORT)"
+              DB_NAME="$(get_env DB_NAME)"
+              DB_SSL="$(get_env DB_SSL_MODE)"
+              DB_SSL="${DB_SSL:-require}"
+              DB_CONN="postgres://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL}"
             fi
 
             # Record previous release for rollback

@@ -7,3 +7,9 @@ api/swagger/*
 !api/swagger/docs.go
 !api/swagger/swagger.json
 !api/swagger/swagger.yaml
+*.test
+__pycache__/
+.agents/
+graphify-out/
+tmp/
+

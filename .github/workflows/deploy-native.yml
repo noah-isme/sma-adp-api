@@ -1,0 +1,233 @@
+name: Deploy Go Native to VPS
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git branch or tag to deploy'
+        required: true
+        default: 'main'
+        type: string
+      environment:
+        description: 'Target deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+concurrency:
+  group: deploy-native-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-deploy:
+    name: Build, Migrate & Deploy Native Go
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: ${{ inputs.environment }}
+
+    env:
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_USER: ${{ secrets.VPS_USER }}
+      VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+      VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+      HEALTH_URL: ${{ vars.HEALTH_URL }}
+      API_BASE_URL: ${{ vars.API_BASE_URL }}
+      ROOT_DIR: ${{ vars.SMA_ROOT_DIR || '/opt/sma' }}
+      ENV_FILE: ${{ vars.SMA_ENV_FILE || '/etc/sma/sma-api.env' }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 1
+
+      - name: Resolve Release Identifier
+        id: release
+        run: |
+          set -euo pipefail
+          RELEASE_SHA=$(git rev-parse HEAD)
+          RELEASE_TAG="v$(git rev-parse --short=12 HEAD)"
+          echo "RELEASE_SHA=$RELEASE_SHA" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=$RELEASE_TAG" >> "$GITHUB_ENV"
+          echo "Target Release: $RELEASE_TAG ($RELEASE_SHA)"
+
+      - name: Validate Input & Required Secrets
+        run: |
+          set -euo pipefail
+          [[ -n "$VPS_HOST" ]] || { echo "ERROR: Secret 'VPS_HOST' is missing" >&2; exit 1; }
+          [[ -n "$VPS_USER" ]] || { echo "ERROR: Secret 'VPS_USER' is missing" >&2; exit 1; }
+          [[ -n "$VPS_SSH_KEY" ]] || { echo "ERROR: Secret 'VPS_SSH_KEY' is missing" >&2; exit 1; }
+          [[ -n "$VPS_KNOWN_HOSTS" ]] || { echo "ERROR: Secret 'VPS_KNOWN_HOSTS' is missing" >&2; exit 1; }
+          [[ -n "$HEALTH_URL" ]] || { echo "ERROR: Variable 'HEALTH_URL' is missing" >&2; exit 1; }
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+          cache: true
+
+      - name: Run Quality & Static Checks
+        run: |
+          go vet ./...
+          python3 scripts/validate_swagger_routes.py
+          python3 scripts/compatibility_smoke.py
+
+      - name: Run Unit Tests
+        run: go test -v ./...
+
+      - name: Build Static Linux Binaries
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          echo "Building API Gateway binary..."
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+            go build -trimpath -ldflags="-s -w -X main.version=${{ env.RELEASE_TAG }}" \
+            -o dist/api-gateway ./cmd/api-gateway
+
+          echo "Building Migration Integrity binary..."
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+            go build -trimpath -ldflags="-s -w" \
+            -o dist/migration-integrity ./scripts/migration_integrity
+
+      - name: Package Release Bundle
+        run: |
+          set -euo pipefail
+          bundle_dir=$(mktemp -d)
+          mkdir -p "$bundle_dir/migrations"
+          cp dist/api-gateway dist/migration-integrity "$bundle_dir/"
+          cp migrations/*.sql "$bundle_dir/migrations/"
+          cp deploy/verify-backup.sh "$bundle_dir/" || true
+          chmod 0750 "$bundle_dir/api-gateway" "$bundle_dir/migration-integrity"
+          tar -czf "${{ runner.temp }}/sma-release.tgz" -C "$bundle_dir" .
+
+      - name: Setup Pinned SSH
+        run: |
+          set -euo pipefail
+          ssh_dir="${{ runner.temp }}/.ssh"
+          install -d -m 0700 "$ssh_dir"
+          printf '%s\n' "$VPS_SSH_KEY" > "$ssh_dir/id_ed25519"
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > "$ssh_dir/known_hosts"
+          chmod 0600 "$ssh_dir/id_ed25519" "$ssh_dir/known_hosts"
+          echo "SSH_DIR=$ssh_dir" >> "$GITHUB_ENV"
+
+      - name: Promote Release onto VPS via SSH
+        run: |
+          set -euo pipefail
+          target="${VPS_USER}@${VPS_HOST}"
+          release_dir="${ROOT_DIR}/releases/${RELEASE_TAG}"
+          remote_tmp="/tmp/sma-upload-${RELEASE_TAG}"
+          ssh_opts=(-i "$SSH_DIR/id_ed25519" -o UserKnownHostsFile="$SSH_DIR/known_hosts" -o StrictHostKeyChecking=yes)
+
+          echo "==> 1. Uploading release archive to VPS..."
+          ssh "${ssh_opts[@]}" "$target" "install -d -m 0700 '$remote_tmp'"
+          scp "${ssh_opts[@]}" "${{ runner.temp }}/sma-release.tgz" "$target:$remote_tmp/release.tgz"
+
+          echo "==> 2. Extracting release on VPS..."
+          ssh "${ssh_opts[@]}" "$target" \
+            "install -d -m 0750 '$release_dir' && \
+             tar -xzf '$remote_tmp/release.tgz' -C '$release_dir' && \
+             chmod 0750 '$release_dir/api-gateway' '$release_dir/migration-integrity' && \
+             rm -rf '$remote_tmp'"
+
+          echo "==> 3. Running Pre-migration Backup, Migrations, and Atomic Release Switch..."
+          ssh "${ssh_opts[@]}" "$target" bash -s -- \
+            "$release_dir" "$ROOT_DIR" "$ENV_FILE" "$HEALTH_URL" << 'EOF'
+            set -euo pipefail
+            RELEASE_DIR="$1"
+            ROOT_DIR="$2"
+            ENV_FILE="$3"
+            HEALTH_URL="$4"
+            CURRENT_LINK="$ROOT_DIR/current"
+            BACKUP_DIR="/var/backups/sma/$(basename "$RELEASE_DIR")"
+            MIGRATE_BIN="/usr/local/bin/migrate"
+
+            # Parse database URL
+            set -a
+            . "$ENV_FILE"
+            set +a
+            DB_CONN="${DATABASE_URL:-${DB_URL:-}}"
+            if [ -z "$DB_CONN" ]; then
+              DB_CONN="postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE:-require}"
+            fi
+
+            # Record previous release for rollback
+            PREVIOUS_RELEASE=""
+            if [ -L "$CURRENT_LINK" ]; then
+              PREVIOUS_RELEASE="$(readlink -f "$CURRENT_LINK" || true)"
+            fi
+
+            # A. Pre-migration backup
+            echo "--- Creating pre-migration database backup ---"
+            install -d -m 0750 "$BACKUP_DIR"
+            backup_file="$BACKUP_DIR/sma-$(date -u +%Y%m%dT%H%M%SZ).dump"
+            pg_dump --format=custom --no-owner --no-privileges --file "$backup_file" "$DB_CONN"
+            sha256sum "$backup_file" | tee "$backup_file.sha256"
+
+            # B. Apply database migrations
+            echo "--- Applying database migrations ---"
+            "$MIGRATE_BIN" -path "$RELEASE_DIR/migrations" -database "$DB_CONN" up
+            echo "Migrated to version: $("$MIGRATE_BIN" -path "$RELEASE_DIR/migrations" -database "$DB_CONN" version 2>&1)"
+
+            # C. Run referential integrity check
+            echo "--- Running migration integrity validation ---"
+            "$RELEASE_DIR/migration-integrity" --dsn "$DB_CONN" --json > "$RELEASE_DIR/migration-integrity.json"
+            if ! grep -q '"passed": true' "$RELEASE_DIR/migration-integrity.json"; then
+              echo "ERROR: Migration integrity validation failed!" >&2
+              cat "$RELEASE_DIR/migration-integrity.json" >&2
+              exit 1
+            fi
+            echo "Referential integrity: PASSED"
+
+            # D. Atomic Symlink Switch & Service Restart
+            echo "--- Switching active release symlink to $RELEASE_DIR ---"
+            ln -sfn "$RELEASE_DIR" "$CURRENT_LINK"
+
+            echo "--- Restarting native systemd service (sma-api) ---"
+            sudo systemctl restart sma-api
+
+            # E. Readiness Probe with Automatic Rollback
+            echo "--- Checking readiness probe at $HEALTH_URL ---"
+            ready=false
+            for i in $(seq 1 30); do
+              if curl --fail --silent --show-error --max-time 3 "$HEALTH_URL" >/dev/null; then
+                ready=true
+                break
+              fi
+              sleep 2
+            done
+
+            if [ "$ready" != "true" ]; then
+              echo "ERROR: Service failed readiness check!" >&2
+              sudo systemctl status sma-api --no-pager >&2 || true
+              sudo journalctl -u sma-api -n 50 --no-pager >&2 || true
+
+              if [ -n "$PREVIOUS_RELEASE" ] && [ -d "$PREVIOUS_RELEASE" ]; then
+                echo "--- Rolling back symlink to: $PREVIOUS_RELEASE ---" >&2
+                ln -sfn "$PREVIOUS_RELEASE" "$CURRENT_LINK"
+                sudo systemctl restart sma-api
+                echo "Rollback completed." >&2
+              fi
+              exit 1
+            fi
+            echo "Deployment successfully activated."
+          EOF
+
+      - name: Verify Live Features & Endpoints
+        run: |
+          set -euo pipefail
+          echo "Verifying Health Check..."
+          curl --fail --silent --show-error --max-time 10 "$HEALTH_URL"
+
+          if [[ -n "${API_BASE_URL:-}" ]]; then
+            echo "Verifying Feature Profile..."
+            features=$(curl --fail --silent --show-error --max-time 10 "$API_BASE_URL/features")
+            echo "$features" | jq .
+          fi

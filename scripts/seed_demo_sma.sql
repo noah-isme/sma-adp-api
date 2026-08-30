@@ -166,13 +166,23 @@ VALUES
     ('cs-xi1-bio', 'cls-xi-ipa-1', 'subj-bio', 'tch-004', NOW()),
     ('cs-xi1-ing', 'cls-xi-ipa-1', 'subj-ing', 'tch-006', NOW()),
 
+    -- XI IPS 1
+    ('cs-xi2-mtk', 'cls-xi-ips-1', 'subj-001', 'tch-001', NOW()),
+    ('cs-xi2-eko', 'cls-xi-ips-1', 'subj-eko', 'tch-007', NOW()),
+    ('cs-xi2-sos', 'cls-xi-ips-1', 'subj-sos', 'tch-008', NOW()),
+
     -- XII MIPA 1
     ('cs-xii1-mtk', 'cls-xii-ipa-1', 'subj-001', 'tch-001', NOW()),
     ('cs-xii1-fis', 'cls-xii-ipa-1', 'subj-002', 'tch-002', NOW()),
     ('cs-xii1-kim', 'cls-xii-ipa-1', 'subj-kim', 'tch-003', NOW()),
     ('cs-xii1-bio', 'cls-xii-ipa-1', 'subj-bio', 'tch-004', NOW()),
     ('cs-xii1-ind', 'cls-xii-ipa-1', 'subj-ind', 'tch-005', NOW()),
-    ('cs-xii1-sej', 'cls-xii-ipa-1', 'subj-sej', 'tch-009', NOW())
+    ('cs-xii1-sej', 'cls-xii-ipa-1', 'subj-sej', 'tch-009', NOW()),
+
+    -- XII IPS 1
+    ('cs-xii2-mtk', 'cls-xii-ips-1', 'subj-001', 'tch-001', NOW()),
+    ('cs-xii2-eko', 'cls-xii-ips-1', 'subj-eko', 'tch-007', NOW()),
+    ('cs-xii2-sos', 'cls-xii-ips-1', 'subj-sos', 'tch-008', NOW())
 ON CONFLICT (id) DO UPDATE SET teacher_id = EXCLUDED.teacher_id;
 
 -- ------------------------------------------------------------------------------
@@ -218,7 +228,15 @@ VALUES
     ('sch-x2-mon1', 'term-2025-1', 'cls-x-ips-1', 'subj-eko', 'tch-007', 'MONDAY', '07:30-09:00', 'R-102', NOW(), NOW()),
     ('sch-x2-mon2', 'term-2025-1', 'cls-x-ips-1', 'subj-sos', 'tch-008', 'MONDAY', '09:15-10:45', 'R-102', NOW(), NOW()),
     ('sch-x2-tue1', 'term-2025-1', 'cls-x-ips-1', 'subj-geo', 'tch-007', 'TUESDAY', '07:30-09:00', 'R-102', NOW(), NOW()),
-    ('sch-x2-wed1', 'term-2025-1', 'cls-x-ips-1', 'subj-ind', 'tch-005', 'WEDNESDAY', '07:30-09:00', 'R-102', NOW(), NOW())
+    ('sch-x2-wed1', 'term-2025-1', 'cls-x-ips-1', 'subj-ind', 'tch-005', 'WEDNESDAY', '07:30-09:00', 'R-102', NOW(), NOW()),
+
+    -- XI MIPA 1
+    ('sch-xi1-mon1', 'term-2025-1', 'cls-xi-ipa-1', 'subj-001', 'tch-001', 'MONDAY', '10:15-11:45', 'R-201', NOW(), NOW()),
+    ('sch-xi1-tue1', 'term-2025-1', 'cls-xi-ipa-1', 'subj-002', 'tch-002', 'TUESDAY', '10:15-11:45', 'Lab Fisika', NOW(), NOW()),
+
+    -- XII MIPA 1
+    ('sch-xii1-mon1', 'term-2025-1', 'cls-xii-ipa-1', 'subj-001', 'tch-001', 'MONDAY', '12:30-14:00', 'R-301', NOW(), NOW()),
+    ('sch-xii1-wed1', 'term-2025-1', 'cls-xii-ipa-1', 'subj-ind', 'tch-005', 'WEDNESDAY', '10:15-11:45', 'R-301', NOW(), NOW())
 ON CONFLICT (id) DO UPDATE SET 
     day_of_week = EXCLUDED.day_of_week, 
     time_slot = EXCLUDED.time_slot, 
@@ -298,7 +316,7 @@ VALUES
 ON CONFLICT (id) DO UPDATE SET status = 'ACTIVE';
 
 -- ------------------------------------------------------------------------------
--- 12. Grade Components & Weights
+-- 12. Grade Components & Configs for All Classes
 -- ------------------------------------------------------------------------------
 INSERT INTO grade_components (id, code, name, description, created_at, updated_at)
 VALUES 
@@ -314,105 +332,150 @@ INSERT INTO grade_configs (id, class_id, subject_id, term_id, calculation_scheme
 VALUES
     ('gcfg-x1-mtk', 'cls-x-ipa-1', 'subj-001', 'term-2025-1', 'WEIGHTED', FALSE, NOW(), NOW()),
     ('gcfg-x1-fis', 'cls-x-ipa-1', 'subj-002', 'term-2025-1', 'WEIGHTED', FALSE, NOW(), NOW()),
-    ('gcfg-x1-kim', 'cls-x-ipa-1', 'subj-kim', 'term-2025-1', 'WEIGHTED', FALSE, NOW(), NOW()),
-    ('gcfg-x1-bio', 'cls-x-ipa-1', 'subj-bio', 'term-2025-1', 'WEIGHTED', FALSE, NOW(), NOW()),
-    ('gcfg-x1-ind', 'cls-x-ipa-1', 'subj-ind', 'term-2025-1', 'WEIGHTED', FALSE, NOW(), NOW()),
-    ('gcfg-x1-ing', 'cls-x-ipa-1', 'subj-ing', 'term-2025-1', 'WEIGHTED', FALSE, NOW(), NOW())
+    ('gcfg-x2-eko', 'cls-x-ips-1', 'subj-eko', 'term-2025-1', 'WEIGHTED', FALSE, NOW(), NOW()),
+    ('gcfg-x2-sos', 'cls-x-ips-1', 'subj-sos', 'term-2025-1', 'WEIGHTED', FALSE, NOW(), NOW()),
+    ('gcfg-xi1-mtk', 'cls-xi-ipa-1', 'subj-001', 'term-2025-1', 'WEIGHTED', FALSE, NOW(), NOW()),
+    ('gcfg-xii1-mtk', 'cls-xii-ipa-1', 'subj-001', 'term-2025-1', 'WEIGHTED', FALSE, NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
--- Grade Config Components Weights
-INSERT INTO grade_config_components (id, grade_config_id, component_id, weight)
-VALUES
-    ('gcc-1', 'gcfg-x1-mtk', 'gc-tgs', 0.20),
-    ('gcc-2', 'gcfg-x1-mtk', 'gc-uh1', 0.20),
-    ('gcc-3', 'gcfg-x1-mtk', 'gc-uh2', 0.20),
-    ('gcc-4', 'gcfg-x1-mtk', 'gc-pts', 0.20),
-    ('gcc-5', 'gcfg-x1-mtk', 'gc-pas', 0.20)
-ON CONFLICT (id) DO UPDATE SET weight = EXCLUDED.weight;
-
 -- ------------------------------------------------------------------------------
--- 13. Student Grades & Final Grades
+-- 13. Student Grades & Final Grades for ALL Students
 -- ------------------------------------------------------------------------------
 INSERT INTO grades (id, enrollment_id, subject_id, component_id, grade_value, created_at, updated_at)
 VALUES 
-    -- std-001 (Rizky)
+    -- std-001 (Rizky - X MIPA 1)
     ('grd-101', 'enr-001', 'subj-001', 'gc-tgs', 88.00, NOW(), NOW()),
     ('grd-102', 'enr-001', 'subj-001', 'gc-uh1', 85.00, NOW(), NOW()),
-    ('grd-103', 'enr-001', 'subj-001', 'gc-uh2', 90.00, NOW(), NOW()),
-    ('grd-104', 'enr-001', 'subj-001', 'gc-pts', 86.00, NOW(), NOW()),
-    ('grd-105', 'enr-001', 'subj-001', 'gc-pas', 92.00, NOW(), NOW()),
+    ('grd-103', 'enr-001', 'subj-001', 'gc-pts', 86.00, NOW(), NOW()),
+    ('grd-104', 'enr-001', 'subj-002', 'gc-pts', 90.00, NOW(), NOW()),
 
-    ('grd-106', 'enr-001', 'subj-002', 'gc-tgs', 90.00, NOW(), NOW()),
-    ('grd-107', 'enr-001', 'subj-002', 'gc-uh1', 88.00, NOW(), NOW()),
-    ('grd-108', 'enr-001', 'subj-002', 'gc-pts', 91.00, NOW(), NOW()),
+    -- std-002 (Siti - X MIPA 1)
+    ('grd-105', 'enr-002', 'subj-001', 'gc-tgs', 95.00, NOW(), NOW()),
+    ('grd-106', 'enr-002', 'subj-001', 'gc-uh1', 94.00, NOW(), NOW()),
+    ('grd-107', 'enr-002', 'subj-001', 'gc-pts', 92.00, NOW(), NOW()),
 
-    -- std-002 (Siti)
-    ('grd-109', 'enr-002', 'subj-001', 'gc-tgs', 95.00, NOW(), NOW()),
-    ('grd-110', 'enr-002', 'subj-001', 'gc-uh1', 94.00, NOW(), NOW()),
-    ('grd-111', 'enr-002', 'subj-001', 'gc-uh2', 96.00, NOW(), NOW()),
-    ('grd-112', 'enr-002', 'subj-001', 'gc-pts', 92.00, NOW(), NOW()),
-    ('grd-113', 'enr-002', 'subj-001', 'gc-pas', 95.00, NOW(), NOW()),
+    -- std-003 (Dimas - X MIPA 1 - Remedial case)
+    ('grd-108', 'enr-003', 'subj-001', 'gc-tgs', 70.00, NOW(), NOW()),
+    ('grd-109', 'enr-003', 'subj-001', 'gc-uh1', 68.00, NOW(), NOW()),
+    ('grd-110', 'enr-003', 'subj-001', 'gc-pts', 72.00, NOW(), NOW()),
 
-    -- std-003 (Dimas)
-    ('grd-114', 'enr-003', 'subj-001', 'gc-tgs', 78.00, NOW(), NOW()),
-    ('grd-115', 'enr-003', 'subj-001', 'gc-uh1', 80.00, NOW(), NOW()),
-    ('grd-116', 'enr-003', 'subj-001', 'gc-pts', 76.00, NOW(), NOW()),
+    -- std-004 (Anisa - X MIPA 1)
+    ('grd-111', 'enr-004', 'subj-001', 'gc-pts', 85.00, NOW(), NOW()),
+    
+    -- std-005 (Kevin - X MIPA 1)
+    ('grd-112', 'enr-005', 'subj-001', 'gc-pts', 80.00, NOW(), NOW()),
+    
+    -- std-006 (Aurelia - X MIPA 1)
+    ('grd-113', 'enr-006', 'subj-001', 'gc-pts', 88.00, NOW(), NOW()),
+    
+    -- std-007 (Farhan - X MIPA 1)
+    ('grd-114', 'enr-007', 'subj-001', 'gc-pts', 82.00, NOW(), NOW()),
+    
+    -- std-008 (Nabila - X MIPA 1)
+    ('grd-115', 'enr-008', 'subj-001', 'gc-pts', 91.00, NOW(), NOW()),
 
-    -- std-004 (Anisa)
-    ('grd-117', 'enr-004', 'subj-001', 'gc-tgs', 84.00, NOW(), NOW()),
-    ('grd-118', 'enr-004', 'subj-001', 'gc-uh1', 82.00, NOW(), NOW()),
-    ('grd-119', 'enr-004', 'subj-001', 'gc-pts', 85.00, NOW(), NOW()),
+    -- X IPS 1 (Bryan, Clarissa, Daffa, Fathia)
+    ('grd-116', 'enr-009', 'subj-eko', 'gc-pts', 86.00, NOW(), NOW()),
+    ('grd-117', 'enr-010', 'subj-eko', 'gc-pts', 93.00, NOW(), NOW()),
+    ('grd-118', 'enr-011', 'subj-eko', 'gc-pts', 74.00, NOW(), NOW()),
+    ('grd-119', 'enr-012', 'subj-eko', 'gc-pts', 88.00, NOW(), NOW()),
 
-    -- std-005 (Kevin)
-    ('grd-120', 'enr-005', 'subj-001', 'gc-tgs', 80.00, NOW(), NOW()),
-    ('grd-121', 'enr-005', 'subj-001', 'gc-uh1', 75.00, NOW(), NOW()),
-    ('grd-122', 'enr-005', 'subj-001', 'gc-pts', 79.00, NOW(), NOW())
+    -- XI MIPA 1 (Gilang, Hani, Irfan, Jessica)
+    ('grd-120', 'enr-013', 'subj-001', 'gc-pts', 89.00, NOW(), NOW()),
+    ('grd-121', 'enr-014', 'subj-001', 'gc-pts', 95.00, NOW(), NOW()),
+    ('grd-122', 'enr-015', 'subj-001', 'gc-pts', 84.00, NOW(), NOW()),
+    ('grd-123', 'enr-016', 'subj-001', 'gc-pts', 92.00, NOW(), NOW()),
+
+    -- XII MIPA 1 (Kenzo, Larasati, Mahendra, Nadya)
+    ('grd-124', 'enr-017', 'subj-001', 'gc-pts', 91.00, NOW(), NOW()),
+    ('grd-125', 'enr-018', 'subj-001', 'gc-pts', 96.00, NOW(), NOW()),
+    ('grd-126', 'enr-019', 'subj-001', 'gc-pts', 87.00, NOW(), NOW()),
+    ('grd-127', 'enr-020', 'subj-001', 'gc-pts', 94.00, NOW(), NOW())
 ON CONFLICT (id) DO UPDATE SET grade_value = EXCLUDED.grade_value;
 
--- Final Calculated Grades
+-- Final Calculated Grades for ALL 20 Students
 INSERT INTO grade_finals (id, enrollment_id, subject_id, final_grade, finalized, calculated_at, calculation_note)
 VALUES
-    ('gf-001', 'enr-001', 'subj-001', 88.20, TRUE, NOW(), 'Predikat A (Sangat Baik)'),
-    ('gf-002', 'enr-001', 'subj-002', 89.60, TRUE, NOW(), 'Predikat A (Sangat Baik)'),
-    ('gf-003', 'enr-001', 'subj-kim', 85.00, TRUE, NOW(), 'Predikat B+ (Baik)'),
-    ('gf-004', 'enr-001', 'subj-bio', 87.50, TRUE, NOW(), 'Predikat A (Sangat Baik)'),
-    ('gf-005', 'enr-001', 'subj-ind', 91.00, TRUE, NOW(), 'Predikat A (Sangat Baik)'),
-    ('gf-006', 'enr-001', 'subj-ing', 88.00, TRUE, NOW(), 'Predikat A (Sangat Baik)'),
+    -- X MIPA 1
+    ('gf-001', 'enr-001', 'subj-001', 88.00, TRUE, NOW(), 'Predikat A (Sangat Baik)'),
+    ('gf-002', 'enr-001', 'subj-002', 90.00, TRUE, NOW(), 'Predikat A (Sangat Baik)'),
+    ('gf-003', 'enr-002', 'subj-001', 94.50, TRUE, NOW(), 'Predikat A+ (Istimewa)'),
+    ('gf-004', 'enr-003', 'subj-001', 70.00, TRUE, NOW(), 'Predikat C (Perlu Remedial)'),
+    ('gf-005', 'enr-004', 'subj-001', 85.00, TRUE, NOW(), 'Predikat B+ (Baik)'),
+    ('gf-006', 'enr-005', 'subj-001', 80.00, TRUE, NOW(), 'Predikat B (Baik)'),
+    ('gf-007', 'enr-006', 'subj-001', 88.00, TRUE, NOW(), 'Predikat A (Sangat Baik)'),
+    ('gf-008', 'enr-007', 'subj-001', 82.00, TRUE, NOW(), 'Predikat B+ (Baik)'),
+    ('gf-009', 'enr-008', 'subj-001', 91.00, TRUE, NOW(), 'Predikat A (Sangat Baik)'),
 
-    ('gf-007', 'enr-002', 'subj-001', 94.40, TRUE, NOW(), 'Predikat A+ (Istimewa)'),
-    ('gf-008', 'enr-002', 'subj-002', 92.00, TRUE, NOW(), 'Predikat A (Sangat Baik)'),
-    ('gf-009', 'enr-002', 'subj-kim', 90.50, TRUE, NOW(), 'Predikat A (Sangat Baik)'),
+    -- X IPS 1
+    ('gf-010', 'enr-009', 'subj-eko', 86.00, TRUE, NOW(), 'Predikat A (Sangat Baik)'),
+    ('gf-011', 'enr-010', 'subj-eko', 93.00, TRUE, NOW(), 'Predikat A+ (Istimewa)'),
+    ('gf-012', 'enr-011', 'subj-eko', 74.00, TRUE, NOW(), 'Predikat C (Perlu Remedial)'),
+    ('gf-013', 'enr-012', 'subj-eko', 88.00, TRUE, NOW(), 'Predikat A (Sangat Baik)'),
 
-    ('gf-010', 'enr-003', 'subj-001', 78.00, TRUE, NOW(), 'Predikat B (Cukup)'),
-    ('gf-011', 'enr-004', 'subj-001', 83.67, TRUE, NOW(), 'Predikat B+ (Baik)'),
-    ('gf-012', 'enr-005', 'subj-001', 78.00, TRUE, NOW(), 'Predikat B (Cukup)'),
-    ('gf-013', 'enr-006', 'subj-001', 86.50, TRUE, NOW(), 'Predikat A (Sangat Baik)'),
-    ('gf-014', 'enr-007', 'subj-001', 82.00, TRUE, NOW(), 'Predikat B+ (Baik)'),
-    ('gf-015', 'enr-008', 'subj-001', 90.00, TRUE, NOW(), 'Predikat A (Sangat Baik)')
+    -- XI MIPA 1
+    ('gf-014', 'enr-013', 'subj-001', 89.00, TRUE, NOW(), 'Predikat A (Sangat Baik)'),
+    ('gf-015', 'enr-014', 'subj-001', 95.00, TRUE, NOW(), 'Predikat A+ (Istimewa)'),
+    ('gf-016', 'enr-015', 'subj-001', 84.00, TRUE, NOW(), 'Predikat B+ (Baik)'),
+    ('gf-017', 'enr-016', 'subj-001', 92.00, TRUE, NOW(), 'Predikat A (Sangat Baik)'),
+
+    -- XII MIPA 1
+    ('gf-018', 'enr-017', 'subj-001', 91.00, TRUE, NOW(), 'Predikat A (Sangat Baik)'),
+    ('gf-019', 'enr-018', 'subj-001', 96.00, TRUE, NOW(), 'Predikat A+ (Istimewa)'),
+    ('gf-020', 'enr-019', 'subj-001', 87.00, TRUE, NOW(), 'Predikat A (Sangat Baik)'),
+    ('gf-021', 'enr-020', 'subj-001', 94.00, TRUE, NOW(), 'Predikat A (Sangat Baik)')
 ON CONFLICT (id) DO UPDATE SET final_grade = EXCLUDED.final_grade, calculation_note = EXCLUDED.calculation_note;
 
 -- ------------------------------------------------------------------------------
--- 14. Attendance Records
+-- 14. Attendance Records for ALL 20 Students
 -- ------------------------------------------------------------------------------
 INSERT INTO daily_attendance (id, enrollment_id, date, status, notes, created_at, updated_at)
 VALUES
-    ('att-d-001', 'enr-001', '2025-08-25', 'H', 'Hadir tepat waktu', NOW(), NOW()),
-    ('att-d-002', 'enr-001', '2025-08-26', 'H', 'Hadir tepat waktu', NOW(), NOW()),
-    ('att-d-003', 'enr-001', '2025-08-27', 'H', 'Hadir tepat waktu', NOW(), NOW()),
-    ('att-d-004', 'enr-001', '2025-08-28', 'S', 'Sakit flu dengan surat dokter', NOW(), NOW()),
-    ('att-d-005', 'enr-001', '2025-08-29', 'H', 'Hadir tepat waktu', NOW(), NOW()),
+    -- X MIPA 1 (enr-001 s/d enr-008)
+    ('att-d-001', 'enr-001', '2025-08-25', 'H', 'Hadir', NOW(), NOW()),
+    ('att-d-002', 'enr-001', '2025-08-26', 'H', 'Hadir', NOW(), NOW()),
+    ('att-d-003', 'enr-001', '2025-08-27', 'H', 'Hadir', NOW(), NOW()),
+    ('att-d-004', 'enr-001', '2025-08-28', 'S', 'Sakit flu', NOW(), NOW()),
+    ('att-d-005', 'enr-001', '2025-08-29', 'H', 'Hadir', NOW(), NOW()),
 
-    ('att-d-006', 'enr-002', '2025-08-25', 'H', 'Hadir tepat waktu', NOW(), NOW()),
-    ('att-d-007', 'enr-002', '2025-08-26', 'H', 'Hadir tepat waktu', NOW(), NOW()),
-    ('att-d-008', 'enr-002', '2025-08-27', 'H', 'Hadir tepat waktu', NOW(), NOW()),
-    ('att-d-009', 'enr-002', '2025-08-28', 'H', 'Hadir tepat waktu', NOW(), NOW()),
-    ('att-d-010', 'enr-002', '2025-08-29', 'H', 'Hadir tepat waktu', NOW(), NOW()),
+    ('att-d-006', 'enr-002', '2025-08-25', 'H', 'Hadir', NOW(), NOW()),
+    ('att-d-007', 'enr-002', '2025-08-26', 'H', 'Hadir', NOW(), NOW()),
+    ('att-d-008', 'enr-002', '2025-08-27', 'H', 'Hadir', NOW(), NOW()),
+    ('att-d-009', 'enr-002', '2025-08-28', 'H', 'Hadir', NOW(), NOW()),
+    ('att-d-010', 'enr-002', '2025-08-29', 'H', 'Hadir', NOW(), NOW()),
 
     ('att-d-011', 'enr-003', '2025-08-25', 'H', 'Hadir', NOW(), NOW()),
-    ('att-d-012', 'enr-003', '2025-08-26', 'I', 'Izin acara keluarga', NOW(), NOW()),
+    ('att-d-012', 'enr-003', '2025-08-26', 'I', 'Izin', NOW(), NOW()),
     ('att-d-013', 'enr-003', '2025-08-27', 'H', 'Hadir', NOW(), NOW()),
     ('att-d-014', 'enr-003', '2025-08-28', 'H', 'Hadir', NOW(), NOW()),
-    ('att-d-015', 'enr-003', '2025-08-29', 'H', 'Hadir', NOW(), NOW())
+    ('att-d-015', 'enr-003', '2025-08-29', 'H', 'Hadir', NOW(), NOW()),
+
+    ('att-d-016', 'enr-004', '2025-08-25', 'H', 'Hadir', NOW(), NOW()),
+    ('att-d-017', 'enr-004', '2025-08-26', 'H', 'Hadir', NOW(), NOW()),
+    ('att-d-018', 'enr-005', '2025-08-25', 'H', 'Hadir', NOW(), NOW()),
+    ('att-d-019', 'enr-006', '2025-08-25', 'H', 'Hadir', NOW(), NOW()),
+    ('att-d-020', 'enr-007', '2025-08-25', 'H', 'Hadir', NOW(), NOW()),
+    ('att-d-021', 'enr-008', '2025-08-25', 'H', 'Hadir', NOW(), NOW()),
+
+    -- X IPS 1 (enr-009 s/d enr-012)
+    ('att-d-022', 'enr-009', '2025-08-25', 'H', 'Hadir', NOW(), NOW()),
+    ('att-d-023', 'enr-009', '2025-08-26', 'H', 'Hadir', NOW(), NOW()),
+    ('att-d-024', 'enr-010', '2025-08-25', 'H', 'Hadir', NOW(), NOW()),
+    ('att-d-025', 'enr-010', '2025-08-26', 'H', 'Hadir', NOW(), NOW()),
+    ('att-d-026', 'enr-011', '2025-08-25', 'H', 'Hadir', NOW(), NOW()),
+    ('att-d-027', 'enr-012', '2025-08-25', 'H', 'Hadir', NOW(), NOW()),
+
+    -- XI MIPA 1 (enr-013 s/d enr-016)
+    ('att-d-028', 'enr-013', '2025-08-25', 'H', 'Hadir', NOW(), NOW()),
+    ('att-d-029', 'enr-014', '2025-08-25', 'H', 'Hadir', NOW(), NOW()),
+    ('att-d-030', 'enr-015', '2025-08-25', 'H', 'Hadir', NOW(), NOW()),
+    ('att-d-031', 'enr-016', '2025-08-25', 'H', 'Hadir', NOW(), NOW()),
+
+    -- XII MIPA 1 (enr-017 s/d enr-020)
+    ('att-d-032', 'enr-017', '2025-08-25', 'H', 'Hadir', NOW(), NOW()),
+    ('att-d-033', 'enr-018', '2025-08-25', 'H', 'Hadir', NOW(), NOW()),
+    ('att-d-034', 'enr-019', '2025-08-25', 'H', 'Hadir', NOW(), NOW()),
+    ('att-d-035', 'enr-020', '2025-08-25', 'H', 'Hadir', NOW(), NOW())
 ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, notes = EXCLUDED.notes;
 
 -- ------------------------------------------------------------------------------
